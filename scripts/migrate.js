@@ -3,7 +3,6 @@
  * Run: node scripts/migrate.js
  */
 const { createClient } = require('@libsql/client');
-require('dotenv').config({ path: '.env.local' });
 
 const client = createClient({
   url: process.env.TURSO_DATABASE_URL,
