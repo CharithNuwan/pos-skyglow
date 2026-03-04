@@ -289,7 +289,7 @@ export default function LabelClient() {
               }
             `}</style>
             {selectedProducts.map(p => (
-              <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} />
+              <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} />
             ))}
           </div>
         </div>
