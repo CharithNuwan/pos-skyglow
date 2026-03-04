@@ -20,6 +20,11 @@ export default function Sidebar({ user }: SidebarProps) {
   const isManager = user.role === 'admin' || user.role === 'manager';
   const isAdmin = user.role === 'admin';
 
+  function closeSidebar() {
+    document.querySelector('.sidebar')?.classList.remove('open');
+    document.getElementById('sidebarOverlay')?.classList.remove('active');
+  }
+
   return (
     <div className="sidebar">
       <Link href="/dashboard" className="sidebar-brand">
