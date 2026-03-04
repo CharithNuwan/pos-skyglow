@@ -1,5 +1,4 @@
 import { SignJWT, jwtVerify } from 'jose';
-import { cookies } from 'next/headers';
 import { query, queryOne, execute } from './db';
 
 const JWT_SECRET = new TextEncoder().encode(
@@ -33,6 +32,8 @@ export async function verifySession(token: string): Promise<SessionUser | null> 
 }
 
 export async function getSession(): Promise<SessionUser | null> {
+  // Dynamically import cookies so this file stays usable in both server and edge contexts
+  const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
   const token = cookieStore.get('pos_session')?.value;
   if (!token) return null;
