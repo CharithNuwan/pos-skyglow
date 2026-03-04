@@ -18,6 +18,7 @@ export default function ProductsClient() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Partial<Product> | null>(null);
+  const [suppliers, setSuppliers] = useState<{supplier_id:number;supplier_name:string}[]>([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState<'success'|'danger'>('success');
@@ -36,7 +37,7 @@ export default function ProductsClient() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadProducts(); }, [search, catFilter, page]);
-  useEffect(() => { loadCategories(); }, []);
+  useEffect(() => { loadCategories(); loadSuppliers(); }, []);
 
   async function loadProducts() {
     setLoading(true);
@@ -48,6 +49,12 @@ export default function ProductsClient() {
     setProducts(data.products || []);
     setTotal(data.total || 0);
     setLoading(false);
+  }
+
+  async function loadSuppliers() {
+    const res = await fetch('/api/suppliers');
+    const data = await res.json();
+    setSuppliers(data.suppliers || []);
   }
 
   async function loadCategories() {
@@ -391,6 +398,13 @@ export default function ProductsClient() {
                     <select className="form-select" value={editProduct.category_id || ''} onChange={e => setEditProduct(p => ({ ...p!, category_id: parseInt(e.target.value) }))}>
                       <option value="">None</option>
                       {categories.map(c => <option key={c.category_id} value={c.category_id}>{c.category_name}</option>)}
+                    </select>
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label">Supplier</label>
+                    <select className="form-select" value={(editProduct as any).supplier_id || ''} onChange={e => setEditProduct(p => ({ ...p!, supplier_id: parseInt(e.target.value) } as any))}>
+                      <option value="">None</option>
+                      {suppliers.map(s => <option key={s.supplier_id} value={s.supplier_id}>{s.supplier_name}</option>)}
                     </select>
                   </div>
                   <div className="col-md-4">

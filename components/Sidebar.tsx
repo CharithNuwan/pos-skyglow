@@ -50,6 +50,16 @@ export default function Sidebar({ user }: SidebarProps) {
             <Link href="/label" className={`sidebar-link ${isActive('/label') ? 'active' : ''}`}>
               <i className="bi bi-printer" /> Print Labels
             </Link>
+            <Link href="/stock-adjust" className={`sidebar-link ${isActive('/stock-adjust') ? 'active' : ''}`}>
+              <i className="bi bi-sliders" /> Stock Adjustment
+            </Link>
+            <div className="sidebar-section mt-2">Contacts</div>
+            <Link href="/customers" className={`sidebar-link ${isActive('/customers') ? 'active' : ''}`}>
+              <i className="bi bi-people" /> Customers
+            </Link>
+            <Link href="/suppliers" className={`sidebar-link ${isActive('/suppliers') ? 'active' : ''}`}>
+              <i className="bi bi-truck" /> Suppliers
+            </Link>
           </>
         )}
 

@@ -131,6 +131,43 @@ const migrations = [
   )`,
 
 
+
+  // ─── NEW: Customers ─────────────────────────────────────────────────────
+  `CREATE TABLE IF NOT EXISTS customers (
+    customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    full_name TEXT NOT NULL,
+    phone TEXT UNIQUE,
+    email TEXT,
+    address TEXT,
+    loyalty_points INTEGER DEFAULT 0,
+    total_spent REAL DEFAULT 0,
+    visit_count INTEGER DEFAULT 0,
+    notes TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+
+  // ─── NEW: Suppliers ─────────────────────────────────────────────────────
+  `CREATE TABLE IF NOT EXISTS suppliers (
+    supplier_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    supplier_name TEXT NOT NULL,
+    contact_person TEXT,
+    phone TEXT,
+    email TEXT,
+    address TEXT,
+    notes TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+
+  `ALTER TABLE products ADD COLUMN supplier_id INTEGER REFERENCES suppliers(supplier_id)`,
+  `ALTER TABLE sales ADD COLUMN customer_id INTEGER REFERENCES customers(customer_id)`,
+
+  `CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone)`,
+  `CREATE INDEX IF NOT EXISTS idx_sales_customer ON sales(customer_id)`,
+
   // ─── NEW: Cash Drawer sessions ─────────────────────────────────────────
   `CREATE TABLE IF NOT EXISTS cash_drawer (
     drawer_id INTEGER PRIMARY KEY AUTOINCREMENT,

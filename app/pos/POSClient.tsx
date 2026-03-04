@@ -24,6 +24,9 @@ export default function POSClient() {
   const [catFilter, setCatFilter] = useState('');
   const [discountValue, setDiscountValue] = useState(0);
   const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>('fixed');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerResults, setCustomerResults] = useState<any[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
@@ -88,6 +91,15 @@ export default function POSClient() {
 
   const taxRate = parseFloat(settings.tax_rate || '0') / 100;
   const currencySymbol = settings.currency_symbol || '$';
+  // Customer search
+  const searchCustomer = async (q: string) => {
+    setCustomerSearch(q);
+    if (q.length < 2) { setCustomerResults([]); return; }
+    const res = await fetch(`/api/customers?search=${encodeURIComponent(q)}&page=1`);
+    const data = await res.json();
+    setCustomerResults(data.customers?.slice(0, 5) || []);
+  };
+
   const subtotal = cart.reduce((sum, i) => sum + i.selling_price * i.cartQty, 0);
   const discountAmt = discountType === 'percentage' ? subtotal * (discountValue / 100) : Math.min(discountValue, subtotal);
   const taxableAmount = subtotal - discountAmt;
@@ -119,6 +131,7 @@ export default function POSClient() {
           subtotal, tax_amount: taxAmt, discount_amount: discountAmt,
           discount_type: discountType, discount_value: discountValue,
           total_amount: total, payment_method: paymentMethod,
+          customer_id: selectedCustomer?.customer_id || null,
           cash_received: cashReceived, change_amount: change, notes,
         }),
       });
@@ -138,6 +151,8 @@ export default function POSClient() {
   function clearCart() {
     setCart([]);
     setDiscountValue(0);
+    setSelectedCustomer(null);
+    setCustomerSearch('');
     setCustomerName('');
     setCustomerPhone('');
     setCashReceived(0);
