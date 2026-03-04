@@ -19,6 +19,8 @@ export default function ProductsClient() {
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Partial<Product> | null>(null);
   const [suppliers, setSuppliers] = useState<{supplier_id:number;supplier_name:string}[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState<'success'|'danger'>('success');
@@ -66,6 +68,53 @@ export default function ProductsClient() {
   function showMsg(text: string, type: 'success'|'danger' = 'success') {
     setMsg(text); setMsgType(type);
     setTimeout(() => setMsg(''), 5000);
+  }
+
+  async function uploadImage(productId: number, file: File) {
+    setUploadingImage(true);
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64 = e.target?.result as string;
+      const res = await fetch('/api/products/image', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: productId, image_data: base64 }),
+      });
+      const data = await res.json();
+      if (!data.success) showMsg(data.error || 'Image upload failed', 'danger');
+      else { showMsg('Image uploaded!'); loadProducts(); }
+      setUploadingImage(false);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function removeImage(productId: number) {
+    await fetch('/api/products/image', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ product_id: productId }) });
+    showMsg('Image removed'); loadProducts();
+    if (editProduct) setEditProduct(p => ({ ...p!, image_url: undefined } as any));
+  }
+
+  async function uploadImage(file: File, productId: number) {
+    setUploadingImage(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target?.result as string;
+        // Resize to max 400px before storing
+        const img = new Image();
+        img.onload = async () => {
+          const canvas = document.createElement('canvas');
+          const max = 400;
+          const ratio = Math.min(max/img.width, max/img.height, 1);
+          canvas.width = img.width * ratio; canvas.height = img.height * ratio;
+          canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.7);
+          await fetch('/api/products/image', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({product_id: productId, image_base64: compressed}) });
+          setUploadingImage(false); loadProducts();
+        };
+        img.src = base64;
+      };
+      reader.readAsDataURL(file);
+    } catch { setUploadingImage(false); }
   }
 
   async function saveProduct() {
@@ -300,7 +349,15 @@ export default function ProductsClient() {
                   <tr><td colSpan={8} className="text-center py-4 text-muted">No products found</td></tr>
                 ) : products.map(p => (
                   <tr key={p.product_id}>
-                    <td className="fw-500">{p.product_name}</td>
+                    <td className="fw-500">
+                      <div className="d-flex align-items-center gap-2">
+                        {(p as any).image_url
+                          ? <img src={(p as any).image_url} alt="" style={{width:32,height:32,objectFit:'cover',borderRadius:4,flexShrink:0}}/>
+                          : <div style={{width:32,height:32,background:'#f0f0f0',borderRadius:4,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.6rem',color:'#aaa'}}>IMG</div>
+                        }
+                        {p.product_name}
+                      </div>
+                    </td>
                     <td className="text-muted small">{p.barcode || '-'}</td>
                     <td>{p.category_name || '-'}</td>
                     <td>${Number(p.cost_price).toFixed(2)}</td>
@@ -445,8 +502,59 @@ export default function ProductsClient() {
                     </select>
                   </div>
                   <div className="col-12">
+                    <label className="form-label">Product Image <span className="text-muted small">(optional, shown on POS grid)</span></label>
+                    <div className="d-flex gap-3 align-items-start">
+                      {(editProduct as any).image_url ? (
+                        <div className="position-relative">
+                          <img src={(editProduct as any).image_url} alt="product" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #dee2e6' }} />
+                          <button type="button" className="btn btn-danger btn-sm position-absolute top-0 end-0" style={{ padding: '1px 5px', fontSize: '0.7rem' }}
+                            onClick={() => editProduct.product_id && removeImage(editProduct.product_id)}>✕</button>
+                        </div>
+                      ) : (
+                        <div style={{ width: 80, height: 80, border: '2px dashed #dee2e6', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontSize: '0.75rem', textAlign: 'center' }}>
+                          No image
+                        </div>
+                      )}
+                      <div>
+                        {editProduct.product_id ? (
+                          <>
+                            <label className={`btn btn-outline-secondary btn-sm ${uploadingImage ? 'disabled' : ''}`}>
+                              {uploadingImage ? <><span className="spinner-border spinner-border-sm me-1"/>Uploading...</> : <><i className="bi bi-image me-1"/>Upload Image</>}
+                              <input type="file" className="d-none" accept="image/*"
+                                onChange={e => { const f = e.target.files?.[0]; if (f && editProduct.product_id) uploadImage(editProduct.product_id, f); }} />
+                            </label>
+                            <div className="form-text">Max ~500KB · JPG, PNG, WebP</div>
+                          </>
+                        ) : (
+                          <div className="text-muted small">Save product first, then add image</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-12">
                     <label className="form-label">Description</label>
                     <textarea className="form-control" rows={2} value={(editProduct as any).description || ''} onChange={e => setEditProduct(p => ({ ...p!, description: e.target.value } as any))} />
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label">Product Image <span className="text-muted small">(optional)</span></label>
+                    <div className="d-flex align-items-center gap-3">
+                      {(editProduct as any).image_url && (
+                        <img src={(editProduct as any).image_url} style={{width:80,height:80,objectFit:'cover',borderRadius:8,border:'1px solid #dee2e6'}} alt=""/>
+                      )}
+                      <div>
+                        <label className={`btn btn-outline-secondary btn-sm ${uploadingImage?'disabled':''}`}>
+                          {uploadingImage ? <><span className="spinner-border spinner-border-sm me-1"/>Uploading...</> : <><i className="bi bi-image me-1"/>{(editProduct as any).image_url ? 'Change Image' : 'Upload Image'}</>}
+                          <input type="file" className="d-none" accept="image/*" disabled={!editProduct.product_id || uploadingImage}
+                            onChange={e => { const f = e.target.files?.[0]; if (f && editProduct.product_id) uploadImage(f, editProduct.product_id); }}/>
+                        </label>
+                        {!editProduct.product_id && <div className="form-text text-warning">Save product first, then upload image</div>}
+                        {(editProduct as any).image_url && (
+                          <button className="btn btn-outline-danger btn-sm ms-2" onClick={async()=>{ await fetch('/api/products/image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product_id:editProduct.product_id,image_base64:null})}); setEditProduct(p=>({...p!,image_url:null} as any)); loadProducts(); }}>
+                            <i className="bi bi-trash me-1"/>Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

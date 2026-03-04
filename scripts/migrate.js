@@ -168,6 +168,33 @@ const migrations = [
   `CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone)`,
   `CREATE INDEX IF NOT EXISTS idx_sales_customer ON sales(customer_id)`,
 
+
+  // ─── NEW: Shifts ────────────────────────────────────────────────────────
+  `CREATE TABLE IF NOT EXISTS shifts (
+    shift_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    opening_cash REAL DEFAULT 0,
+    closing_cash REAL,
+    expected_cash REAL,
+    cash_difference REAL,
+    total_sales_count INTEGER DEFAULT 0,
+    total_sales_amount REAL DEFAULT 0,
+    notes TEXT,
+    status TEXT DEFAULT 'open',
+    started_at TEXT DEFAULT (datetime('now')),
+    ended_at TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_shifts_user ON shifts(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_shifts_status ON shifts(status)`,
+  `ALTER TABLE sales ADD COLUMN shift_id INTEGER REFERENCES shifts(shift_id)`,
+  `ALTER TABLE products ADD COLUMN image_url TEXT`,
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES ('barcode_sound', '1', 'Play beep on barcode scan')`,
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES ('whatsapp_enabled', '0', 'Enable WhatsApp receipt sharing')`,
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES ('whatsapp_number', '', 'Shop WhatsApp number with country code e.g. 94771234567')`,
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES ('email_receipt_enabled', '0', 'Enable email receipt sharing')`,
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES ('show_product_images', '1', 'Show product images on POS grid')`,
+
   // ─── NEW: Cash Drawer sessions ─────────────────────────────────────────
   `CREATE TABLE IF NOT EXISTS cash_drawer (
     drawer_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -234,6 +261,43 @@ const migrations = [
     ('receipt_width', '80', 'Thermal printer receipt width in mm')`,
   `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES
     ('receipt_font_size', '13', 'Receipt base font size in pixels')`,
+
+
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES
+    ('barcode_sound', '1', 'Play beep sound when barcode is scanned')`,
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES
+    ('whatsapp_number', '', 'Shop WhatsApp number for sending receipts (with country code, e.g. 94771234567)')`,
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES
+    ('shop_email', '', 'Shop email address for sending receipts')`,
+  `ALTER TABLE products ADD COLUMN image_url TEXT`,
+
+
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES
+    ('barcode_sound', '1', 'Play beep sound when barcode is scanned')`,
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES
+    ('whatsapp_number', '', 'WhatsApp number for receipts (with country code e.g. 94771234567)')`,
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES
+    ('receipt_email', '', 'Shop email shown on receipts')`,
+
+  `CREATE TABLE IF NOT EXISTS shifts (
+    shift_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    opening_cash REAL DEFAULT 0,
+    closing_cash REAL,
+    expected_cash REAL,
+    cash_difference REAL,
+    total_sales INTEGER DEFAULT 0,
+    total_revenue REAL DEFAULT 0,
+    notes TEXT,
+    status TEXT DEFAULT 'open',
+    started_at TEXT DEFAULT (datetime('now')),
+    ended_at TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+  )`,
+  `ALTER TABLE products ADD COLUMN image_url TEXT`,
+  `ALTER TABLE sales ADD COLUMN shift_id INTEGER REFERENCES shifts(shift_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_shifts_user ON shifts(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_shifts_status ON shifts(status)`,
 
   // Admin user (password: password123) - bcrypt hash
   `INSERT OR IGNORE INTO users (username, email, password_hash, full_name, phone, role, is_active) VALUES

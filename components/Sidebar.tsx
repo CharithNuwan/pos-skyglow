@@ -37,6 +37,12 @@ export default function Sidebar({ user }: SidebarProps) {
         <Link href="/drawer" className={`sidebar-link ${isActive('/drawer') ? 'active' : ''}`}>
           <i className="bi bi-cash-stack" /> Cash Drawer
         </Link>
+        <Link href="/shifts" className={`sidebar-link ${isActive('/shifts') ? 'active' : ''}`}>
+          <i className="bi bi-person-badge" /> Shifts & Reports
+        </Link>
+        <Link href="/shifts" className={`sidebar-link ${isActive('/shifts') ? 'active' : ''}`}>
+          <i className="bi bi-clock" /> My Shift
+        </Link>
 
         {isManager && (
           <>
@@ -71,6 +77,9 @@ export default function Sidebar({ user }: SidebarProps) {
             </Link>
             <Link href="/reports" className={`sidebar-link ${isActive('/reports') ? 'active' : ''}`}>
               <i className="bi bi-bar-chart" /> Reports
+            </Link>
+            <Link href="/reports/cashier" className={`sidebar-link ${isActive('/reports/cashier') ? 'active' : ''}`}>
+              <i className="bi bi-people" /> Cashier Report
             </Link>
             <Link href="/expenses" className={`sidebar-link ${isActive('/expenses') ? 'active' : ''}`}>
               <i className="bi bi-receipt-cutoff" /> Expenses

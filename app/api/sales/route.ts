@@ -49,10 +49,10 @@ export async function POST(req: NextRequest) {
 
     // Insert sale
     statements.push({
-      sql: `INSERT INTO sales (invoice_number, user_id, customer_id, customer_name, customer_phone, subtotal, tax_amount, discount_amount, discount_type, discount_value, total_amount, payment_method, payment_status, cash_received, change_amount, notes, sale_date, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, datetime('now'), datetime('now'), datetime('now'))`,
+      sql: `INSERT INTO sales (invoice_number, user_id, customer_id, shift_id, customer_name, customer_phone, subtotal, tax_amount, discount_amount, discount_type, discount_value, total_amount, payment_method, payment_status, cash_received, change_amount, notes, sale_date, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, datetime('now'), datetime('now'), datetime('now'))`,
       args: [
-        invoiceNumber, session.user_id, data.customer_id || null,
+        invoiceNumber, session.user_id, data.customer_id || null, data.shift_id || null,
         data.customer_name || null, data.customer_phone || null,
         data.subtotal, data.tax_amount, data.discount_amount,
         data.discount_type || null, data.discount_value || 0, data.total_amount,

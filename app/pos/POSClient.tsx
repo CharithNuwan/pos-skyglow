@@ -24,6 +24,8 @@ export default function POSClient() {
   const [catFilter, setCatFilter] = useState('');
   const [discountValue, setDiscountValue] = useState(0);
   const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>('fixed');
+  const [barcodeSound, setBarcodeSound] = useState(true);
+  const [currentShiftId, setCurrentShiftId] = useState<number|null>(null);
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerResults, setCustomerResults] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
@@ -35,6 +37,7 @@ export default function POSClient() {
   const [processing, setProcessing] = useState(false);
   const [lastSale, setLastSale] = useState<{ invoice_number: string; sale_id: number } | null>(null);
   const [settings, setSettings] = useState<Record<string, string>>({});
+  const [barcodeSound, setBarcodeSound] = useState(true);
   const [barcodeInput, setBarcodeInput] = useState('');
   const barcodeRef = useRef<HTMLInputElement>(null);
 
@@ -54,6 +57,7 @@ export default function POSClient() {
     setProducts(prodData.products || []);
     setCategories(catData.categories || []);
     setSettings(settingsData || {});
+    setBarcodeSound(settingsData?.barcode_sound !== '0');
   }
 
   const filtered = products.filter(p => {
@@ -85,7 +89,30 @@ export default function POSClient() {
   function processBarcode() {
     if (!barcodeInput) return;
     const product = products.find(p => p.barcode === barcodeInput);
-    if (product) addToCart(product);
+    if (product) {
+      addToCart(product);
+      // Beep on successful scan
+      if (barcodeSound) {
+        try {
+          const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const o = ctx.createOscillator(); const g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.type = 'sine'; o.frequency.value = 1800; g.gain.value = 0.2;
+          o.start(); o.stop(ctx.currentTime + 0.07);
+        } catch {}
+      }
+    } else {
+      // Error beep - different tone for not found
+      if (barcodeSound) {
+        try {
+          const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const o = ctx.createOscillator(); const g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.type = 'square'; o.frequency.value = 400; g.gain.value = 0.15;
+          o.start(); o.stop(ctx.currentTime + 0.15);
+        } catch {}
+      }
+    }
     setBarcodeInput('');
   }
 
@@ -99,6 +126,20 @@ export default function POSClient() {
     const data = await res.json();
     setCustomerResults(data.customers?.slice(0, 5) || []);
   };
+
+  // Barcode beep
+  function playBeep() {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 1200; osc.type = 'square';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1);
+    } catch {}
+  }
 
   const subtotal = cart.reduce((sum, i) => sum + i.selling_price * i.cartQty, 0);
   const discountAmt = discountType === 'percentage' ? subtotal * (discountValue / 100) : Math.min(discountValue, subtotal);
@@ -132,6 +173,7 @@ export default function POSClient() {
           discount_type: discountType, discount_value: discountValue,
           total_amount: total, payment_method: paymentMethod,
           customer_id: selectedCustomer?.customer_id || null,
+          shift_id: currentShiftId || null,
           cash_received: cashReceived, change_amount: change, notes,
         }),
       });
@@ -223,7 +265,10 @@ export default function POSClient() {
                   className={`product-card ${p.quantity === 0 ? 'out-of-stock' : ''}`}
                   onClick={() => addToCart(p)}
                 >
-                  <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>📦</div>
+                  {(p as any).image_url && settings.show_product_images !== '0'
+                    ? <img src={(p as any).image_url} alt={p.product_name} style={{ width: '100%', height: '4.5rem', objectFit: 'cover', borderRadius: 6, marginBottom: '0.4rem' }} />
+                    : <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>📦</div>
+                  }
                   <div style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.product_name}>
                     {p.product_name}
                   </div>

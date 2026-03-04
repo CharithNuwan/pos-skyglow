@@ -204,6 +204,92 @@ export default function SettingsClient() {
         </div>
       </div>
 
+      {/* ─── POS Behaviour ─── */}
+      <div className="card mb-3">
+        <div className="card-header fw-bold"><i className="bi bi-toggles me-2"/>POS Behaviour</div>
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-md-6">
+              <div className="d-flex justify-content-between align-items-center p-3 rounded border">
+                <div>
+                  <div className="fw-600">🔊 Barcode Scanner Sound</div>
+                  <div className="text-muted small">Beep when a product is scanned successfully</div>
+                </div>
+                <div className="form-check form-switch mb-0">
+                  <input className="form-check-input" type="checkbox" role="switch"
+                    checked={settings.barcode_sound !== '0'}
+                    onChange={e => update('barcode_sound', e.target.checked ? '1' : '0')}
+                    style={{ width: 44, height: 24 }} />
+                </div>
+              </div>
+            </div>
+            <div className="col-md-6">
+              <div className="d-flex justify-content-between align-items-center p-3 rounded border">
+                <div>
+                  <div className="fw-600">🖼️ Show Product Images on POS</div>
+                  <div className="text-muted small">Display product images in POS grid</div>
+                </div>
+                <div className="form-check form-switch mb-0">
+                  <input className="form-check-input" type="checkbox" role="switch"
+                    checked={settings.show_product_images !== '0'}
+                    onChange={e => update('show_product_images', e.target.checked ? '1' : '0')}
+                    style={{ width: 44, height: 24 }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Receipt Sharing ─── */}
+      <div className="card mb-3">
+        <div className="card-header fw-bold"><i className="bi bi-share me-2"/>Receipt Sharing</div>
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-md-6">
+              <div className="d-flex justify-content-between align-items-center p-3 rounded border mb-3">
+                <div>
+                  <div className="fw-600" style={{color:'#25D366'}}><i className="bi bi-whatsapp me-1"/>WhatsApp Receipt</div>
+                  <div className="text-muted small">Show WhatsApp button on receipt page</div>
+                </div>
+                <div className="form-check form-switch mb-0">
+                  <input className="form-check-input" type="checkbox" role="switch"
+                    checked={settings.whatsapp_enabled === '1'}
+                    onChange={e => update('whatsapp_enabled', e.target.checked ? '1' : '0')}
+                    style={{ width: 44, height: 24 }} />
+                </div>
+              </div>
+              {settings.whatsapp_enabled === '1' && (
+                <div>
+                  <label className="form-label small fw-600">Default WhatsApp Number <span className="text-muted">(with country code, no +)</span></label>
+                  <div className="input-group">
+                    <span className="input-group-text" style={{color:'#25D366'}}><i className="bi bi-whatsapp"/></span>
+                    <input className="form-control" placeholder="e.g. 94771234567" value={settings.whatsapp_number || ''}
+                      onChange={e => update('whatsapp_number', e.target.value)} />
+                  </div>
+                  <div className="form-text">Used when customer has no phone on file</div>
+                </div>
+              )}
+            </div>
+            <div className="col-md-6">
+              <div className="d-flex justify-content-between align-items-center p-3 rounded border">
+                <div>
+                  <div className="fw-600 text-primary"><i className="bi bi-envelope me-1"/>Email Receipt</div>
+                  <div className="text-muted small">Show Email button on receipt (opens mail app)</div>
+                </div>
+                <div className="form-check form-switch mb-0">
+                  <input className="form-check-input" type="checkbox" role="switch"
+                    checked={settings.email_receipt_enabled === '1'}
+                    onChange={e => update('email_receipt_enabled', e.target.checked ? '1' : '0')}
+                    style={{ width: 44, height: 24 }} />
+                </div>
+              </div>
+              <div className="form-text mt-2">Email button appears only when the customer has an email address saved in their profile.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <button className="btn btn-primary px-4" onClick={save} disabled={saving}>
         {saving
           ? <><span className="spinner-border spinner-border-sm me-2" />Saving...</>

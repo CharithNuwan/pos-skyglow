@@ -52,10 +52,45 @@ export default function ReceiptPage() {
           }}
         >
           {/* Action buttons - hidden on print */}
-          <div className="no-print mb-3 d-flex gap-2">
+          <div className="no-print mb-3 d-flex gap-2 flex-wrap">
             <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
               <i className="bi bi-printer me-1" />Print Receipt
             </button>
+            {settings?.whatsapp_enabled === '1' && (
+              <button className="btn btn-success btn-sm" onClick={() => {
+                const phone = sale.customer_phone || '';
+                const text = encodeURIComponent(
+                  `*Receipt - ${sale.invoice_number}*\n` +
+                  `Shop: ${settings?.shop_name || ''}\n` +
+                  `Date: ${new Date(sale.sale_date).toLocaleString()}\n` +
+                  `─────────────────\n` +
+                  items.map((i: any) => `${i.short_name||i.product_name} x${i.quantity}  ${settings?.currency_symbol||'Rs'} ${Number(i.total_price).toFixed(2)}`).join('\n') +
+                  `\n─────────────────\n` +
+                  `*Total: ${settings?.currency_symbol||'Rs'} ${Number(sale.total_amount).toFixed(2)}*\n` +
+                  `Payment: ${sale.payment_method}\n` +
+                  `Thank you! 🙏`
+                );
+                const waNum = phone.replace(/\D/g,'') || settings?.whatsapp_number || '';
+                window.open(`https://wa.me/${waNum}?text=${text}`, '_blank');
+              }}>
+                <i className="bi bi-whatsapp me-1" />WhatsApp
+              </button>
+            )}
+            {settings?.email_receipt_enabled === '1' && sale.customer_email && (
+              <button className="btn btn-outline-primary btn-sm" onClick={() => {
+                const subject = encodeURIComponent(`Receipt ${sale.invoice_number} - ${settings?.shop_name||''}`);
+                const body = encodeURIComponent(
+                  `Dear Customer,\n\nThank you for your purchase!\n\n` +
+                  `Invoice: ${sale.invoice_number}\nDate: ${new Date(sale.sale_date).toLocaleString()}\n\n` +
+                  items.map((i: any) => `${i.short_name||i.product_name} x${i.quantity} - ${settings?.currency_symbol||'Rs'} ${Number(i.total_price).toFixed(2)}`).join('\n') +
+                  `\n\nTotal: ${settings?.currency_symbol||'Rs'} ${Number(sale.total_amount).toFixed(2)}\nPayment: ${sale.payment_method}\n\n` +
+                  `${settings?.receipt_footer||'Thank you for shopping with us!'}\n\n${settings?.shop_name||''}`
+                );
+                window.open(`mailto:${sale.customer_email}?subject=${subject}&body=${body}`);
+              }}>
+                <i className="bi bi-envelope me-1" />Email
+              </button>
+            )}
             <button className="btn btn-outline-secondary btn-sm" onClick={() => window.close()}>
               Close
             </button>
