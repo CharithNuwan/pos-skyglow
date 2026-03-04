@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     await execute(
       `INSERT INTO stock_logs (product_id, user_id, movement_type, quantity_before, quantity_change, quantity_after, notes, created_at)
        VALUES (?, ?, 'restock', ?, ?, ?, ?, datetime('now'))`,
-      [product_id, session.userId, product.quantity, quantity, newQuantity, note || 'Manual restock']
+      [product_id, session.user_id, product.quantity, quantity, newQuantity, note || 'Manual restock']
     );
 
     return NextResponse.json({
