@@ -284,13 +284,50 @@ export default function POSClient() {
 
           <div className="cart-footer">
             {/* Customer */}
-            <div className="row g-1 mb-2">
-              <div className="col-6">
-                <input className="form-control form-control-sm" placeholder="Customer name" value={customerName} onChange={e => setCustomerName(e.target.value)} />
-              </div>
-              <div className="col-6">
-                <input className="form-control form-control-sm" placeholder="Phone" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
-              </div>
+            <div className="mb-2 position-relative">
+              {selectedCustomer ? (
+                <div className="d-flex align-items-center gap-2 px-2 py-1 rounded" style={{ background: '#e8f5e9', border: '1px solid #a5d6a7' }}>
+                  <i className="bi bi-person-check text-success" />
+                  <div className="flex-fill" style={{ minWidth: 0 }}>
+                    <div className="fw-600 small text-truncate">{selectedCustomer.full_name}</div>
+                    <div className="text-muted" style={{ fontSize: '0.7rem' }}>
+                      {selectedCustomer.phone && <span className="me-2">{selectedCustomer.phone}</span>}
+                      <span>⭐ {selectedCustomer.loyalty_points} pts</span>
+                    </div>
+                  </div>
+                  <button className="btn btn-sm btn-link text-danger p-0" title="Remove customer" onClick={() => { setSelectedCustomer(null); setCustomerSearch(''); setCustomerResults([]); }}>
+                    <i className="bi bi-x-lg" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text"><i className="bi bi-person" /></span>
+                    <input
+                      className="form-control"
+                      placeholder="Search customer by name or phone..."
+                      value={customerSearch}
+                      onChange={e => searchCustomer(e.target.value)}
+                    />
+                    {customerSearch && <button className="btn btn-outline-secondary" onClick={() => { setCustomerSearch(''); setCustomerResults([]); }}><i className="bi bi-x" /></button>}
+                  </div>
+                  {customerResults.length > 0 && (
+                    <div className="position-absolute w-100 bg-white border rounded shadow" style={{ zIndex: 200, top: '100%', left: 0 }}>
+                      {customerResults.map((c: any) => (
+                        <div key={c.customer_id} className="px-3 py-2 border-bottom d-flex justify-content-between align-items-center"
+                          style={{ cursor: 'pointer' }}
+                          onMouseDown={() => { setSelectedCustomer(c); setCustomerSearch(''); setCustomerResults([]); }}>
+                          <div>
+                            <div className="fw-500 small">{c.full_name}</div>
+                            <div className="text-muted" style={{ fontSize: '0.7rem' }}>{c.phone}</div>
+                          </div>
+                          <span className="badge bg-warning text-dark">⭐ {c.loyalty_points}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Discount */}
