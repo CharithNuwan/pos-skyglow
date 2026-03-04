@@ -20,7 +20,6 @@ export default function ProductsClient() {
   const [editProduct, setEditProduct] = useState<Partial<Product> | null>(null);
   const [suppliers, setSuppliers] = useState<{supplier_id:number;supplier_name:string}[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState<'success'|'danger'>('success');
