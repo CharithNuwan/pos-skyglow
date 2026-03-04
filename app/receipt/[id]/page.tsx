@@ -106,7 +106,7 @@ export default function ReceiptPage() {
             <tbody>
               {items.map((item: any) => (
                 <tr key={item.sale_item_id}>
-                  <td style={{ paddingTop: 3, paddingBottom: 3, wordBreak: 'break-word' }}>{item.product_name}</td>
+                  <td style={{ paddingTop: 3, paddingBottom: 3, wordBreak: 'break-word' }}>{item.short_name || item.product_name}</td>
                   <td style={{ textAlign: 'center' }}>{item.quantity}</td>
                   <td style={{ textAlign: 'right' }}>{curr}{Number(item.unit_price).toFixed(2)}</td>
                   <td style={{ textAlign: 'right', fontWeight: 600 }}>{curr}{Number(item.total_price).toFixed(2)}</td>

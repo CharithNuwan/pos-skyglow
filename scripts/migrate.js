@@ -37,7 +37,8 @@ const migrations = [
   `CREATE TABLE IF NOT EXISTS categories (
     category_id INTEGER PRIMARY KEY AUTOINCREMENT,
     category_name TEXT NOT NULL,
-    description TEXT,
+    short_name TEXT,
+  description TEXT,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
@@ -171,6 +172,9 @@ const migrations = [
   `INSERT OR IGNORE INTO categories (category_name, description) VALUES ('Food & Beverages', 'Edible items and drinks')`,
   `INSERT OR IGNORE INTO categories (category_name, description) VALUES ('Home & Garden', 'Home improvement and garden supplies')`,
 
+  // Add short_name column if not exists (safe to run multiple times via try/catch in migrate fn)
+  `ALTER TABLE products ADD COLUMN short_name TEXT`,
+
   // Sample products
   `INSERT OR IGNORE INTO products (barcode, product_name, category_id, cost_price, selling_price, quantity, minimum_stock, description) VALUES
     ('1234567890123', 'Wireless Mouse', 1, 15.00, 29.99, 50, 10, 'Ergonomic wireless mouse with USB receiver')`,
@@ -191,8 +195,13 @@ async function migrate() {
       await client.execute(migrations[i]);
       process.stdout.write('.');
     } catch (err) {
-      console.error(`\n❌ Migration ${i + 1} failed:`, err.message);
-      console.error('SQL:', migrations[i].slice(0, 100));
+      // Ignore "duplicate column" errors from ALTER TABLE (already applied)
+      if (err.message && (err.message.includes('duplicate column') || err.message.includes('already exists'))) {
+        process.stdout.write('s'); // s = skipped
+      } else {
+        console.error(`\n❌ Migration ${i + 1} failed:`, err.message);
+        console.error('SQL:', migrations[i].slice(0, 100));
+      }
     }
   }
   console.log('\n✅ Migration complete!');
