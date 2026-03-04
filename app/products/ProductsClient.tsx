@@ -22,6 +22,13 @@ export default function ProductsClient() {
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState<'success'|'danger'>('success');
 
+  // Restock state
+  const [showRestock, setShowRestock] = useState(false);
+  const [restockProduct, setRestockProduct] = useState<Product | null>(null);
+  const [restockQty, setRestockQty] = useState(1);
+  const [restockNote, setRestockNote] = useState('');
+  const [restocking, setRestocking] = useState(false);
+
   // Import state
   const [showImport, setShowImport] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -72,6 +79,31 @@ export default function ProductsClient() {
     if (!confirm('Are you sure?')) return;
     await fetch(`/api/products/${id}`, { method: 'DELETE' });
     loadProducts();
+  }
+
+  // Restock product
+  async function doRestock() {
+    if (!restockProduct || restockQty <= 0) return;
+    setRestocking(true);
+    try {
+      const res = await fetch('/api/products/restock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: restockProduct.product_id, quantity: restockQty, note: restockNote }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showMsg(`✓ Restocked "${data.product_name}" — ${data.quantity_before} → ${data.quantity_after} units`);
+        setShowRestock(false);
+        setRestockQty(1);
+        setRestockNote('');
+        loadProducts();
+      } else {
+        showMsg(data.error || 'Restock failed', 'danger');
+      }
+    } finally {
+      setRestocking(false);
+    }
   }
 
   // Export CSV
@@ -274,6 +306,9 @@ export default function ProductsClient() {
                     </td>
                     <td><span className={`badge ${p.is_active ? 'bg-success' : 'bg-secondary'}`}>{p.is_active ? 'Active' : 'Inactive'}</span></td>
                     <td>
+                      <button className="btn btn-sm btn-outline-success me-1" title="Restock" onClick={() => { setRestockProduct(p); setRestockQty(1); setRestockNote(''); setShowRestock(true); }}>
+                        <i className="bi bi-plus-square" />
+                      </button>
                       <button className="btn btn-sm btn-outline-primary me-1" onClick={() => { setEditProduct({...p}); setShowModal(true); }}>
                         <i className="bi bi-pencil" />
                       </button>
@@ -375,6 +410,21 @@ export default function ProductsClient() {
                     <input type="number" className="form-control" min="0" value={editProduct.minimum_stock || 5} onChange={e => setEditProduct(p => ({ ...p!, minimum_stock: parseInt(e.target.value) }))} />
                   </div>
                   <div className="col-md-4">
+                    <label className="form-label">
+                      Pack Size
+                      <span className="ms-1 text-muted small">(items per pack)</span>
+                    </label>
+                    <div className="d-flex gap-1">
+                      {[1,6,12,24].map(n => (
+                        <button key={n} type="button"
+                          className={`btn btn-sm flex-fill ${((editProduct as any).pack_size||1)===n?'btn-primary':'btn-outline-secondary'}`}
+                          onClick={() => setEditProduct(p => ({...p!, pack_size: n} as any))}>
+                          {n===1?'Single':`×${n}`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="col-md-4">
                     <label className="form-label">Status</label>
                     <select className="form-select" value={editProduct.is_active ?? 1} onChange={e => setEditProduct(p => ({ ...p!, is_active: parseInt(e.target.value) }))}>
                       <option value={1}>Active</option><option value={0}>Inactive</option>
@@ -390,6 +440,74 @@ export default function ProductsClient() {
                 <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                 <button className="btn btn-primary" onClick={saveProduct} disabled={saving}>
                   {saving ? <><span className="spinner-border spinner-border-sm me-1" />Saving...</> : 'Save Product'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restock Modal */}
+      {showRestock && restockProduct && (
+        <div className="modal show d-block" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title"><i className="bi bi-plus-square me-2 text-success" />Restock Product</h5>
+                <button className="btn-close" onClick={() => setShowRestock(false)} />
+              </div>
+              <div className="modal-body">
+                {/* Product info */}
+                <div className="alert alert-light border mb-3 py-2">
+                  <div className="fw-bold">{restockProduct.product_name}</div>
+                  <div className="text-muted small">
+                    {restockProduct.barcode && <span className="me-3"><i className="bi bi-upc me-1" />{restockProduct.barcode}</span>}
+                    Current stock: <span className={restockProduct.quantity <= restockProduct.minimum_stock ? 'text-danger fw-bold' : 'fw-bold'}>{restockProduct.quantity} units</span>
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-600">Quantity to Add *</label>
+                  <div className="d-flex align-items-center gap-2">
+                    <button className="btn btn-outline-secondary" onClick={() => setRestockQty(q => Math.max(1, q - 1))}>−</button>
+                    <input
+                      type="number"
+                      className="form-control text-center fw-bold fs-5"
+                      style={{ width: 100 }}
+                      min={1}
+                      value={restockQty}
+                      onChange={e => setRestockQty(Math.max(1, parseInt(e.target.value) || 1))}
+                    />
+                    <button className="btn btn-outline-secondary" onClick={() => setRestockQty(q => q + 1)}>+</button>
+                    <div className="ms-2 text-muted">
+                      → New stock: <span className="fw-bold text-success">{restockProduct.quantity + restockQty}</span>
+                    </div>
+                  </div>
+                  {/* Quick amount buttons */}
+                  <div className="d-flex gap-2 mt-2">
+                    {[5, 10, 20, 50, 100].map(n => (
+                      <button key={n} type="button" className={`btn btn-sm ${restockQty === n ? 'btn-success' : 'btn-outline-secondary'}`} onClick={() => setRestockQty(n)}>+{n}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label">Note <span className="text-muted small">(optional)</span></label>
+                  <input
+                    className="form-control"
+                    placeholder="e.g. Supplier delivery, Purchase order #123"
+                    value={restockNote}
+                    onChange={e => setRestockNote(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setShowRestock(false)}>Cancel</button>
+                <button className="btn btn-success px-4" onClick={doRestock} disabled={restocking || restockQty <= 0}>
+                  {restocking
+                    ? <><span className="spinner-border spinner-border-sm me-2" />Restocking...</>
+                    : <><i className="bi bi-plus-square me-2" />Add {restockQty} Units</>
+                  }
                 </button>
               </div>
             </div>

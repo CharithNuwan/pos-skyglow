@@ -174,6 +174,7 @@ const migrations = [
 
   // Add short_name column if not exists (safe to run multiple times via try/catch in migrate fn)
   `ALTER TABLE products ADD COLUMN short_name TEXT`,
+  `ALTER TABLE products ADD COLUMN pack_size INTEGER DEFAULT 1`,
 
   // Sample products
   `INSERT OR IGNORE INTO products (barcode, product_name, category_id, cost_price, selling_price, quantity, minimum_stock, description) VALUES

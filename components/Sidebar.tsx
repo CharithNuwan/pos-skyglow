@@ -44,6 +44,9 @@ export default function Sidebar({ user }: SidebarProps) {
             <Link href="/categories" className={`sidebar-link ${isActive('/categories') ? 'active' : ''}`}>
               <i className="bi bi-tags" /> Categories
             </Link>
+            <Link href="/label" className={`sidebar-link ${isActive('/label') ? 'active' : ''}`}>
+              <i className="bi bi-printer" /> Print Labels
+            </Link>
           </>
         )}
 

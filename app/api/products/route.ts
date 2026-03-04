@@ -40,12 +40,12 @@ export async function POST(req: NextRequest) {
     if (!hasRole(session.role, 'manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const data = await req.json();
-    const { barcode, product_name, short_name, category_id, cost_price, selling_price, quantity, minimum_stock, description } = data;
+    const { barcode, product_name, short_name, pack_size, category_id, cost_price, selling_price, quantity, minimum_stock, description } = data;
 
     const result = await execute(
-      `INSERT INTO products (barcode, product_name, short_name, category_id, cost_price, selling_price, quantity, minimum_stock, description, is_active, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
-      [barcode || null, product_name, short_name || null, category_id || null, cost_price, selling_price, quantity, minimum_stock || 5, description || null]
+      `INSERT INTO products (barcode, product_name, short_name, pack_size, category_id, cost_price, selling_price, quantity, minimum_stock, description, is_active, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
+      [barcode || null, product_name, short_name || null, pack_size || 1, category_id || null, cost_price, selling_price, quantity, minimum_stock || 5, description || null]
     );
     return NextResponse.json({ success: true, product_id: result.lastInsertRowid });
   } catch (e: unknown) {
