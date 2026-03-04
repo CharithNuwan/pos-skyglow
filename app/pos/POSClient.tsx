@@ -24,7 +24,6 @@ export default function POSClient() {
   const [catFilter, setCatFilter] = useState('');
   const [discountValue, setDiscountValue] = useState(0);
   const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>('fixed');
-  const [barcodeSound, setBarcodeSound] = useState(true);
   const [currentShiftId, setCurrentShiftId] = useState<number|null>(null);
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerResults, setCustomerResults] = useState<any[]>([]);
