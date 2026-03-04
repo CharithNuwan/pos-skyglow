@@ -310,13 +310,46 @@ export default function ProductsClient() {
               </div>
               <div className="modal-body">
                 <div className="row g-3">
-                  <div className="col-md-8">
+                  <div className="col-md-6">
                     <label className="form-label">Product Name *</label>
-                    <input className="form-control" value={editProduct.product_name || ''} onChange={e => setEditProduct(p => ({ ...p!, product_name: e.target.value }))} />
+                    <input className="form-control" value={editProduct.product_name || ''} onChange={e => setEditProduct(p => ({ ...p!, product_name: e.target.value }))} placeholder="Full product name" />
                   </div>
-                  <div className="col-md-4">
+                  <div className="col-md-6">
+                    <label className="form-label">
+                      Short Name
+                      <span className="ms-1 text-muted small">(shown on receipt)</span>
+                    </label>
+                    <input
+                      className="form-control"
+                      value={(editProduct as any).short_name || ''}
+                      onChange={e => setEditProduct(p => ({ ...p!, short_name: e.target.value } as any))}
+                      placeholder="e.g. Wireless Mouse"
+                      maxLength={30}
+                    />
+                    <div className="form-text">Max 30 chars. Leave blank to use full name.</div>
+                  </div>
+                  <div className="col-md-8">
                     <label className="form-label">Barcode / SKU</label>
-                    <input className="form-control" value={editProduct.barcode || ''} onChange={e => setEditProduct(p => ({ ...p!, barcode: e.target.value }))} />
+                    <div className="input-group">
+                      <input
+                        className="form-control"
+                        value={editProduct.barcode || ''}
+                        onChange={e => setEditProduct(p => ({ ...p!, barcode: e.target.value }))}
+                        placeholder="Scan or type barcode"
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary"
+                        title="Generate random barcode"
+                        onClick={() => {
+                          const ts = Date.now().toString().slice(-8);
+                          const rand = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+                          setEditProduct(p => ({ ...p!, barcode: ts + rand }));
+                        }}
+                      >
+                        <i className="bi bi-upc-scan me-1" />Generate
+                      </button>
+                    </div>
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Category</label>
