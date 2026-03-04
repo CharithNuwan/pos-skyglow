@@ -1,0 +1,334 @@
+'use client';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
+
+interface Product {
+  product_id: number;
+  product_name: string;
+  barcode: string;
+  selling_price: number;
+  cost_price: number;
+  quantity: number;
+  category_id: number;
+  category_name: string;
+}
+
+interface Category { category_id: number; category_name: string; }
+interface CartItem extends Product { cartQty: number; }
+
+export default function POSClient() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [search, setSearch] = useState('');
+  const [catFilter, setCatFilter] = useState('');
+  const [discountValue, setDiscountValue] = useState(0);
+  const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>('fixed');
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [cashReceived, setCashReceived] = useState(0);
+  const [notes, setNotes] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [lastSale, setLastSale] = useState<{ invoice_number: string; sale_id: number } | null>(null);
+  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [barcodeInput, setBarcodeInput] = useState('');
+  const barcodeRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  async function loadData() {
+    const [prodRes, catRes, settingsRes] = await Promise.all([
+      fetch('/api/products?inStock=true&perPage=100'),
+      fetch('/api/categories'),
+      fetch('/api/settings'),
+    ]);
+    const prodData = await prodRes.json();
+    const catData = await catRes.json();
+    const settingsData = await settingsRes.json();
+    setProducts(prodData.products || []);
+    setCategories(catData.categories || []);
+    setSettings(settingsData || {});
+  }
+
+  const filtered = products.filter(p => {
+    const matchSearch = !search || p.product_name.toLowerCase().includes(search.toLowerCase()) || (p.barcode || '').includes(search);
+    const matchCat = !catFilter || String(p.category_id) === catFilter;
+    return matchSearch && matchCat;
+  });
+
+  function addToCart(product: Product) {
+    if (product.quantity <= 0) return;
+    setCart(prev => {
+      const existing = prev.find(i => i.product_id === product.product_id);
+      if (existing) {
+        if (existing.cartQty >= product.quantity) return prev;
+        return prev.map(i => i.product_id === product.product_id ? { ...i, cartQty: i.cartQty + 1 } : i);
+      }
+      return [...prev, { ...product, cartQty: 1 }];
+    });
+  }
+
+  function updateQty(productId: number, qty: number) {
+    if (qty <= 0) {
+      setCart(prev => prev.filter(i => i.product_id !== productId));
+    } else {
+      setCart(prev => prev.map(i => i.product_id === productId ? { ...i, cartQty: Math.min(qty, i.quantity) } : i));
+    }
+  }
+
+  function processBarcode() {
+    if (!barcodeInput) return;
+    const product = products.find(p => p.barcode === barcodeInput);
+    if (product) addToCart(product);
+    setBarcodeInput('');
+  }
+
+  const taxRate = parseFloat(settings.tax_rate || '0') / 100;
+  const currencySymbol = settings.currency_symbol || '$';
+  const subtotal = cart.reduce((sum, i) => sum + i.selling_price * i.cartQty, 0);
+  const discountAmt = discountType === 'percentage' ? subtotal * (discountValue / 100) : Math.min(discountValue, subtotal);
+  const taxableAmount = subtotal - discountAmt;
+  const taxAmt = taxableAmount * taxRate;
+  const total = taxableAmount + taxAmt;
+  const change = paymentMethod === 'cash' ? Math.max(0, cashReceived - total) : 0;
+
+  async function processSale() {
+    if (cart.length === 0) return;
+    if (paymentMethod === 'cash' && cashReceived < total) {
+      alert('Insufficient cash received');
+      return;
+    }
+    setProcessing(true);
+    try {
+      const res = await fetch('/api/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart.map(i => ({
+            product_id: i.product_id,
+            quantity: i.cartQty,
+            unit_price: i.selling_price,
+            cost_price: i.cost_price,
+            total_price: i.selling_price * i.cartQty,
+          })),
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          subtotal, tax_amount: taxAmt, discount_amount: discountAmt,
+          discount_type: discountType, discount_value: discountValue,
+          total_amount: total, payment_method: paymentMethod,
+          cash_received: cashReceived, change_amount: change, notes,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLastSale({ invoice_number: data.invoice_number, sale_id: data.sale_id });
+        clearCart();
+        loadData();
+      } else {
+        alert(data.error || 'Sale failed');
+      }
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  function clearCart() {
+    setCart([]);
+    setDiscountValue(0);
+    setCustomerName('');
+    setCustomerPhone('');
+    setCashReceived(0);
+    setNotes('');
+  }
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', flexDirection: 'column' }}>
+      {/* Top bar */}
+      <div className="topbar" style={{ justifyContent: 'space-between' }}>
+        <div className="d-flex align-items-center gap-3">
+          <Link href="/dashboard" className="btn btn-sm btn-outline-secondary">
+            <i className="bi bi-arrow-left" />
+          </Link>
+          <h5 className="mb-0 fw-bold">Point of Sale</h5>
+        </div>
+        {lastSale && (
+          <div className="alert alert-success py-1 px-3 mb-0 d-flex align-items-center gap-2">
+            <i className="bi bi-check-circle-fill" />
+            Sale {lastSale.invoice_number} completed!
+            <a href={`/receipt/${lastSale.sale_id}`} target="_blank" className="btn btn-sm btn-success ms-2">
+              <i className="bi bi-printer" /> Receipt
+            </a>
+          </div>
+        )}
+      </div>
+
+      <div className="pos-layout" style={{ flex: 1, padding: '1rem', overflow: 'hidden' }}>
+        {/* Products Panel */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="card-header">
+            <div className="row g-2">
+              <div className="col-md-4">
+                <input
+                  className="form-control"
+                  placeholder="🔍 Search products..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+              </div>
+              <div className="col-md-3">
+                <select className="form-select" value={catFilter} onChange={e => setCatFilter(e.target.value)}>
+                  <option value="">All Categories</option>
+                  {categories.map(c => <option key={c.category_id} value={c.category_id}>{c.category_name}</option>)}
+                </select>
+              </div>
+              <div className="col-md-5">
+                <div className="input-group">
+                  <span className="input-group-text bg-primary text-white"><i className="bi bi-upc-scan" /></span>
+                  <input
+                    ref={barcodeRef}
+                    className="form-control"
+                    placeholder="Scan barcode..."
+                    value={barcodeInput}
+                    onChange={e => setBarcodeInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && processBarcode()}
+                  />
+                  <button className="btn btn-primary" onClick={processBarcode}>Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="card-body p-2" style={{ overflow: 'auto' }}>
+            <div className="product-grid">
+              {filtered.map(p => (
+                <div
+                  key={p.product_id}
+                  className={`product-card ${p.quantity === 0 ? 'out-of-stock' : ''}`}
+                  onClick={() => addToCart(p)}
+                >
+                  <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>📦</div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.product_name}>
+                    {p.product_name}
+                  </div>
+                  <div className="price">{currencySymbol}{p.selling_price.toFixed(2)}</div>
+                  <div className={`stock ${p.quantity <= 5 ? 'text-danger' : ''}`}>
+                    {p.quantity === 0 ? 'Out of stock' : `${p.quantity} in stock`}
+                  </div>
+                </div>
+              ))}
+              {filtered.length === 0 && (
+                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '2rem', color: '#6c757d' }}>
+                  <i className="bi bi-search fs-2 d-block mb-2" />
+                  No products found
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Cart Panel */}
+        <div className="cart-panel">
+          <div className="cart-header">
+            <div className="d-flex justify-content-between align-items-center">
+              <h6 className="mb-0 fw-bold"><i className="bi bi-cart3 me-2" />Cart ({cart.length} items)</h6>
+              {cart.length > 0 && (
+                <button className="btn btn-sm btn-outline-danger" onClick={clearCart}>
+                  <i className="bi bi-trash" /> Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="cart-items">
+            {cart.length === 0 ? (
+              <div className="text-center text-muted py-4">
+                <i className="bi bi-cart-x fs-2 d-block mb-2" />
+                Cart is empty
+              </div>
+            ) : (
+              cart.map(item => (
+                <div key={item.product_id} className="cart-item">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product_name}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>{currencySymbol}{item.selling_price.toFixed(2)} each</div>
+                  </div>
+                  <div className="d-flex align-items-center gap-1">
+                    <button className="btn btn-sm btn-outline-secondary" style={{ width: 28, padding: 0 }} onClick={() => updateQty(item.product_id, item.cartQty - 1)}>-</button>
+                    <span style={{ width: 30, textAlign: 'center', fontWeight: 600 }}>{item.cartQty}</span>
+                    <button className="btn btn-sm btn-outline-secondary" style={{ width: 28, padding: 0 }} onClick={() => updateQty(item.product_id, item.cartQty + 1)}>+</button>
+                  </div>
+                  <div style={{ minWidth: 60, textAlign: 'right', fontWeight: 700, color: '#0d6efd' }}>
+                    {currencySymbol}{(item.selling_price * item.cartQty).toFixed(2)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="cart-footer">
+            {/* Customer */}
+            <div className="row g-1 mb-2">
+              <div className="col-6">
+                <input className="form-control form-control-sm" placeholder="Customer name" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+              </div>
+              <div className="col-6">
+                <input className="form-control form-control-sm" placeholder="Phone" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
+              </div>
+            </div>
+
+            {/* Discount */}
+            <div className="input-group input-group-sm mb-2">
+              <span className="input-group-text">Discount</span>
+              <input type="number" className="form-control" min="0" step="0.01" value={discountValue || ''} onChange={e => setDiscountValue(parseFloat(e.target.value) || 0)} />
+              <select className="form-select" style={{ maxWidth: 70 }} value={discountType} onChange={e => setDiscountType(e.target.value as 'fixed' | 'percentage')}>
+                <option value="fixed">{currencySymbol}</option>
+                <option value="percentage">%</option>
+              </select>
+            </div>
+
+            {/* Totals */}
+            <div className="totals-row"><span>Subtotal</span><span>{currencySymbol}{subtotal.toFixed(2)}</span></div>
+            {discountAmt > 0 && <div className="totals-row text-success"><span>Discount</span><span>-{currencySymbol}{discountAmt.toFixed(2)}</span></div>}
+            {taxRate > 0 && <div className="totals-row"><span>Tax ({settings.tax_rate}%)</span><span>{currencySymbol}{taxAmt.toFixed(2)}</span></div>}
+            <div className="totals-row total"><span>TOTAL</span><span>{currencySymbol}{total.toFixed(2)}</span></div>
+
+            {/* Payment method */}
+            <div className="mb-2 mt-2">
+              <div className="btn-group w-100">
+                {['cash','card','online'].map(m => (
+                  <button key={m} className={`btn btn-sm ${paymentMethod === m ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setPaymentMethod(m)}>
+                    {m === 'cash' ? '💵' : m === 'card' ? '💳' : '📱'} {m.charAt(0).toUpperCase() + m.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {paymentMethod === 'cash' && (
+              <div className="input-group input-group-sm mb-2">
+                <span className="input-group-text">Cash Received</span>
+                <input type="number" className="form-control" min={total} step="0.01" value={cashReceived || ''} onChange={e => setCashReceived(parseFloat(e.target.value) || 0)} />
+              </div>
+            )}
+            {paymentMethod === 'cash' && cashReceived > 0 && (
+              <div className="totals-row text-success fw-600 mb-2"><span>Change</span><span>{currencySymbol}{change.toFixed(2)}</span></div>
+            )}
+
+            <button
+              className="btn btn-success w-100"
+              onClick={processSale}
+              disabled={cart.length === 0 || processing}
+            >
+              {processing ? (
+                <><span className="spinner-border spinner-border-sm me-2" />Processing...</>
+              ) : (
+                <><i className="bi bi-check-circle me-2" />Complete Sale {currencySymbol}{total.toFixed(2)}</>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
