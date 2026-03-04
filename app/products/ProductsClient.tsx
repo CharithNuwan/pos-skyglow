@@ -1,4 +1,4 @@
-'use client';
+'use client'; // v2
 import { useState, useEffect, useRef } from 'react';
 
 interface Product {
@@ -92,29 +92,6 @@ export default function ProductsClient() {
     if (editProduct) setEditProduct(p => ({ ...p!, image_url: undefined } as any));
   }
 
-  async function uploadImage(file: File, productId: number) {
-    setUploadingImage(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = e.target?.result as string;
-        // Resize to max 400px before storing
-        const img = new Image();
-        img.onload = async () => {
-          const canvas = document.createElement('canvas');
-          const max = 400;
-          const ratio = Math.min(max/img.width, max/img.height, 1);
-          canvas.width = img.width * ratio; canvas.height = img.height * ratio;
-          canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const compressed = canvas.toDataURL('image/jpeg', 0.7);
-          await fetch('/api/products/image', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({product_id: productId, image_base64: compressed}) });
-          setUploadingImage(false); loadProducts();
-        };
-        img.src = base64;
-      };
-      reader.readAsDataURL(file);
-    } catch { setUploadingImage(false); }
-  }
 
   async function saveProduct() {
     if (!editProduct?.product_name) return;
@@ -533,27 +510,6 @@ export default function ProductsClient() {
                   <div className="col-12">
                     <label className="form-label">Description</label>
                     <textarea className="form-control" rows={2} value={(editProduct as any).description || ''} onChange={e => setEditProduct(p => ({ ...p!, description: e.target.value } as any))} />
-                  </div>
-                  <div className="col-12">
-                    <label className="form-label">Product Image <span className="text-muted small">(optional)</span></label>
-                    <div className="d-flex align-items-center gap-3">
-                      {(editProduct as any).image_url && (
-                        <img src={(editProduct as any).image_url} style={{width:80,height:80,objectFit:'cover',borderRadius:8,border:'1px solid #dee2e6'}} alt=""/>
-                      )}
-                      <div>
-                        <label className={`btn btn-outline-secondary btn-sm ${uploadingImage?'disabled':''}`}>
-                          {uploadingImage ? <><span className="spinner-border spinner-border-sm me-1"/>Uploading...</> : <><i className="bi bi-image me-1"/>{(editProduct as any).image_url ? 'Change Image' : 'Upload Image'}</>}
-                          <input type="file" className="d-none" accept="image/*" disabled={!editProduct.product_id || uploadingImage}
-                            onChange={e => { const f = e.target.files?.[0]; if (f && editProduct.product_id) uploadImage(f, editProduct.product_id); }}/>
-                        </label>
-                        {!editProduct.product_id && <div className="form-text text-warning">Save product first, then upload image</div>}
-                        {(editProduct as any).image_url && (
-                          <button className="btn btn-outline-danger btn-sm ms-2" onClick={async()=>{ await fetch('/api/products/image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product_id:editProduct.product_id,image_base64:null})}); setEditProduct(p=>({...p!,image_url:null} as any)); loadProducts(); }}>
-                            <i className="bi bi-trash me-1"/>Remove
-                          </button>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
