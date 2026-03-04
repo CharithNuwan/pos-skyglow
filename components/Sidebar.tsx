@@ -34,6 +34,9 @@ export default function Sidebar({ user }: SidebarProps) {
         <Link href="/pos" className={`sidebar-link ${isActive('/pos') ? 'active' : ''}`}>
           <i className="bi bi-cart3" /> Point of Sale
         </Link>
+        <Link href="/drawer" className={`sidebar-link ${isActive('/drawer') ? 'active' : ''}`}>
+          <i className="bi bi-cash-stack" /> Cash Drawer
+        </Link>
 
         {isManager && (
           <>
@@ -52,12 +55,15 @@ export default function Sidebar({ user }: SidebarProps) {
 
         {isManager && (
           <>
-            <div className="sidebar-section mt-2">Sales</div>
+            <div className="sidebar-section mt-2">Sales & Finance</div>
             <Link href="/sales" className={`sidebar-link ${isActive('/sales') ? 'active' : ''}`}>
               <i className="bi bi-receipt" /> Sales
             </Link>
             <Link href="/reports" className={`sidebar-link ${isActive('/reports') ? 'active' : ''}`}>
               <i className="bi bi-bar-chart" /> Reports
+            </Link>
+            <Link href="/expenses" className={`sidebar-link ${isActive('/expenses') ? 'active' : ''}`}>
+              <i className="bi bi-receipt-cutoff" /> Expenses
             </Link>
           </>
         )}

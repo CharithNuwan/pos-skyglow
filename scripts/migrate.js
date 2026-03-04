@@ -130,6 +130,42 @@ const migrations = [
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
   )`,
 
+
+  // ─── NEW: Cash Drawer sessions ─────────────────────────────────────────
+  `CREATE TABLE IF NOT EXISTS cash_drawer (
+    drawer_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    opening_cash REAL NOT NULL DEFAULT 0,
+    closing_cash REAL,
+    expected_cash REAL,
+    cash_difference REAL,
+    total_cash_sales REAL DEFAULT 0,
+    total_online_sales REAL DEFAULT 0,
+    total_sales INTEGER DEFAULT 0,
+    notes TEXT,
+    status TEXT NOT NULL DEFAULT 'open',
+    opened_at TEXT DEFAULT (datetime('now')),
+    closed_at TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+  )`,
+
+  // ─── NEW: Expenses ──────────────────────────────────────────────────────
+  `CREATE TABLE IF NOT EXISTS expenses (
+    expense_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    category TEXT NOT NULL DEFAULT 'general',
+    description TEXT NOT NULL,
+    amount REAL NOT NULL DEFAULT 0,
+    payment_method TEXT DEFAULT 'cash',
+    reference TEXT,
+    expense_date TEXT DEFAULT (datetime('now')),
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+  )`,
+
+  `CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date)`,
+  `CREATE INDEX IF NOT EXISTS idx_cash_drawer_status ON cash_drawer(status)`,
+
   // Indexes
   `CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)`,
   `CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id)`,
