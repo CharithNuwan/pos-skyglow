@@ -2,6 +2,9 @@ import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Sidebar from './Sidebar';
 
+// Force all pages using this layout to render dynamically (never at build time)
+export const dynamic = 'force-dynamic';
+
 interface AppLayoutProps {
   children: React.ReactNode;
   title: string;

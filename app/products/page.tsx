@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import AppLayout from '@/components/AppLayout';
 import ProductsClient from './ProductsClient';
 
