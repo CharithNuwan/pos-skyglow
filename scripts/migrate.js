@@ -156,6 +156,10 @@ const migrations = [
     ('receipt_footer', 'Please come again!', 'Footer text on receipts')`,
   `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES
     ('low_stock_threshold', '5', 'Default low stock alert threshold')`,
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES
+    ('receipt_width', '80', 'Thermal printer receipt width in mm')`,
+  `INSERT OR IGNORE INTO settings (setting_key, setting_value, setting_description) VALUES
+    ('receipt_font_size', '13', 'Receipt base font size in pixels')`,
 
   // Admin user (password: password123) - bcrypt hash
   `INSERT OR IGNORE INTO users (username, email, password_hash, full_name, phone, role, is_active) VALUES
