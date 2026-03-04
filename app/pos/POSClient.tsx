@@ -37,6 +37,7 @@ export default function POSClient() {
   const [lastSale, setLastSale] = useState<{ invoice_number: string; sale_id: number } | null>(null);
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [barcodeSound, setBarcodeSound] = useState(true);
+  const [posTab, setPosTab] = useState<'products'|'cart'>('products');
   const [barcodeInput, setBarcodeInput] = useState('');
   const barcodeRef = useRef<HTMLInputElement>(null);
 
@@ -194,6 +195,7 @@ export default function POSClient() {
     setDiscountValue(0);
     setSelectedCustomer(null);
     setCustomerSearch('');
+    setPosTab('products');
     setCustomerName('');
     setCustomerPhone('');
     setCashReceived(0);
@@ -221,9 +223,20 @@ export default function POSClient() {
         )}
       </div>
 
+      {/* Tablet tab bar */}
+      <div className="pos-tab-bar">
+        <button className={posTab === 'products' ? 'active' : ''} onClick={() => setPosTab('products')}>
+          <i className="bi bi-grid me-1" />Products
+        </button>
+        <button className={posTab === 'cart' ? 'active' : ''} onClick={() => setPosTab('cart')}>
+          <i className="bi bi-cart3 me-1" />Cart
+          {cart.length > 0 && <span className="cart-badge">{cart.reduce((s,i)=>s+i.cartQty,0)}</span>}
+        </button>
+      </div>
+
       <div className="pos-layout" style={{ flex: 1, padding: '1rem', overflow: 'hidden' }}>
         {/* Products Panel */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className={`card pos-products-panel${posTab === 'products' ? ' active' : ''}`} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div className="card-header">
             <div className="row g-2">
               <div className="col-md-4">
@@ -262,7 +275,7 @@ export default function POSClient() {
                 <div
                   key={p.product_id}
                   className={`product-card ${p.quantity === 0 ? 'out-of-stock' : ''}`}
-                  onClick={() => addToCart(p)}
+                  onClick={() => { addToCart(p); if (window.innerWidth <= 900) setPosTab('cart'); }}
                 >
                   {(p as any).image_url && settings.show_product_images !== '0'
                     ? <img src={(p as any).image_url} alt={p.product_name} style={{ width: '100%', height: '4.5rem', objectFit: 'cover', borderRadius: 6, marginBottom: '0.4rem' }} />
@@ -288,7 +301,7 @@ export default function POSClient() {
         </div>
 
         {/* Cart Panel */}
-        <div className="cart-panel">
+        <div className={`cart-panel pos-cart-panel${posTab === 'cart' ? ' active' : ''}`}>
           <div className="cart-header">
             <div className="d-flex justify-content-between align-items-center">
               <h6 className="mb-0 fw-bold"><i className="bi bi-cart3 me-2" />Cart ({cart.length} items)</h6>

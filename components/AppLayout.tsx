@@ -1,8 +1,9 @@
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Sidebar from './Sidebar';
+import MobileNav from './MobileNav';
+import SidebarOverlay from './SidebarOverlay';
 
-// Force all pages using this layout to render dynamically (never at build time)
 export const dynamic = 'force-dynamic';
 
 interface AppLayoutProps {
@@ -21,11 +22,15 @@ export default async function AppLayout({ children, title, requiredRole = 'cashi
   return (
     <div className="app-layout">
       <Sidebar user={session} />
+      <SidebarOverlay />
       <div className="main-wrapper">
-        <div className="topbar">
+        <div className="topbar" style={{ display: 'flex', alignItems: 'center' }}>
+          <MobileNav />
           <h5 className="mb-0 fw-bold">{title}</h5>
-          <div className="d-flex align-items-center gap-3">
-            <span className="text-muted small">{new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+          <div className="d-flex align-items-center gap-3 ms-auto">
+            <span className="text-muted small d-none d-sm-block">
+              {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            </span>
           </div>
         </div>
         <div className="page-content">{children}</div>

@@ -144,8 +144,131 @@ body {
 /* Low stock */
 .low-stock-badge { background: #fff3cd; color: #856404; font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 99px; }
 
-/* Responsive sidebar */
-@media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .main-wrapper { margin-left: 0; }
+/* ─── Tablet & Responsive ────────────────────────────────────────────── */
+
+/* Sidebar collapses on tablet */
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); transition: transform 0.25s ease; }
+  .sidebar.open { transform: translateX(0); z-index: 1050; }
+  .main-wrapper { margin-left: 0 !important; }
+  .sidebar-overlay { display: block !important; }
+}
+
+/* POS tablet layout — stack panels with toggle tabs */
+@media (max-width: 900px) {
+  .pos-layout {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    gap: 0 !important;
+  }
+
+  /* Hide whichever panel isn't active */
+  .pos-layout .pos-products-panel { display: none; }
+  .pos-layout .pos-cart-panel    { display: none; }
+  .pos-layout .pos-products-panel.active { display: flex; flex-direction: column; }
+  .pos-layout .pos-cart-panel.active    { display: flex; flex-direction: column; }
+
+  /* Product grid — smaller cards on tablet */
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+
+  .product-card { padding: 0.5rem !important; }
+  .product-card .price { font-size: 0.9rem !important; }
+
+  /* Make cart panel full viewport height */
+  .pos-cart-panel.active {
+    min-height: calc(100vh - 160px);
+  }
+}
+
+/* POS toggle tabs — shown only on tablet */
+.pos-tab-bar {
+  display: none;
+}
+@media (max-width: 900px) {
+  .pos-tab-bar {
+    display: flex;
+    gap: 0;
+    background: #fff;
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+  .pos-tab-bar button {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    background: #f8f9fa;
+    color: #6c757d;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .pos-tab-bar button.active {
+    background: #fff;
+    color: #0d6efd;
+    border-bottom: 3px solid #0d6efd;
+  }
+  .pos-tab-bar .cart-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #dc3545;
+    color: #fff;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.3rem;
+    margin-left: 0.4rem;
+    vertical-align: middle;
+  }
+}
+
+/* Sidebar overlay (tablet) */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1040;
+  cursor: pointer;
+}
+.sidebar-overlay.active {
+  display: block;
+}
+
+/* Hamburger menu button — shown only on tablet */
+.sidebar-toggle-btn {
+  display: none;
+}
+@media (max-width: 900px) {
+  .sidebar-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #6c757d;
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+  }
+  .sidebar-toggle-btn:hover { background: #f0f0f0; }
+}
+
+/* Shrink page header padding on tablet */
+@media (max-width: 900px) {
+  .page-header { padding: 0.75rem 1rem !important; }
+  .page-content { padding: 0.75rem !important; }
 }
