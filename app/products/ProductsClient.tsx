@@ -666,7 +666,7 @@ export default function ProductsClient() {
                   <h5 className="modal-title text-white fw-bold mb-0">
                     <i className="bi bi-layers me-2"/>Batch Management — {batchProduct.product_name}
                   </h5>
-                  <div className="text-white-50 small">Default price: {settings?.currency_symbol}{batchProduct.selling_price} · Total stock: {batchProduct.quantity}</div>
+                  <div className="text-white-50 small">Default price: Rs {batchProduct.selling_price} · Total stock: {batchProduct.quantity}</div>
                 </div>
                 <button className="btn-close btn-close-white" onClick={()=>setShowBatchModal(false)}/>
               </div>
@@ -706,8 +706,8 @@ export default function ProductsClient() {
                               <tr key={b.batch_id} style={{background: isExpired?'#fff5f5': expiringSoon?'#fffbeb':''}}>
                                 <td className="fw-600">{b.batch_number}</td>
                                 <td><code style={{fontSize:'0.7rem'}}>{b.barcode}</code></td>
-                                <td>{settings?.currency_symbol}{Number(b.cost_price).toFixed(2)}</td>
-                                <td className="fw-600 text-success">{settings?.currency_symbol}{Number(b.selling_price).toFixed(2)}</td>
+                                <td>Rs {Number(b.cost_price).toFixed(2)}</td>
+                                <td className="fw-600 text-success">Rs {Number(b.selling_price).toFixed(2)}</td>
                                 <td>
                                   <span className={`badge ${b.quantity===0?'bg-secondary':b.quantity<=5?'bg-warning text-dark':'bg-success'}`}>
                                     {b.quantity}
