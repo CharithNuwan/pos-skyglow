@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
     const page = parseInt(searchParams.get('page') || '1');
-    let sql = `SELECT * FROM customers WHERE is_active = 1`;
+    let sql = `SELECT * FROM customers WHERE is_active = 1 AND company_id = ?`;
     const args: any[] = [];
     if (search) { sql += ` AND (full_name LIKE ? OR phone LIKE ? OR email LIKE ?)`; args.push(`%${search}%`, `%${search}%`, `%${search}%`); }
     const total = (await queryOne<any>(`SELECT COUNT(*) as cnt FROM (${sql}) t`, args))?.cnt ?? 0;

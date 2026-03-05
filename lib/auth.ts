@@ -10,7 +10,9 @@ export interface SessionUser {
   username: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'manager' | 'cashier';
+  role: 'cashier' | 'manager' | 'admin' | 'superadmin';
+  company_id: number;
+  company_name?: string;
 }
 
 export async function createSession(user: SessionUser): Promise<string> {
@@ -32,12 +34,21 @@ export async function verifySession(token: string): Promise<SessionUser | null> 
 }
 
 export async function getSession(): Promise<SessionUser | null> {
-  // Dynamically import cookies so this file stays usable in both server and edge contexts
   const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
   const token = cookieStore.get('pos_session')?.value;
   if (!token) return null;
   return verifySession(token);
+}
+
+export async function getSuperAdminSession(): Promise<SessionUser | null> {
+  const { cookies } = await import('next/headers');
+  const cookieStore = await cookies();
+  const token = cookieStore.get('sa_session')?.value;
+  if (!token) return null;
+  const session = await verifySession(token);
+  if (!session || session.role !== 'superadmin') return null;
+  return session;
 }
 
 export async function requireSession(): Promise<SessionUser> {
@@ -46,8 +57,14 @@ export async function requireSession(): Promise<SessionUser> {
   return session;
 }
 
+export async function requireSuperAdmin(): Promise<SessionUser> {
+  const session = await getSuperAdminSession();
+  if (!session) throw new Error('Unauthorized');
+  return session;
+}
+
 export function hasRole(userRole: string, requiredRole: string): boolean {
-  const hierarchy: Record<string, number> = { cashier: 1, manager: 2, admin: 3 };
+  const hierarchy: Record<string, number> = { cashier: 1, manager: 2, admin: 3, superadmin: 99 };
   return (hierarchy[userRole] ?? 0) >= (hierarchy[requiredRole] ?? 99);
 }
 

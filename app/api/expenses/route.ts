@@ -10,17 +10,17 @@ export async function GET(req: NextRequest) {
     const dateFrom = searchParams.get('date_from') || new Date(Date.now() - 30*86400000).toISOString().slice(0,10);
     const dateTo = searchParams.get('date_to') || new Date().toISOString().slice(0,10);
     const expenses = await query(
-      `SELECT e.*, u.full_name FROM expenses e JOIN users u ON e.user_id = u.user_id
+      `SELECT e.*, u.full_name FROM expenses e JOIN users u ON e.user_id = u.user_id WHERE e.company_id = ? AND
        WHERE date(e.expense_date) BETWEEN ? AND ? ORDER BY e.expense_date DESC`,
       [dateFrom, dateTo]
     );
     const summary = await queryOne<any>(
-      `SELECT COALESCE(SUM(amount),0) as total, COUNT(*) as count FROM expenses WHERE date(expense_date) BETWEEN ? AND ?`,
+      `SELECT COALESCE(SUM(amount),0) as total, COUNT(*) as count FROM expenses WHERE company_id = ? AND date(expense_date) BETWEEN ? AND ?`,
       [dateFrom, dateTo]
     );
     const byCategory = await query(
       `SELECT category, COALESCE(SUM(amount),0) as total, COUNT(*) as count FROM expenses
-       WHERE date(expense_date) BETWEEN ? AND ? GROUP BY category ORDER BY total DESC`,
+       WHERE company_id = ? AND date(expense_date) BETWEEN ? AND ? GROUP BY category ORDER BY total DESC`,
       [dateFrom, dateTo]
     );
     return NextResponse.json({ expenses, summary, byCategory });
@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
+    const company_id = session.company_id || 1;
     const { category, description, amount, payment_method, reference, expense_date } = await req.json();
     if (!description || !amount) return NextResponse.json({ error: 'Description and amount required' }, { status: 400 });
     await execute(

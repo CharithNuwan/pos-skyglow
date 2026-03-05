@@ -12,12 +12,16 @@ const client = createClient({
 const migrations = [
   `CREATE TABLE IF NOT EXISTS settings (
     setting_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    setting_key TEXT NOT NULL UNIQUE,
+    company_id INTEGER NOT NULL DEFAULT 1,
+    setting_key TEXT NOT NULL,
     setting_value TEXT,
     setting_description TEXT,
     created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now'))
+    updated_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(company_id, setting_key)
   )`,
+  `ALTER TABLE settings ADD COLUMN company_id INTEGER DEFAULT 1`,
+  `UPDATE settings SET company_id=1 WHERE company_id IS NULL`,
 
   `CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -298,6 +302,51 @@ const migrations = [
   `ALTER TABLE sales ADD COLUMN shift_id INTEGER REFERENCES shifts(shift_id)`,
   `CREATE INDEX IF NOT EXISTS idx_shifts_user ON shifts(user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_shifts_status ON shifts(status)`,
+
+
+  // ── Multi-company support ──────────────────────────────────────────
+  `CREATE TABLE IF NOT EXISTS companies (
+    company_id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_name TEXT    NOT NULL,
+    slug         TEXT    UNIQUE,
+    plan         TEXT    DEFAULT 'standard',
+    max_users    INTEGER DEFAULT 10,
+    max_products INTEGER DEFAULT 500,
+    is_active    INTEGER DEFAULT 1,
+    notes        TEXT,
+    created_at   TEXT    DEFAULT (datetime('now')),
+    updated_at   TEXT    DEFAULT (datetime('now'))
+  )`,
+  // Seed the default company from existing shop_name setting (company_id=1)
+  `INSERT OR IGNORE INTO companies (company_id, company_name, slug, plan, is_active)
+   VALUES (1, (SELECT setting_value FROM settings WHERE setting_key='shop_name' LIMIT 1), 'default', 'standard', 1)`,
+  // Add company_id to all tables (ALTER TABLE ignores if column exists via try/catch)
+  `ALTER TABLE users      ADD COLUMN company_id INTEGER DEFAULT 1`,
+  `ALTER TABLE products   ADD COLUMN company_id INTEGER DEFAULT 1`,
+  `ALTER TABLE categories ADD COLUMN company_id INTEGER DEFAULT 1`,
+  `ALTER TABLE suppliers  ADD COLUMN company_id INTEGER DEFAULT 1`,
+  `ALTER TABLE customers  ADD COLUMN company_id INTEGER DEFAULT 1`,
+  `ALTER TABLE sales      ADD COLUMN company_id INTEGER DEFAULT 1`,
+  `ALTER TABLE expenses   ADD COLUMN company_id INTEGER DEFAULT 1`,
+  `ALTER TABLE cash_drawer ADD COLUMN company_id INTEGER DEFAULT 1`,
+  `ALTER TABLE shifts     ADD COLUMN company_id INTEGER DEFAULT 1`,
+  // Backfill all existing rows to company 1
+  `UPDATE users      SET company_id=1 WHERE company_id IS NULL`,
+  `UPDATE products   SET company_id=1 WHERE company_id IS NULL`,
+  `UPDATE categories SET company_id=1 WHERE company_id IS NULL`,
+  `UPDATE suppliers  SET company_id=1 WHERE company_id IS NULL`,
+  `UPDATE customers  SET company_id=1 WHERE company_id IS NULL`,
+  `UPDATE sales      SET company_id=1 WHERE company_id IS NULL`,
+  `UPDATE expenses   SET company_id=1 WHERE company_id IS NULL`,
+  // Superadmin user (company_id=0 means no company)
+  `INSERT OR IGNORE INTO users (user_id, username, email, password_hash, full_name, role, company_id, is_active)
+   VALUES (0, 'superadmin', 'super@admin.local',
+   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', -- default password: 'password' CHANGE THIS
+   'Super Admin', 'superadmin', 0, 1)`,
+  // Indexes
+  `CREATE INDEX IF NOT EXISTS idx_products_company   ON products(company_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_sales_company      ON sales(company_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_users_company      ON users(company_id)`,
 
   // Admin user (password: password123) - bcrypt hash
   `INSERT OR IGNORE INTO users (username, email, password_hash, full_name, phone, role, is_active) VALUES

@@ -5,7 +5,7 @@ import { requireSession, hasRole } from '@/lib/auth';
 export async function GET() {
   try {
     await requireSession();
-    const categories = await query(`SELECT * FROM categories WHERE is_active = 1 ORDER BY category_name`);
+    const categories = await query(`SELECT * FROM categories WHERE is_active = 1 AND company_id = ? ORDER BY category_name`);
     return NextResponse.json({ categories });
   } catch (e: unknown) {
     if ((e as Error).message === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -16,6 +16,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
+    const company_id = session.company_id || 1;
     if (!hasRole(session.role, 'manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const { category_name, description } = await req.json();
     if (!category_name) return NextResponse.json({ error: 'Category name required' }, { status: 400 });

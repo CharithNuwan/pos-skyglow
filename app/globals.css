@@ -240,9 +240,25 @@ body {
   background: rgba(0,0,0,0.4);
   z-index: 1040;
   cursor: pointer;
+  pointer-events: none;
 }
 .sidebar-overlay.active {
   display: block;
+  pointer-events: all;
+}
+
+/* Fix: ensure main content is never blocked by overlay when sidebar is closed */
+@media (max-width: 900px) {
+  .main-wrapper {
+    pointer-events: all;
+    position: relative;
+    z-index: 1;
+  }
+  /* Fix topbar hamburger z-index */
+  .topbar {
+    position: relative;
+    z-index: 100;
+  }
 }
 
 /* Hamburger menu button — shown only on tablet */

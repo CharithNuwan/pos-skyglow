@@ -296,6 +296,52 @@ export default function SettingsClient() {
           : <><i className="bi bi-save me-2" />Save All Settings</>
         }
       </button>
+
+      {/* Danger Zone */}
+      <div className="card mt-4 border-danger">
+        <div className="card-header fw-bold text-danger" style={{background:'#fff5f5'}}>
+          <i className="bi bi-exclamation-triangle me-2"/>Danger Zone — Reset Data
+        </div>
+        <div className="card-body">
+          <p className="text-muted small mb-3">Permanently delete data. <strong>Cannot be undone.</strong> Settings and user accounts are kept.</p>
+          <div className="row g-3">
+            <div className="col-md-4">
+              <div className="border rounded p-3 h-100" style={{borderColor:'#ffc107'}}>
+                <div className="fw-bold mb-1 text-warning">Clear Sales Only</div>
+                <div className="text-muted small mb-3">Deletes all sales &amp; receipts. Keeps products, customers, stock levels.</div>
+                <button className="btn btn-sm btn-outline-warning w-100" onClick={async()=>{
+                  if(!confirm('Delete all sales history? This cannot be undone.')) return;
+                  const d = await fetch('/api/admin/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope:'sales_only'})}).then(r=>r.json());
+                  alert(d.success ? '✅ ' + d.message : '❌ ' + d.error);
+                }}><i className="bi bi-trash me-1"/>Clear Sales History</button>
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="border rounded p-3 h-100" style={{borderColor:'#fd7e14'}}>
+                <div className="fw-bold mb-1" style={{color:'#fd7e14'}}>Clear Products &amp; Sales</div>
+                <div className="text-muted small mb-3">Deletes all products, categories, sales and stock logs.</div>
+                <button className="btn btn-sm w-100" style={{color:'#fd7e14',borderColor:'#fd7e14',background:'none'}} onClick={async()=>{
+                  if(!confirm('Delete all products and sales? This cannot be undone.')) return;
+                  const d = await fetch('/api/admin/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope:'products_only'})}).then(r=>r.json());
+                  alert(d.success ? '✅ ' + d.message : '❌ ' + d.error);
+                }}><i className="bi bi-trash me-1"/>Clear Products &amp; Sales</button>
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="border border-danger rounded p-3 h-100">
+                <div className="fw-bold mb-1 text-danger">Clear Everything</div>
+                <div className="text-muted small mb-3">Deletes ALL data: products, categories, suppliers, customers, sales, shifts, expenses.</div>
+                <button className="btn btn-sm btn-outline-danger w-100" onClick={async()=>{
+                  if(!confirm('⚠️ Delete ALL data? This cannot be undone.')) return;
+                  if(!confirm('Final warning: this deletes everything including customers and suppliers. Continue?')) return;
+                  const d = await fetch('/api/admin/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope:'all'})}).then(r=>r.json());
+                  alert(d.success ? '✅ ' + d.message : '❌ ' + d.error);
+                }}><i className="bi bi-trash me-1"/>Clear Everything</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

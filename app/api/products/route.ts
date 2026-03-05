@@ -5,6 +5,7 @@ import { requireSession, hasRole } from '@/lib/auth';
 export async function GET(req: NextRequest) {
   try {
     const session = await requireSession();
+    const company_id = session.company_id || 1;
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
     const category = searchParams.get('category') || '';
@@ -37,6 +38,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
+    const company_id = session.company_id || 1;
     if (!hasRole(session.role, 'manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const data = await req.json();

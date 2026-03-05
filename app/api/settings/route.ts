@@ -5,7 +5,7 @@ import { requireSession, hasRole } from '@/lib/auth';
 export async function GET() {
   try {
     await requireSession();
-    const settings = await query(`SELECT setting_key, setting_value FROM settings`);
+    const settings = await query(`SELECT setting_key, setting_value FROM settings WHERE company_id = ?`);
     const map = Object.fromEntries((settings as any[]).map((s: any) => [s.setting_key, s.setting_value]));
     return NextResponse.json(map);
   } catch (e: unknown) {
@@ -17,6 +17,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
+    const company_id = session.company_id || 1;
     if (!hasRole(session.role, 'admin')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const updates = await req.json();
     for (const [key, value] of Object.entries(updates)) {

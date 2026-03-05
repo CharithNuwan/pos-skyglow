@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 export async function GET() {
   try {
     const session = await requireSession();
+    const company_id = session.company_id || 1;
     if (!hasRole(session.role, 'admin')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const users = await query(`SELECT user_id, username, email, full_name, phone, role, is_active, last_login, created_at FROM users ORDER BY created_at DESC`);
     return NextResponse.json({ users });
@@ -18,6 +19,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
+    const company_id = session.company_id || 1;
     if (!hasRole(session.role, 'admin')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const { username, email, password, full_name, phone, role } = await req.json();
     if (!username || !email || !password || !full_name) return NextResponse.json({ error: 'Required fields missing' }, { status: 400 });

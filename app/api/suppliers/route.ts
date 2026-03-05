@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     await requireSession();
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
-    let sql = `SELECT s.*, COUNT(p.product_id) as product_count FROM suppliers s LEFT JOIN products p ON p.supplier_id = s.supplier_id WHERE s.is_active = 1`;
+    let sql = `SELECT s.*, COUNT(p.product_id) as product_count FROM suppliers s LEFT JOIN products p ON p.supplier_id = s.supplier_id WHERE s.company_id = ? WHERE s.is_active = 1`;
     const args: any[] = [];
     if (search) { sql += ` AND (s.supplier_name LIKE ? OR s.phone LIKE ?)`; args.push(`%${search}%`, `%${search}%`); }
     sql += ` GROUP BY s.supplier_id ORDER BY s.supplier_name`;
@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
+    const company_id = session.company_id || 1;
     if (!hasRole(session.role, 'manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const { supplier_name, contact_person, phone, email, address, notes } = await req.json();
     if (!supplier_name) return NextResponse.json({ error: 'Name required' }, { status: 400 });

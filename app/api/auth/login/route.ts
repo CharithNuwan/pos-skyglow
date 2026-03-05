@@ -6,49 +6,38 @@ import bcrypt from 'bcryptjs';
 export async function POST(req: NextRequest) {
   try {
     const { username, password } = await req.json();
-    if (!username || !password) {
-      return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
-    }
+    if (!username || !password) return NextResponse.json({ error: 'Username and password required' }, { status: 400 });
 
     const field = username.includes('@') ? 'email' : 'username';
     const user = await queryOne<{
       user_id: number; username: string; email: string;
-      password_hash: string; full_name: string; role: string; is_active: number;
+      password_hash: string; full_name: string; role: string; is_active: number; company_id: number;
     }>(
-      `SELECT user_id, username, email, password_hash, full_name, role, is_active FROM users WHERE ${field} = ? AND is_active = 1`,
+      `SELECT user_id, username, email, password_hash, full_name, role, is_active, company_id
+       FROM users WHERE ${field} = ? AND is_active = 1 AND (company_id != 0 OR role = 'superadmin')`,
       [username]
     );
 
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    if (user.role === 'superadmin') return NextResponse.json({ error: 'Use /superadmin/login' }, { status: 403 });
 
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-    }
+    if (!valid) return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+
+    // Get company info
+    const company = await queryOne<{company_name: string}>(`SELECT company_name FROM companies WHERE company_id = ?`, [user.company_id]);
 
     const sessionUser = {
-      user_id: user.user_id,
-      username: user.username,
-      email: user.email,
-      full_name: user.full_name,
-      role: user.role as 'admin' | 'manager' | 'cashier',
+      user_id: user.user_id, username: user.username, email: user.email,
+      full_name: user.full_name, role: user.role as any,
+      company_id: user.company_id, company_name: company?.company_name || '',
     };
 
     const token = await createSession(sessionUser);
-
-    // Update last login
     await execute(`UPDATE users SET last_login = datetime('now') WHERE user_id = ?`, [user.user_id]);
 
     const response = NextResponse.json({ success: true, user: sessionUser });
-    response.cookies.set('pos_session', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 8, // 8 hours
-      path: '/',
-    });
+    response.cookies.set('pos_session', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60*60*8, path: '/' });
     return response;
   } catch (err) {
     console.error('Login error:', err);
