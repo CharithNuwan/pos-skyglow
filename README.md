@@ -26,7 +26,7 @@ This creates all tables and inserts sample data.
 ```bash
 npm run dev
 ```
-Visit http://localhost:3000
+*) Visit http://localhost:3000
 
 ## Default Login
 - **Username:** `admin`
