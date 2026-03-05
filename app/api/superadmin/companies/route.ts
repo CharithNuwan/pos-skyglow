@@ -7,6 +7,11 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     await requireSuperAdmin();
+    // Auto-create companies table if missing
+    try { await execute(`CREATE TABLE IF NOT EXISTS companies (company_id INTEGER PRIMARY KEY AUTOINCREMENT, company_name TEXT NOT NULL, slug TEXT UNIQUE, plan TEXT DEFAULT 'standard', max_users INTEGER DEFAULT 10, max_products INTEGER DEFAULT 500, is_active INTEGER DEFAULT 1, notes TEXT, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))`); } catch {}
+    // Seed company 1 if missing
+    try { await execute(`INSERT OR IGNORE INTO companies (company_id,company_name,slug,plan,is_active) VALUES (1,(SELECT COALESCE(setting_value,'My Shop') FROM settings WHERE setting_key='shop_name' LIMIT 1),'default','standard',1)`); } catch {}
+
     const companies = await query(`
       SELECT c.*,
         (SELECT COUNT(*) FROM users u WHERE u.company_id = c.company_id AND u.role != 'superadmin') as user_count,

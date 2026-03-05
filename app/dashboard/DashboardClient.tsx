@@ -25,9 +25,10 @@ export default function DashboardClient() {
   const [expiryData, setExpiryData] = useState<{expiring_soon:any[], expired:any[]}>({expiring_soon:[], expired:[]});
 
   useEffect(() => {
-    fetch('/api/batches?expiring_soon=1').then(r=>r.json()).then(d=>{
-      if (d.expiring_soon !== undefined) setExpiryData(d);
-    }).catch(()=>{});
+    fetch('/api/batches?expiring_soon=1')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.expiring_soon) setExpiryData(d); })
+      .catch(() => {}); // Silently ignore if batches table doesn't exist yet
   }, []);
   const recentSales = stats?.recentSales || [];
   const topProducts = stats?.topProducts || [];

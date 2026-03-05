@@ -12,21 +12,26 @@ export async function GET(req: NextRequest) {
     const expiring_soon = searchParams.get('expiring_soon');
 
     if (expiring_soon) {
-      const batches = await query(`
-        SELECT b.*, p.product_name FROM product_batches b
-        JOIN products p ON b.product_id = p.product_id
-        WHERE b.company_id=? AND b.status='active' AND b.quantity>0
-          AND b.expiry_date IS NOT NULL
-          AND date(b.expiry_date) <= date('now','+30 days')
-          AND date(b.expiry_date) >= date('now')
-        ORDER BY b.expiry_date ASC`, [company_id]);
-      const expired = await query(`
-        SELECT b.*, p.product_name FROM product_batches b
-        JOIN products p ON b.product_id = p.product_id
-        WHERE b.company_id=? AND b.quantity>0
-          AND b.expiry_date IS NOT NULL AND date(b.expiry_date) < date('now')
-        ORDER BY b.expiry_date ASC`, [company_id]);
-      return NextResponse.json({ expiring_soon: batches, expired });
+      try {
+        const batches = await query(`
+          SELECT b.*, p.product_name FROM product_batches b
+          JOIN products p ON b.product_id = p.product_id
+          WHERE b.company_id=? AND b.status='active' AND b.quantity>0
+            AND b.expiry_date IS NOT NULL
+            AND date(b.expiry_date) <= date('now','+30 days')
+            AND date(b.expiry_date) >= date('now')
+          ORDER BY b.expiry_date ASC`, [company_id]);
+        const expired = await query(`
+          SELECT b.*, p.product_name FROM product_batches b
+          JOIN products p ON b.product_id = p.product_id
+          WHERE b.company_id=? AND b.quantity>0
+            AND b.expiry_date IS NOT NULL AND date(b.expiry_date) < date('now')
+          ORDER BY b.expiry_date ASC`, [company_id]);
+        return NextResponse.json({ expiring_soon: batches, expired });
+      } catch {
+        // Table may not exist yet - return empty
+        return NextResponse.json({ expiring_soon: [], expired: [] });
+      }
     }
 
     if (product_id) {
