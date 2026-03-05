@@ -13,6 +13,15 @@ export default function DashboardClient() {
       .catch(() => setLoading(false));
   }, []);
 
+  const [expiryData, setExpiryData] = useState<{expiring_soon:any[], expired:any[]}>({expiring_soon:[], expired:[]});
+
+  useEffect(() => {
+    fetch('/api/batches?expiring_soon=1')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.expiring_soon) setExpiryData(d); })
+      .catch(() => {});
+  }, []);
+
   if (loading) return (
     <div className="text-center py-5">
       <span className="spinner-border text-primary" />
@@ -22,14 +31,7 @@ export default function DashboardClient() {
 
   const todaySales = stats?.todaySales || {};
   const lowStock = stats?.lowStock || [];
-  const [expiryData, setExpiryData] = useState<{expiring_soon:any[], expired:any[]}>({expiring_soon:[], expired:[]});
 
-  useEffect(() => {
-    fetch('/api/batches?expiring_soon=1')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.expiring_soon) setExpiryData(d); })
-      .catch(() => {}); // Silently ignore if batches table doesn't exist yet
-  }, []);
   const recentSales = stats?.recentSales || [];
   const topProducts = stats?.topProducts || [];
 
