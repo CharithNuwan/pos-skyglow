@@ -19,7 +19,10 @@ export async function GET(req: NextRequest) {
       await execute(`INSERT INTO users (username,email,password_hash,full_name,role,company_id,is_active) VALUES ('superadmin','super@admin.local',?,'Super Admin','superadmin',0,1)`, [hash]);
     }
 
-    return NextResponse.json({ success: true, message: 'Superadmin password set to: superadmin123 — Login at /superadmin/login' });
+    // Also fix default company slug to use actual company name
+    await execute(`UPDATE companies SET slug = LOWER(REPLACE(REPLACE(company_name, ' ', '-'), '''', '')) WHERE company_id = 1 AND slug = 'default'`);
+
+    return NextResponse.json({ success: true, message: 'Superadmin ready + company slug fixed. Login at /superadmin/login' });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

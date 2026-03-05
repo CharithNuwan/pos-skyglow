@@ -104,6 +104,11 @@ function Label({ product, shopName, copies, size, showName, showShop }: {
 
 export default function LabelClient() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [batchMode, setBatchMode] = useState(false);
+  const [batches, setBatches] = useState<any[]>([]);
+  const [selectedBatches, setSelectedBatches] = useState<Record<number,number>>({});
+  const [batchSearch, setBatchSearch] = useState('');
+  const [batchProduct, setBatchProduct] = useState<Product|null>(null);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Record<number, number>>({});
   const [shopName, setShopName] = useState('');
@@ -142,10 +147,42 @@ export default function LabelClient() {
   }
 
   const selectedProducts = Object.keys(selected).map(id => products.find(p => p.product_id === parseInt(id))).filter(Boolean) as Product[];
+
+  async function loadBatches(productId: number, product: Product) {
+    setBatchProduct(product);
+    const res = await fetch(`/api/batches?product_id=${productId}`);
+    const d = await res.json();
+    setBatches(d.batches || []);
+  }
+
+  // Build label items: products OR batches
+  const batchLabelItems = Object.keys(selectedBatches).map(bid => {
+    const b = batches.find((x:any) => x.batch_id === parseInt(bid));
+    if (!b || !batchProduct) return null;
+    return {
+      product_name: batchProduct.product_name,
+      short_name: batchProduct.short_name,
+      barcode: b.barcode,
+      selling_price: b.selling_price,
+      batch_number: b.batch_number,
+      expiry_date: b.expiry_date,
+      qty: selectedBatches[parseInt(bid)] || 1,
+    };
+  }).filter(Boolean);
   const totalLabels = Object.values(selected).reduce((a, b) => a + b, 0);
 
   return (
     <div>
+      {/* Batch mode toggle */}
+      <div className="mb-3 d-flex gap-2 align-items-center">
+        <button className={`btn btn-sm ${!batchMode?'btn-primary':'btn-outline-secondary'}`} onClick={()=>{setBatchMode(false);setSelectedBatches({});}}>
+          <i className="bi bi-tag me-1"/>Product Labels
+        </button>
+        <button className={`btn btn-sm ${batchMode?'btn-success':'btn-outline-secondary'}`} onClick={()=>{setBatchMode(true);setSelected({});}}>
+          <i className="bi bi-layers me-1"/>Batch Labels
+        </button>
+        {batchMode && <span className="text-muted small">Select a product, then choose which batches to print labels for</span>}
+      </div>
       <div className="row g-3">
         {/* Left — search and select */}
         <div className="col-lg-5">
@@ -154,7 +191,7 @@ export default function LabelClient() {
             <div className="card-body">
               <input
                 className="form-control mb-3"
-                placeholder="Search products to add labels..."
+                placeholder={batchMode ? "Search product to load its batches..." : "Search products to add labels..."}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 autoFocus

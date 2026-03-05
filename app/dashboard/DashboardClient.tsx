@@ -22,6 +22,13 @@ export default function DashboardClient() {
 
   const todaySales = stats?.todaySales || {};
   const lowStock = stats?.lowStock || [];
+  const [expiryData, setExpiryData] = useState<{expiring_soon:any[], expired:any[]}>({expiring_soon:[], expired:[]});
+
+  useEffect(() => {
+    fetch('/api/batches?expiring_soon=1').then(r=>r.json()).then(d=>{
+      if (d.expiring_soon !== undefined) setExpiryData(d);
+    }).catch(()=>{});
+  }, []);
   const recentSales = stats?.recentSales || [];
   const topProducts = stats?.topProducts || [];
 
@@ -116,6 +123,45 @@ export default function DashboardClient() {
             </div>
           </div>
         </div>
+
+        {/* Expiry Alerts */}
+        {(expiryData.expired.length > 0 || expiryData.expiring_soon.length > 0) && (
+          <div className="card mb-3 border-danger border-opacity-50">
+            <div className="card-header d-flex justify-content-between align-items-center py-2" style={{background:'#fff5f5'}}>
+              <span className="fw-bold text-danger"><i className="bi bi-exclamation-triangle me-1"/>Batch Expiry Alerts</span>
+              <span className="badge bg-danger">{expiryData.expired.length + expiryData.expiring_soon.length}</span>
+            </div>
+            <div className="card-body p-0">
+              {expiryData.expired.map((b:any) => (
+                <div key={b.batch_id} className="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style={{background:'#fff5f5'}}>
+                  <div>
+                    <span className="fw-500 small">{b.product_name}</span>
+                    <span className="text-muted small ms-2">Batch: {b.batch_number}</span>
+                  </div>
+                  <div className="text-end">
+                    <span className="badge bg-danger">EXPIRED {b.expiry_date}</span>
+                    <div className="text-muted" style={{fontSize:'0.7rem'}}>{b.quantity} units remaining</div>
+                  </div>
+                </div>
+              ))}
+              {expiryData.expiring_soon.map((b:any) => {
+                const days = Math.ceil((new Date(b.expiry_date).getTime()-Date.now())/86400000);
+                return (
+                  <div key={b.batch_id} className="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style={{background:'#fffbeb'}}>
+                    <div>
+                      <span className="fw-500 small">{b.product_name}</span>
+                      <span className="text-muted small ms-2">Batch: {b.batch_number}</span>
+                    </div>
+                    <div className="text-end">
+                      <span className="badge bg-warning text-dark">Expires in {days}d</span>
+                      <div className="text-muted" style={{fontSize:'0.7rem'}}>{b.quantity} units · {b.expiry_date}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Low Stock */}
         <div className="col-lg-4">

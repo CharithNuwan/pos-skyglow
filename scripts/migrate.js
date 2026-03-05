@@ -348,6 +348,28 @@ const migrations = [
   `CREATE INDEX IF NOT EXISTS idx_sales_company      ON sales(company_id)`,
   `CREATE INDEX IF NOT EXISTS idx_users_company      ON users(company_id)`,
 
+
+  // ── Product Batches ─────────────────────────────────────────────────
+  `CREATE TABLE IF NOT EXISTS product_batches (
+    batch_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id    INTEGER NOT NULL,
+    company_id    INTEGER NOT NULL DEFAULT 1,
+    batch_number  TEXT    NOT NULL,
+    barcode       TEXT    UNIQUE,
+    cost_price    REAL    NOT NULL DEFAULT 0,
+    selling_price REAL    NOT NULL DEFAULT 0,
+    quantity      INTEGER NOT NULL DEFAULT 0,
+    received_date TEXT    DEFAULT (date('now')),
+    expiry_date   TEXT,
+    notes         TEXT,
+    status        TEXT    DEFAULT 'active',
+    created_at    TEXT    DEFAULT (datetime('now')),
+    updated_at    TEXT    DEFAULT (datetime('now'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_batches_product   ON product_batches(product_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_batches_barcode   ON product_batches(barcode)`,
+  `CREATE INDEX IF NOT EXISTS idx_batches_company   ON product_batches(company_id)`,
+
   // Admin user (password: password123) - bcrypt hash
   `INSERT OR IGNORE INTO users (username, email, password_hash, full_name, phone, role, is_active) VALUES
     ('admin', 'admin@pos.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', '+1 234 567 8900', 'admin', 1)`,

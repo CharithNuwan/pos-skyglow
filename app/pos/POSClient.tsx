@@ -86,34 +86,79 @@ export default function POSClient() {
     }
   }
 
-  function processBarcode() {
-    if (!barcodeInput) return;
-    const product = products.find(p => p.barcode === barcodeInput);
+  const [batchWarning, setBatchWarning] = useState<string|null>(null);
+  const [batchError, setBatchError] = useState<string|null>(null);
+
+  function beepSuccess() {
+    if (!barcodeSound) return;
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.value = 1800; g.gain.value = 0.2;
+      o.start(); o.stop(ctx.currentTime + 0.07);
+    } catch {}
+  }
+
+  function beepError() {
+    if (!barcodeSound) return;
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'square'; o.frequency.value = 400; g.gain.value = 0.15;
+      o.start(); o.stop(ctx.currentTime + 0.3);
+    } catch {}
+  }
+
+  async function processBarcode() {
+    if (!barcodeInput.trim()) return;
+    const code = barcodeInput.trim();
+    setBarcodeInput('');
+    setBatchWarning(null);
+    setBatchError(null);
+
+    // ── Step 1: Check if it's a batch barcode
+    const batchRes = await fetch(`/api/batches/scan?barcode=${encodeURIComponent(code)}`);
+    const batchData = await batchRes.json();
+
+    if (batchData.found) {
+      if (batchData.blocked) {
+        // BLOCKED — expired, depleted, or inactive
+        setBatchError(batchData.message);
+        beepError();
+        return;
+      }
+      // Valid batch — add to cart using batch price
+      const b = batchData.batch;
+      const cartItem = {
+        product_id: b.product_id,
+        product_name: b.product_name,
+        selling_price: b.selling_price,
+        quantity: b.quantity,
+        barcode: code,
+        category_name: b.category_name || '',
+        batch_id: b.batch_id,
+        batch_number: b.batch_number,
+        expiry_date: b.expiry_date,
+      };
+      addToCart(cartItem as any);
+      if (batchData.warning) setBatchWarning(batchData.warning);
+      beepSuccess();
+      if (window.innerWidth <= 900) setPosTab('cart');
+      return;
+    }
+
+    // ── Step 2: Fall back to regular product barcode
+    const product = products.find(p => p.barcode === code);
     if (product) {
       addToCart(product);
-      // Beep on successful scan
-      if (barcodeSound) {
-        try {
-          const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-          const o = ctx.createOscillator(); const g = ctx.createGain();
-          o.connect(g); g.connect(ctx.destination);
-          o.type = 'sine'; o.frequency.value = 1800; g.gain.value = 0.2;
-          o.start(); o.stop(ctx.currentTime + 0.07);
-        } catch {}
-      }
+      beepSuccess();
+      if (window.innerWidth <= 900) setPosTab('cart');
     } else {
-      // Error beep - different tone for not found
-      if (barcodeSound) {
-        try {
-          const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-          const o = ctx.createOscillator(); const g = ctx.createGain();
-          o.connect(g); g.connect(ctx.destination);
-          o.type = 'square'; o.frequency.value = 400; g.gain.value = 0.15;
-          o.start(); o.stop(ctx.currentTime + 0.15);
-        } catch {}
-      }
+      setBatchError(`❌ Barcode not found: ${code}`);
+      beepError();
     }
-    setBarcodeInput('');
   }
 
   const taxRate = parseFloat(settings.tax_rate || '0') / 100;
@@ -223,6 +268,20 @@ export default function POSClient() {
         )}
       </div>
 
+      {/* Batch scan alerts */}
+      {batchError && (
+        <div style={{margin:'0 1rem 0.5rem',padding:'0.75rem 1rem',background:'#fee2e2',border:'1px solid #fca5a5',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <span style={{color:'#991b1b',fontWeight:600,fontSize:'0.9rem'}}>{batchError}</span>
+          <button onClick={()=>setBatchError(null)} style={{background:'none',border:'none',color:'#991b1b',cursor:'pointer',fontSize:'1.1rem',lineHeight:1}}>×</button>
+        </div>
+      )}
+      {batchWarning && (
+        <div style={{margin:'0 1rem 0.5rem',padding:'0.6rem 1rem',background:'#fef3c7',border:'1px solid #fcd34d',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <span style={{color:'#92400e',fontWeight:500,fontSize:'0.85rem'}}>{batchWarning}</span>
+          <button onClick={()=>setBatchWarning(null)} style={{background:'none',border:'none',color:'#92400e',cursor:'pointer',fontSize:'1.1rem',lineHeight:1}}>×</button>
+        </div>
+      )}
+
       {/* Tablet tab bar */}
       <div className="pos-tab-bar">
         <button className={posTab === 'products' ? 'active' : ''} onClick={() => setPosTab('products')}>
@@ -284,6 +343,11 @@ export default function POSClient() {
                   <div style={{ fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.product_name}>
                     {p.product_name}
                   </div>
+                  {(p as any).batch_number && (
+                    <div style={{fontSize:'0.65rem',color:'#6c757d',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                      Batch: {(p as any).batch_number}
+                    </div>
+                  )}
                   <div className="price">{currencySymbol}{p.selling_price.toFixed(2)}</div>
                   <div className={`stock ${p.quantity <= 5 ? 'text-danger' : ''}`}>
                     {p.quantity === 0 ? 'Out of stock' : `${p.quantity} in stock`}

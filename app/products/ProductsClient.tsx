@@ -18,6 +18,12 @@ export default function ProductsClient() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Partial<Product> | null>(null);
+  const [batchProduct, setBatchProduct] = useState<Product | null>(null);
+  const [batches, setBatches] = useState<any[]>([]);
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [editBatch, setEditBatch] = useState<any>(null);
+  const [savingBatch, setSavingBatch] = useState(false);
+  const [batchMsg, setBatchMsg] = useState('');
   const [suppliers, setSuppliers] = useState<{supplier_id:number;supplier_name:string}[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -349,6 +355,9 @@ export default function ProductsClient() {
                       <button className="btn btn-sm btn-outline-success me-1" title="Restock" onClick={() => { setRestockProduct(p); setRestockQty(1); setRestockNote(''); setShowRestock(true); }}>
                         <i className="bi bi-plus-square" />
                       </button>
+                      <button className="btn btn-sm btn-outline-success me-1" onClick={() => openBatches(p)} title="Manage Batches">
+                        <i className="bi bi-layers" />
+                      </button>
                       <button className="btn btn-sm btn-outline-primary me-1" onClick={() => { setEditProduct({...p}); setShowModal(true); }}>
                         <i className="bi bi-pencil" />
                       </button>
@@ -592,5 +601,195 @@ export default function ProductsClient() {
         </div>
       )}
     </div>
+
+      {/* ── Batch Management Modal ── */}
+      {showBatchModal && batchProduct && (
+        <div className="modal show d-block" style={{background:'rgba(0,0,0,0.5)'}}>
+          <div className="modal-dialog modal-xl modal-dialog-scrollable">
+            <div className="modal-content">
+              <div className="modal-header" style={{background:'linear-gradient(135deg,#198754,#0f5132)'}}>
+                <div>
+                  <h5 className="modal-title text-white fw-bold mb-0">
+                    <i className="bi bi-layers me-2"/>Batch Management — {batchProduct.product_name}
+                  </h5>
+                  <div className="text-white-50 small">Default price: {settings?.currency_symbol}{batchProduct.selling_price} · Total stock: {batchProduct.quantity}</div>
+                </div>
+                <button className="btn-close btn-close-white" onClick={()=>setShowBatchModal(false)}/>
+              </div>
+              <div className="modal-body p-0">
+                <div className="row g-0" style={{minHeight:420}}>
+
+                  {/* Left — existing batches */}
+                  <div className="col-lg-7 border-end" style={{overflowY:'auto',maxHeight:520}}>
+                    <div className="p-3 border-bottom bg-light">
+                      <span className="fw-bold small text-muted text-uppercase">Existing Batches ({batches.length})</span>
+                    </div>
+                    {batches.length === 0 ? (
+                      <div className="text-center py-5 text-muted">
+                        <i className="bi bi-layers fs-1 d-block mb-2 opacity-25"/>No batches yet. Add the first batch →
+                      </div>
+                    ) : (
+                      <table className="table table-hover mb-0 small">
+                        <thead className="table-light sticky-top">
+                          <tr>
+                            <th>Batch #</th>
+                            <th>Barcode</th>
+                            <th>Cost</th>
+                            <th>Price</th>
+                            <th>Qty</th>
+                            <th>Received</th>
+                            <th>Expiry</th>
+                            <th>Status</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {batches.map((b:any) => {
+                            const isExpired = b.expiry_date && new Date(b.expiry_date) < new Date();
+                            const daysLeft = b.expiry_date ? Math.ceil((new Date(b.expiry_date).getTime()-Date.now())/86400000) : null;
+                            const expiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft >= 0;
+                            return (
+                              <tr key={b.batch_id} style={{background: isExpired?'#fff5f5': expiringSoon?'#fffbeb':''}}>
+                                <td className="fw-600">{b.batch_number}</td>
+                                <td><code style={{fontSize:'0.7rem'}}>{b.barcode}</code></td>
+                                <td>{settings?.currency_symbol}{Number(b.cost_price).toFixed(2)}</td>
+                                <td className="fw-600 text-success">{settings?.currency_symbol}{Number(b.selling_price).toFixed(2)}</td>
+                                <td>
+                                  <span className={`badge ${b.quantity===0?'bg-secondary':b.quantity<=5?'bg-warning text-dark':'bg-success'}`}>
+                                    {b.quantity}
+                                  </span>
+                                </td>
+                                <td>{b.received_date}</td>
+                                <td>
+                                  {b.expiry_date ? (
+                                    <span className={isExpired?'text-danger fw-bold':expiringSoon?'text-warning fw-bold':'text-muted'}>
+                                      {isExpired ? '⛔ ' : expiringSoon ? '⚠️ ' : ''}{b.expiry_date}
+                                      {daysLeft !== null && !isExpired && <span className="d-block" style={{fontSize:'0.65rem'}}>({daysLeft}d left)</span>}
+                                    </span>
+                                  ) : <span className="text-muted">—</span>}
+                                </td>
+                                <td>
+                                  <span className={`badge ${b.status==='active'?'bg-success':b.status==='expired'?'bg-danger':'bg-secondary'}`}>
+                                    {b.status}
+                                  </span>
+                                </td>
+                                <td>
+                                  <button className="btn btn-xs btn-outline-primary me-1" style={{padding:'1px 6px',fontSize:'0.7rem'}}
+                                    onClick={()=>setEditBatch({...b, expiry_date: b.expiry_date||''})}>
+                                    <i className="bi bi-pencil"/>
+                                  </button>
+                                  <button className="btn btn-xs btn-outline-danger" style={{padding:'1px 6px',fontSize:'0.7rem'}}
+                                    onClick={()=>deleteBatch(b.batch_id)}>
+                                    <i className="bi bi-trash"/>
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+
+                  {/* Right — add/edit batch form */}
+                  <div className="col-lg-5 p-3">
+                    <div className="fw-bold mb-3 text-success">
+                      <i className="bi bi-plus-circle me-1"/>
+                      {editBatch?.batch_id ? 'Edit Batch' : 'Add New Batch'}
+                    </div>
+                    {batchMsg && <div className={`alert py-2 small ${batchMsg.startsWith('✅')?'alert-success':'alert-danger'}`}>{batchMsg}</div>}
+                    {editBatch && (
+                      <div className="row g-2">
+                        <div className="col-12">
+                          <label className="form-label small fw-600">Batch Number *</label>
+                          <input className="form-control form-control-sm" value={editBatch.batch_number||''} onChange={e=>setEditBatch((b:any)=>({...b,batch_number:e.target.value}))}/>
+                        </div>
+                        <div className="col-12">
+                          <label className="form-label small fw-600">Batch Barcode * <span className="text-muted fw-normal">(printed on labels)</span></label>
+                          <div className="input-group input-group-sm">
+                            <input className="form-control" value={editBatch.barcode||''} onChange={e=>setEditBatch((b:any)=>({...b,barcode:e.target.value}))}/>
+                            <button className="btn btn-outline-secondary" onClick={()=>setEditBatch((b:any)=>({...b,barcode:`${batchProduct.barcode||batchProduct.product_id}-B${String(Date.now()).slice(-4)}`}))}>
+                              <i className="bi bi-arrow-clockwise"/>
+                            </button>
+                          </div>
+                        </div>
+                        <div className="col-6">
+                          <label className="form-label small fw-600">Cost Price</label>
+                          <input type="number" step="0.01" min="0" className="form-control form-control-sm" value={editBatch.cost_price||0} onChange={e=>setEditBatch((b:any)=>({...b,cost_price:parseFloat(e.target.value)}))}/>
+                        </div>
+                        <div className="col-6">
+                          <label className="form-label small fw-600">Selling Price *</label>
+                          <input type="number" step="0.01" min="0" className="form-control form-control-sm" value={editBatch.selling_price||0} onChange={e=>setEditBatch((b:any)=>({...b,selling_price:parseFloat(e.target.value)}))}/>
+                        </div>
+                        <div className="col-6">
+                          <label className="form-label small fw-600">Quantity *</label>
+                          <input type="number" min="0" className="form-control form-control-sm" value={editBatch.quantity||0} onChange={e=>setEditBatch((b:any)=>({...b,quantity:parseInt(e.target.value)}))}/>
+                        </div>
+                        <div className="col-6">
+                          <label className="form-label small fw-600">Received Date</label>
+                          <input type="date" className="form-control form-control-sm" value={editBatch.received_date||''} onChange={e=>setEditBatch((b:any)=>({...b,received_date:e.target.value}))}/>
+                        </div>
+                        <div className="col-12">
+                          <label className="form-label small fw-600">
+                            Expiry Date <span className="text-muted fw-normal">(leave blank for no expiry — e.g. gift items)</span>
+                          </label>
+                          <input type="date" className="form-control form-control-sm" value={editBatch.expiry_date||''} onChange={e=>setEditBatch((b:any)=>({...b,expiry_date:e.target.value}))}/>
+                          {editBatch.expiry_date && (
+                            <div className="form-text text-warning">
+                              <i className="bi bi-info-circle me-1"/>Scanning this batch after expiry will BLOCK the sale at POS.
+                            </div>
+                          )}
+                          {!editBatch.expiry_date && (
+                            <div className="form-text text-success">
+                              <i className="bi bi-check-circle me-1"/>No expiry — this batch will never be blocked at POS.
+                            </div>
+                          )}
+                        </div>
+                        {editBatch.batch_id && (
+                          <div className="col-12">
+                            <label className="form-label small fw-600">Status</label>
+                            <select className="form-select form-select-sm" value={editBatch.status||'active'} onChange={e=>setEditBatch((b:any)=>({...b,status:e.target.value}))}>
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                              <option value="expired">Expired</option>
+                              <option value="depleted">Depleted</option>
+                            </select>
+                          </div>
+                        )}
+                        <div className="col-12">
+                          <label className="form-label small fw-600">Notes</label>
+                          <input className="form-control form-control-sm" value={editBatch.notes||''} onChange={e=>setEditBatch((b:any)=>({...b,notes:e.target.value}))} placeholder="Optional notes about this batch"/>
+                        </div>
+                        <div className="col-12 mt-2 d-flex gap-2">
+                          <button className="btn btn-success flex-fill" onClick={saveBatch} disabled={savingBatch}>
+                            {savingBatch ? <span className="spinner-border spinner-border-sm me-1"/> : <i className="bi bi-check-lg me-1"/>}
+                            {editBatch.batch_id ? 'Update Batch' : 'Add Batch'}
+                          </button>
+                          {editBatch.batch_id && (
+                            <button className="btn btn-outline-secondary" onClick={()=>setEditBatch({
+                              product_id: batchProduct.product_id,
+                              batch_number:`BATCH-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-NEW`,
+                              barcode:`${batchProduct.barcode||batchProduct.product_id}-B${String(Date.now()).slice(-4)}`,
+                              cost_price:batchProduct.cost_price||0, selling_price:batchProduct.selling_price||0,
+                              quantity:0, received_date:new Date().toISOString().slice(0,10), expiry_date:'', notes:'',
+                            })}>New</button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <div className="text-muted small me-auto">
+                  <i className="bi bi-info-circle me-1"/>Print batch barcodes from <strong>Print Labels</strong> page
+                </div>
+                <button className="btn btn-secondary" onClick={()=>setShowBatchModal(false)}>Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
