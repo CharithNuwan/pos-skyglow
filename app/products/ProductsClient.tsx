@@ -184,6 +184,60 @@ export default function ProductsClient() {
     URL.revokeObjectURL(url);
   }
 
+  async function openBatches(p: any) {
+    setBatchProduct(p);
+    setBatchMsg('');
+    const res = await fetch(`/api/batches?product_id=${p.product_id}`);
+    const d = await res.json();
+    setBatches(d.batches || []);
+    setEditBatch({
+      product_id: p.product_id,
+      batch_number: `BATCH-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-001`,
+      barcode: `${p.barcode || p.product_id}-B${String(Date.now()).slice(-4)}`,
+      cost_price: p.cost_price || 0,
+      selling_price: p.selling_price || 0,
+      quantity: 0,
+      received_date: new Date().toISOString().slice(0,10),
+      expiry_date: '',
+      notes: '',
+    });
+    setShowBatchModal(true);
+  }
+
+  async function saveBatch() {
+    setSavingBatch(true); setBatchMsg('');
+    const isEdit = editBatch?.batch_id;
+    const url = isEdit ? `/api/batches/${editBatch.batch_id}` : '/api/batches';
+    const res = await fetch(url, { method: isEdit?'PUT':'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(editBatch) });
+    const d = await res.json();
+    if (d.success) {
+      setBatchMsg('✅ Batch saved!');
+      const r2 = await fetch(`/api/batches?product_id=${batchProduct!.product_id}`);
+      const d2 = await r2.json();
+      setBatches(d2.batches || []);
+      loadProducts();
+      setEditBatch({
+        product_id: batchProduct!.product_id,
+        batch_number: `BATCH-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String((d2.batches?.length||0)+1).padStart(3,'0')}`,
+        barcode: `${batchProduct!.barcode || batchProduct!.product_id}-B${String(Date.now()).slice(-4)}`,
+        cost_price: batchProduct!.cost_price || 0,
+        selling_price: batchProduct!.selling_price || 0,
+        quantity: 0, received_date: new Date().toISOString().slice(0,10), expiry_date: '', notes: '',
+      });
+    } else { setBatchMsg('❌ ' + d.error); }
+    setSavingBatch(false);
+  }
+
+  async function deleteBatch(id: number) {
+    if (!confirm('Delete this batch?')) return;
+    await fetch(`/api/batches/${id}`, { method:'DELETE' });
+    const r = await fetch(`/api/batches?product_id=${batchProduct!.product_id}`);
+    const d = await r.json();
+    setBatches(d.batches || []);
+    loadProducts();
+  }
+
+
   return (
     <>
     <div>
