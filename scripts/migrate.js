@@ -341,7 +341,7 @@ const migrations = [
   // Superadmin user (company_id=0 means no company)
   `INSERT OR IGNORE INTO users (user_id, username, email, password_hash, full_name, role, company_id, is_active)
    VALUES (0, 'superadmin', 'super@admin.local',
-   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', -- default password: 'password' CHANGE THIS
+   'SUPERADMIN_PASSWORD_PLACEHOLDER',
    'Super Admin', 'superadmin', 0, 1)`,
   // Indexes
   `CREATE INDEX IF NOT EXISTS idx_products_company   ON products(company_id)`,
@@ -377,6 +377,20 @@ const migrations = [
 
 async function migrate() {
   console.log('🚀 Running database migrations...');
+
+  // Generate the superadmin password hash at runtime
+  let bcrypt;
+  try { bcrypt = require('bcryptjs'); } catch(e) {}
+  if (bcrypt) {
+    const saHash = await bcrypt.hash('superadmin123', 10);
+    // Replace placeholder hash in migrations array
+    for (let i = 0; i < migrations.length; i++) {
+      if (migrations[i].includes('SUPERADMIN_PASSWORD_PLACEHOLDER')) {
+        migrations[i] = migrations[i].replace('SUPERADMIN_PASSWORD_PLACEHOLDER', saHash);
+      }
+    }
+  }
+
   for (let i = 0; i < migrations.length; i++) {
     try {
       await client.execute(migrations[i]);
@@ -392,9 +406,13 @@ async function migrate() {
     }
   }
   console.log('\n✅ Migration complete!');
-  console.log('\n👤 Default login:');
+  console.log('\n👤 Default company login:');
   console.log('   Username: admin');
   console.log('   Password: password');
+  console.log('\n🔐 Super Admin login:');
+  console.log('   URL: /superadmin/login');
+  console.log('   Username: superadmin');
+  console.log('   Password: superadmin123');
 }
 
 migrate().catch(console.error);
