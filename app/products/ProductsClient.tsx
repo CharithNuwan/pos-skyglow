@@ -185,6 +185,7 @@ export default function ProductsClient() {
   }
 
   return (
+    <>
     <div>
       {msg && (
         <div className={`alert alert-${msgType} alert-dismissible`}>
@@ -600,7 +601,6 @@ export default function ProductsClient() {
           </div>
         </div>
       )}
-    </div>
 
       {/* ── Batch Management Modal ── */}
       {showBatchModal && batchProduct && (
@@ -790,6 +790,7 @@ export default function ProductsClient() {
           </div>
         </div>
       )}
+    </div>
     </>
   );
 }
