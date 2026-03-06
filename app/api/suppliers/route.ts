@@ -5,7 +5,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    await requireSession();
+    const session = requireSession();
+    const company_id = session.company_id || 1;
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
     let sql = `SELECT s.*, COUNT(p.product_id) as product_count FROM suppliers s LEFT JOIN products p ON p.supplier_id = s.supplier_id WHERE s.company_id = ? WHERE s.is_active = 1`;
