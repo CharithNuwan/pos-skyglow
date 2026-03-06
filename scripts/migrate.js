@@ -372,6 +372,18 @@ const migrations = [
 
   `ALTER TABLE sale_items ADD COLUMN batch_id INTEGER REFERENCES product_batches(batch_id)`,
 
+  `CREATE TABLE IF NOT EXISTS print_jobs (
+    job_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id INTEGER NOT NULL DEFAULT 1,
+    type TEXT NOT NULL DEFAULT 'receipt',
+    status TEXT NOT NULL DEFAULT 'pending',
+    payload TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    printed_at TEXT
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_print_jobs_status ON print_jobs(status)`,
+  `CREATE INDEX IF NOT EXISTS idx_print_jobs_company ON print_jobs(company_id)`,
+
   // Admin user (password: password123) - bcrypt hash
   `INSERT OR IGNORE INTO users (username, email, password_hash, full_name, phone, role, is_active) VALUES
     ('admin', 'admin@pos.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', '+1 234 567 8900', 'admin', 1)`,

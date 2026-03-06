@@ -186,6 +186,39 @@ export default function SettingsClient() {
               <label className="form-label">Receipt Footer Text</label>
               <input className="form-control" value={settings.receipt_footer || ''} onChange={e => update('receipt_footer', e.target.value)} placeholder="Please come again!" />
             </div>
+
+            {/* Print Bridge — API token for Android app */}
+            <div className="col-12 mt-2">
+              <hr />
+              <label className="form-label fw-600">
+                <i className="bi bi-phone me-1"/>Print Bridge — API Token
+              </label>
+              <p className="text-muted small mb-2">
+                Use this token in the Android Print Bridge app to poll and print receipts. Keep it secret.
+              </p>
+              <div className="input-group">
+                <input
+                  type="password"
+                  className="form-control font-monospace"
+                  value={settings.print_api_token || ''}
+                  onChange={e => update('print_api_token', e.target.value)}
+                  placeholder="Generate or paste token"
+                />
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => {
+                    const token = Array.from(crypto.getRandomValues(new Uint8Array(24)))
+                      .map(b => b.toString(16).padStart(2, '0')).join('');
+                    update('print_api_token', token);
+                  }}
+                  title="Generate new token"
+                >
+                  <i className="bi bi-arrow-repeat"/> Generate
+                </button>
+              </div>
+              <div className="form-text">Save settings after generating or changing the token.</div>
+            </div>
           </div>
         </div>
       </div>

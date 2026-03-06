@@ -237,6 +237,39 @@ export default function POSClient() {
         setLastSale({ invoice_number: data.invoice_number, sale_id: data.sale_id });
         clearCart();
         loadData();
+        // Fire-and-forget: enqueue receipt for Print Bridge (Android)
+        const payload = {
+          invoice_number: data.invoice_number,
+          sale_id: data.sale_id,
+          items: cart.map(i => ({
+            name: i.product_name,
+            qty: i.cartQty,
+            unit_price: i.selling_price,
+            total: i.selling_price * i.cartQty,
+          })),
+          subtotal,
+          tax_amount: taxAmt,
+          discount_amount: discountAmt,
+          total_amount: total,
+          payment_method: paymentMethod,
+          cash_received: paymentMethod === 'cash' ? cashReceived : undefined,
+          change_amount: paymentMethod === 'cash' ? change : undefined,
+          customer_name: customerName || undefined,
+          customer_phone: customerPhone || undefined,
+          sale_date: new Date().toISOString(),
+          shop_name: settings.shop_name || '',
+          shop_address: settings.shop_address || '',
+          shop_phone: settings.shop_phone || '',
+          currency_symbol: settings.currency_symbol || '$',
+          receipt_header: settings.receipt_header || '',
+          receipt_footer: settings.receipt_footer || '',
+        };
+        fetch('/api/print-jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'receipt', payload }),
+          credentials: 'same-origin',
+        }).catch(() => {});
       } else {
         alert(data.error || 'Sale failed');
       }
