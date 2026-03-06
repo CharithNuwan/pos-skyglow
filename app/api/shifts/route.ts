@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       const existing = await queryOne(`SELECT shift_id FROM shifts WHERE user_id = ? AND status = 'open'`, [session.user_id]);
       if (existing) return NextResponse.json({ error: 'You already have an open shift' }, { status: 400 });
       const result = await execute(`INSERT INTO shifts (user_id, opening_cash, status, started_at) VALUES (?, ?, 'open', datetime('now'))`, [session.user_id, opening_cash || 0]);
-      return NextResponse.json({ success: true, shift_id: result.lastInsertRowid });
+      return NextResponse.json({ success: true, shift_id: Number(result.lastInsertRowid) });
     }
 
     if (action === 'end') {

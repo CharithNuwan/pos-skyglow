@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
       [barcode || null, product_name, short_name || null, pack_size || 1, category_id || null, supplier_id || null, cost_price, selling_price, quantity, minimum_stock || 5, description || null]
     );
-    return NextResponse.json({ success: true, product_id: result.lastInsertRowid });
+    return NextResponse.json({ success: true, product_id: Number(result.lastInsertRowid) });
   } catch (e: unknown) {
     if ((e as Error).message === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });

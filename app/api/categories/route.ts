@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       `INSERT INTO categories (category_name, description, is_active, created_at, updated_at) VALUES (?, ?, 1, datetime('now'), datetime('now'))`,
       [category_name, description || null]
     );
-    return NextResponse.json({ success: true, category_id: result.lastInsertRowid });
+    return NextResponse.json({ success: true, category_id: Number(result.lastInsertRowid) });
   } catch (e: unknown) {
     if ((e as Error).message === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });

@@ -24,13 +24,17 @@ export async function POST(req: NextRequest) {
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
 
-    // Get company info
-    const company = await queryOne<{company_name: string}>(`SELECT company_name FROM companies WHERE company_id = ?`, [user.company_id]);
+    // Get company info (gracefully handle missing companies table)
+    let companyName = '';
+    try {
+      const company = await queryOne<{company_name: string}>(`SELECT company_name FROM companies WHERE company_id = ?`, [user.company_id]);
+      companyName = company?.company_name || '';
+    } catch {}
 
     const sessionUser = {
       user_id: user.user_id, username: user.username, email: user.email,
       full_name: user.full_name, role: user.role as any,
-      company_id: user.company_id, company_name: company?.company_name || '',
+      company_id: user.company_id, company_name: companyName,
     };
 
     const token = await createSession(sessionUser);

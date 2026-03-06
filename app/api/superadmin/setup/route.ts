@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Fix default company slug
-    await execute(`UPDATE companies SET slug=LOWER(REPLACE(REPLACE(company_name,' ','-'),'''','')) WHERE company_id=1 AND (slug='default' OR slug IS NULL)`);
+    try { await execute(`UPDATE companies SET slug=LOWER(REPLACE(REPLACE(company_name,' ','-'),'''','')) WHERE company_id=1 AND (slug='default' OR slug IS NULL)`); } catch {}
 
     // Create companies table if missing
     await execute(`CREATE TABLE IF NOT EXISTS companies (
@@ -44,8 +44,8 @@ export async function GET(req: NextRequest) {
     )`);
 
     // Seed company 1 from settings if missing
-    await execute(`INSERT OR IGNORE INTO companies (company_id, company_name, slug, plan, is_active)
-      VALUES (1, (SELECT COALESCE(setting_value,'My Shop') FROM settings WHERE setting_key='shop_name' LIMIT 1), 'default', 'standard', 1)`);
+    try { await execute(`INSERT OR IGNORE INTO companies (company_id, company_name, slug, plan, is_active)
+      VALUES (1, (SELECT COALESCE(setting_value,'My Shop') FROM settings WHERE setting_key='shop_name' LIMIT 1), 'default', 'standard', 1)`); } catch {}
 
     // Add company_id columns if missing (safe - errors ignored by migrate)
     const tables = ['users','products','categories','suppliers','customers','sales','expenses','cash_drawer','shifts'];

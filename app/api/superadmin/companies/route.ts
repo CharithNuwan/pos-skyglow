@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       `INSERT INTO companies (company_name, slug, plan, max_users, max_products, notes) VALUES (?,?,?,?,?,?)`,
       [company_name, cleanSlug, plan||'standard', max_users||10, max_products||500, notes||null]
     );
-    const company_id = companyResult.lastInsertRowid;
+    const company_id = Number(companyResult.lastInsertRowid);
 
     // Create default settings for company
     const settingPairs = [

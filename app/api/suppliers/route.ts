@@ -28,6 +28,6 @@ export async function POST(req: NextRequest) {
       `INSERT INTO suppliers (supplier_name, contact_person, phone, email, address, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
       [supplier_name, contact_person || null, phone || null, email || null, address || null, notes || null]
     );
-    return NextResponse.json({ success: true, supplier_id: result.lastInsertRowid });
+    return NextResponse.json({ success: true, supplier_id: Number(result.lastInsertRowid) });
   } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }

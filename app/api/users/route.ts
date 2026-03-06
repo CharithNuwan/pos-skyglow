@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       `INSERT INTO users (username, email, password_hash, full_name, phone, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
       [username, email, hash, full_name, phone || null, role || 'cashier']
     );
-    return NextResponse.json({ success: true, user_id: result.lastInsertRowid });
+    return NextResponse.json({ success: true, user_id: Number(result.lastInsertRowid) });
   } catch (e: unknown) {
     if ((e as Error).message === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });

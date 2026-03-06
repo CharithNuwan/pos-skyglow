@@ -55,6 +55,6 @@ export async function POST(req: NextRequest) {
       [product_id, company_id, batch_number, barcode, cost_price||0, selling_price||0, quantity||0, received_date||new Date().toISOString().slice(0,10), expiry_date||null, notes||null]
     );
     await execute(`UPDATE products SET quantity=(SELECT COALESCE(SUM(quantity),0) FROM product_batches WHERE product_id=? AND status='active') WHERE product_id=?`, [product_id, product_id]);
-    return NextResponse.json({ success: true, batch_id: result.lastInsertRowid });
+    return NextResponse.json({ success: true, batch_id: Number(result.lastInsertRowid) });
   } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }
