@@ -36,6 +36,12 @@ export default function SuppliersClient() {
     } finally { setSaving(false); }
   }
 
+  async function del(id: number) {
+    if (!confirm('Delete this supplier?')) return;
+    await fetch(`/api/suppliers/${id}`, { method: 'DELETE' });
+    load();
+  }
+
   return (
     <div>
       {msg && <div className="alert alert-success alert-dismissible">{msg}<button className="btn-close" onClick={() => setMsg('')}/></div>}
@@ -62,9 +68,10 @@ export default function SuppliersClient() {
                   <td className="small">{s.phone || '-'}</td>
                   <td><span className="badge bg-light text-dark">{s.product_count} products</span></td>
                   <td>
-                    <button className="btn btn-sm btn-outline-primary" onClick={() => { setEditSup({ ...s }); setShowModal(true); }}>
+                    <button className="btn btn-sm btn-outline-primary me-1" onClick={() => { setEditSup({ ...s }); setShowModal(true); }}>
                       <i className="bi bi-pencil"/>
                     </button>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => del(s.supplier_id)}><i className="bi bi-trash"/></button>
                   </td>
                 </tr>
               ))}

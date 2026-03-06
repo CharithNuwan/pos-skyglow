@@ -16,3 +16,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ success: true });
   } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const session = await requireSession();
+    if (!hasRole(session.role, 'manager')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const id = parseInt(params.id);
+    await execute(`UPDATE suppliers SET is_active = 0, updated_at = datetime('now') WHERE supplier_id = ?`, [id]);
+    return NextResponse.json({ success: true });
+  } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
+}
