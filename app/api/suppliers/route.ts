@@ -9,8 +9,8 @@ export async function GET(req: NextRequest) {
     const company_id = session.company_id || 1;
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
-    let sql = `SELECT s.*, COUNT(p.product_id) as product_count FROM suppliers s LEFT JOIN products p ON p.supplier_id = s.supplier_id WHERE s.company_id = ? WHERE s.is_active = 1`;
-    const args: any[] = [];
+    let sql = `SELECT s.*, COUNT(p.product_id) as product_count FROM suppliers s LEFT JOIN products p ON p.supplier_id = s.supplier_id WHERE (s.company_id = ? OR s.company_id IS NULL) AND (s.is_active = 1 OR s.is_active IS NULL)`;
+    const args: any[] = [company_id];
     if (search) { sql += ` AND (s.supplier_name LIKE ? OR s.phone LIKE ?)`; args.push(`%${search}%`, `%${search}%`); }
     sql += ` GROUP BY s.supplier_id ORDER BY s.supplier_name`;
     const suppliers = await query(sql, args);
