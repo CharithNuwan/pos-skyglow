@@ -370,6 +370,8 @@ const migrations = [
   `CREATE INDEX IF NOT EXISTS idx_batches_barcode   ON product_batches(barcode)`,
   `CREATE INDEX IF NOT EXISTS idx_batches_company   ON product_batches(company_id)`,
 
+  `ALTER TABLE sale_items ADD COLUMN batch_id INTEGER REFERENCES product_batches(batch_id)`,
+
   // Admin user (password: password123) - bcrypt hash
   `INSERT OR IGNORE INTO users (username, email, password_hash, full_name, phone, role, is_active) VALUES
     ('admin', 'admin@pos.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', '+1 234 567 8900', 'admin', 1)`,

@@ -72,22 +72,33 @@ export async function POST(req: NextRequest) {
 
     // Insert items and update stock
     for (const item of data.items) {
+      const batch_id = item.batch_id ?? null;
       await execute(
-        `INSERT INTO sale_items (sale_id, product_id, quantity, unit_price, cost_price, total_price, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
-        [saleId, item.product_id, item.quantity, item.unit_price, item.cost_price || 0, item.total_price]
+        `INSERT INTO sale_items (sale_id, product_id, batch_id, quantity, unit_price, cost_price, total_price, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+        [saleId, item.product_id, batch_id, item.quantity, item.unit_price, item.cost_price || 0, item.total_price]
       );
 
-      // Get current stock for logging
-      const product = await queryOne<{ quantity: number; cost_price: number }>(`SELECT quantity, cost_price FROM products WHERE product_id = ?`, [item.product_id]);
-      const qBefore = product?.quantity ?? 0;
-      const qAfter = qBefore - item.quantity;
-
-      await execute(`UPDATE products SET quantity = quantity - ?, updated_at = datetime('now') WHERE product_id = ?`, [item.quantity, item.product_id]);
-
-      await execute(
-        `INSERT INTO stock_logs (product_id, user_id, movement_type, quantity_before, quantity_change, quantity_after, reference_id, reference_type, notes, created_at) VALUES (?, ?, 'sale', ?, ?, ?, ?, 'sale', ?, datetime('now'))`,
-        [item.product_id, session.user_id, qBefore, -item.quantity, qAfter, saleId, `Sale - ${invoiceNumber}`]
-      );
+      if (batch_id != null) {
+        const batch = await queryOne<{ quantity: number; product_id: number }>(`SELECT quantity, product_id FROM product_batches WHERE batch_id = ?`, [batch_id]);
+        if (batch) {
+          const qAfter = Math.max(0, (batch.quantity ?? 0) - item.quantity);
+          await execute(`UPDATE product_batches SET quantity = ?, updated_at = datetime('now') WHERE batch_id = ?`, [qAfter, batch_id]);
+          await execute(`UPDATE products SET quantity = (SELECT COALESCE(SUM(quantity),0) FROM product_batches WHERE product_id = ? AND status = 'active'), updated_at = datetime('now') WHERE product_id = ?`, [batch.product_id, batch.product_id]);
+        }
+        await execute(
+          `INSERT INTO stock_logs (product_id, user_id, movement_type, quantity_before, quantity_change, quantity_after, reference_id, reference_type, notes, created_at) VALUES (?, ?, 'sale', ?, ?, ?, ?, 'sale', ?, datetime('now'))`,
+          [item.product_id, session.user_id, batch?.quantity ?? 0, -item.quantity, Math.max(0, (batch?.quantity ?? 0) - item.quantity), saleId, `Sale - ${invoiceNumber}`]
+        );
+      } else {
+        const product = await queryOne<{ quantity: number; cost_price: number }>(`SELECT quantity, cost_price FROM products WHERE product_id = ?`, [item.product_id]);
+        const qBefore = product?.quantity ?? 0;
+        const qAfter = qBefore - item.quantity;
+        await execute(`UPDATE products SET quantity = quantity - ?, updated_at = datetime('now') WHERE product_id = ?`, [item.quantity, item.product_id]);
+        await execute(
+          `INSERT INTO stock_logs (product_id, user_id, movement_type, quantity_before, quantity_change, quantity_after, reference_id, reference_type, notes, created_at) VALUES (?, ?, 'sale', ?, ?, ?, ?, 'sale', ?, datetime('now'))`,
+          [item.product_id, session.user_id, qBefore, -item.quantity, qAfter, saleId, `Sale - ${invoiceNumber}`]
+        );
+      }
     }
 
     // Update customer stats + loyalty points

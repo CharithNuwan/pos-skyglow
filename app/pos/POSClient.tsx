@@ -11,6 +11,8 @@ interface Product {
   quantity: number;
   category_id: number;
   category_name: string;
+  batch_id?: number | null;
+  batch_number?: string | null;
 }
 
 interface Category { category_id: number; category_name: string; }
@@ -47,7 +49,7 @@ export default function POSClient() {
 
   async function loadData() {
     const [prodRes, catRes, settingsRes] = await Promise.all([
-      fetch('/api/products?inStock=true&perPage=100'),
+      fetch('/api/pos/products?inStock=true'),
       fetch('/api/categories'),
       fetch('/api/settings'),
     ]);
@@ -68,21 +70,26 @@ export default function POSClient() {
 
   function addToCart(product: Product) {
     if (product.quantity <= 0) return;
+    const bid = (product as any).batch_id ?? null;
     setCart(prev => {
-      const existing = prev.find(i => i.product_id === product.product_id);
+      const existing = prev.find(i => i.product_id === product.product_id && ((i as any).batch_id ?? null) === bid);
       if (existing) {
         if (existing.cartQty >= product.quantity) return prev;
-        return prev.map(i => i.product_id === product.product_id ? { ...i, cartQty: i.cartQty + 1 } : i);
+        return prev.map(i => i.product_id === product.product_id && ((i as any).batch_id ?? null) === bid ? { ...i, cartQty: i.cartQty + 1 } : i);
       }
       return [...prev, { ...product, cartQty: 1 }];
     });
   }
 
-  function updateQty(productId: number, qty: number) {
+  function updateQty(productId: number, batchId: number | null, qty: number) {
     if (qty <= 0) {
-      setCart(prev => prev.filter(i => i.product_id !== productId));
+      setCart(prev => prev.filter(i => !(i.product_id === productId && ((i as any).batch_id ?? null) === batchId)));
     } else {
-      setCart(prev => prev.map(i => i.product_id === productId ? { ...i, cartQty: Math.min(qty, i.quantity) } : i));
+      setCart(prev => prev.map(i =>
+        i.product_id === productId && ((i as any).batch_id ?? null) === batchId
+          ? { ...i, cartQty: Math.min(qty, i.quantity) }
+          : i
+      ));
     }
   }
 
@@ -135,9 +142,11 @@ export default function POSClient() {
         product_id: b.product_id,
         product_name: b.product_name,
         selling_price: b.selling_price,
+        cost_price: b.cost_price ?? 0,
         quantity: b.quantity,
         barcode: code,
         category_name: b.category_name || '',
+        category_id: b.category_id ?? 0,
         batch_id: b.batch_id,
         batch_number: b.batch_number,
         expiry_date: b.expiry_date,
@@ -150,7 +159,7 @@ export default function POSClient() {
     }
 
     // ── Step 2: Fall back to regular product barcode
-    const product = products.find(p => p.barcode === code);
+    const product = products.find((p: Product) => p.barcode === code && (p as any).batch_id == null);
     if (product) {
       addToCart(product);
       beepSuccess();
@@ -207,6 +216,7 @@ export default function POSClient() {
         body: JSON.stringify({
           items: cart.map(i => ({
             product_id: i.product_id,
+            batch_id: (i as any).batch_id ?? null,
             quantity: i.cartQty,
             unit_price: i.selling_price,
             cost_price: i.cost_price,
@@ -330,9 +340,9 @@ export default function POSClient() {
           </div>
           <div className="card-body p-2" style={{ overflow: 'auto' }}>
             <div className="product-grid">
-              {filtered.map(p => (
+              {filtered.map((p) => (
                 <div
-                  key={p.product_id}
+                  key={(p as any).batch_id != null ? `b-${p.product_id}-${(p as any).batch_id}` : `p-${p.product_id}`}
                   className={`product-card ${p.quantity === 0 ? 'out-of-stock' : ''}`}
                   onClick={() => { addToCart(p); if (window.innerWidth <= 900) setPosTab('cart'); }}
                 >
@@ -385,15 +395,18 @@ export default function POSClient() {
               </div>
             ) : (
               cart.map(item => (
-                <div key={item.product_id} className="cart-item">
+                <div key={(item as any).batch_id != null ? `b-${item.product_id}-${(item as any).batch_id}` : `p-${item.product_id}`} className="cart-item">
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product_name}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>{currencySymbol}{item.selling_price.toFixed(2)} each</div>
+                    <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>
+                      {currencySymbol}{item.selling_price.toFixed(2)} each
+                      {(item as any).batch_number && <span className="ms-1"> · {(item as any).batch_number}</span>}
+                    </div>
                   </div>
                   <div className="d-flex align-items-center gap-1">
-                    <button className="btn btn-sm btn-outline-secondary" style={{ width: 28, padding: 0 }} onClick={() => updateQty(item.product_id, item.cartQty - 1)}>-</button>
+                    <button className="btn btn-sm btn-outline-secondary" style={{ width: 28, padding: 0 }} onClick={() => updateQty(item.product_id, (item as any).batch_id ?? null, item.cartQty - 1)}>-</button>
                     <span style={{ width: 30, textAlign: 'center', fontWeight: 600 }}>{item.cartQty}</span>
-                    <button className="btn btn-sm btn-outline-secondary" style={{ width: 28, padding: 0 }} onClick={() => updateQty(item.product_id, item.cartQty + 1)}>+</button>
+                    <button className="btn btn-sm btn-outline-secondary" style={{ width: 28, padding: 0 }} onClick={() => updateQty(item.product_id, (item as any).batch_id ?? null, item.cartQty + 1)}>+</button>
                   </div>
                   <div style={{ minWidth: 60, textAlign: 'right', fontWeight: 700, color: '#0d6efd' }}>
                     {currencySymbol}{(item.selling_price * item.cartQty).toFixed(2)}

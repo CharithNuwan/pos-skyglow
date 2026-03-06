@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     if (!barcode) return NextResponse.json({ error: 'barcode required' }, { status: 400 });
 
     const batch = await queryOne<any>(`
-      SELECT b.*, p.product_name, p.product_id, p.barcode as product_barcode, c.category_name
+      SELECT b.*, p.product_name, p.product_id, p.category_id, p.barcode as product_barcode, c.category_name
       FROM product_batches b
       JOIN products p ON b.product_id = p.product_id
       LEFT JOIN categories c ON p.category_id = c.category_id
