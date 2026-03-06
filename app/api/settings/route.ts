@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
 import { requireSession, hasRole } from '@/lib/auth';
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    await requireSession();
-    const settings = await query(`SELECT setting_key, setting_value FROM settings WHERE company_id = ?`);
+    const session = await requireSession();
+    const company_id = session.company_id || 1;
+    const settings = await query(
+      `SELECT setting_key, setting_value FROM settings WHERE company_id = ?`,
+      [company_id]
+    );
     const map = Object.fromEntries((settings as any[]).map((s: any) => [s.setting_key, s.setting_value]));
     return NextResponse.json(map);
   } catch (e: unknown) {
@@ -22,8 +27,9 @@ export async function POST(req: NextRequest) {
     const updates = await req.json();
     for (const [key, value] of Object.entries(updates)) {
       await execute(
-        `INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON CONFLICT(setting_key) DO UPDATE SET setting_value=excluded.setting_value, updated_at=datetime('now')`,
-        [key, String(value)]
+        `INSERT INTO settings (setting_key, setting_value, company_id) VALUES (?, ?, ?)
+         ON CONFLICT(setting_key, company_id) DO UPDATE SET setting_value=excluded.setting_value, updated_at=datetime('now')`,
+        [key, String(value), company_id]
       );
     }
     return NextResponse.json({ success: true });
