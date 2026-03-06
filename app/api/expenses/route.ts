@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = requireSession();
+    const session = await requireSession();
     const company_id = session.company_id || 1;
     const { searchParams } = new URL(req.url);
     const dateFrom = searchParams.get('date_from') || new Date(Date.now() - 30*86400000).toISOString().slice(0,10);

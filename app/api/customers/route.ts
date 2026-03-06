@@ -5,13 +5,13 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = requireSession();
+    const session = await requireSession();
     const company_id = session.company_id || 1;
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
     const page = parseInt(searchParams.get('page') || '1');
     let sql = `SELECT * FROM customers WHERE is_active = 1 AND company_id = ?`;
-    const args: any[] = [];
+    const args: any[] = [company_id];
     if (search) { sql += ` AND (full_name LIKE ? OR phone LIKE ? OR email LIKE ?)`; args.push(`%${search}%`, `%${search}%`, `%${search}%`); }
     const total = (await queryOne<any>(`SELECT COUNT(*) as cnt FROM (${sql}) t`, args))?.cnt ?? 0;
     sql += ` ORDER BY total_spent DESC LIMIT 20 OFFSET ?`;
@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    await requireSession();
+    const session = await requireSession();
+    const company_id = session.company_id || 1;
     const { full_name, phone, email, address, notes } = await req.json();
     if (!full_name) return NextResponse.json({ error: 'Name required' }, { status: 400 });
     const result = await execute(
