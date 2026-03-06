@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     for (const [key, value] of Object.entries(updates)) {
       await execute(
         `INSERT INTO settings (setting_key, setting_value, company_id) VALUES (?, ?, ?)
-         ON CONFLICT(setting_key, company_id) DO UPDATE SET setting_value=excluded.setting_value, updated_at=datetime('now')`,
+         ON CONFLICT(company_id, setting_key) DO UPDATE SET setting_value=excluded.setting_value, updated_at=datetime('now')`,
         [key, String(value), company_id]
       );
     }

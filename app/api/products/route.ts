@@ -14,8 +14,8 @@ export async function GET(req: NextRequest) {
     const perPage = 20;
 
     let sql = `SELECT p.*, c.category_name FROM products p
-      LEFT JOIN categories c ON p.category_id = c.category_id WHERE p.is_active = 1`;
-    const args: (string | number)[] = [];
+      LEFT JOIN categories c ON p.category_id = c.category_id WHERE p.is_active = 1 AND (p.company_id = ? OR p.company_id IS NULL)`;
+    const args: (string | number)[] = [company_id];
 
     if (search) { sql += ` AND (p.product_name LIKE ? OR p.barcode LIKE ?)`; args.push(`%${search}%`, `%${search}%`); }
     if (category) { sql += ` AND p.category_id = ?`; args.push(parseInt(category)); }
@@ -45,9 +45,9 @@ export async function POST(req: NextRequest) {
     const { barcode, product_name, short_name, pack_size, category_id, supplier_id, cost_price, selling_price, quantity, minimum_stock, description } = data;
 
     const result = await execute(
-      `INSERT INTO products (barcode, product_name, short_name, pack_size, category_id, supplier_id, cost_price, selling_price, quantity, minimum_stock, description, is_active, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`,
-      [barcode || null, product_name, short_name || null, pack_size || 1, category_id || null, supplier_id || null, cost_price, selling_price, quantity, minimum_stock || 5, description || null]
+      `INSERT INTO products (barcode, product_name, short_name, pack_size, category_id, supplier_id, cost_price, selling_price, quantity, minimum_stock, description, is_active, company_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, datetime('now'), datetime('now'))`,
+      [barcode || null, product_name, short_name || null, pack_size || 1, category_id || null, supplier_id || null, cost_price, selling_price, quantity, minimum_stock || 5, description || null, company_id]
     );
     return NextResponse.json({ success: true, product_id: Number(result.lastInsertRowid) });
   } catch (e: unknown) {

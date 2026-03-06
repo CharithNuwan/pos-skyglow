@@ -16,8 +16,8 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status') || '';
     const search = searchParams.get('search') || '';
 
-    let sql = `SELECT s.*, u.full_name as cashier_name FROM sales s JOIN users u ON s.user_id = u.user_id WHERE date(s.sale_date) BETWEEN ? AND ?`;
-    const args: (string | number)[] = [dateFrom, dateTo];
+    let sql = `SELECT s.*, u.full_name as cashier_name FROM sales s JOIN users u ON s.user_id = u.user_id WHERE s.company_id = ? AND date(s.sale_date) BETWEEN ? AND ?`;
+    const args: (string | number)[] = [company_id, dateFrom, dateTo];
 
     if (status) { sql += ` AND s.payment_status = ?`; args.push(status); }
     if (search) { sql += ` AND (s.invoice_number LIKE ? OR s.customer_name LIKE ?)`; args.push(`%${search}%`, `%${search}%`); }
@@ -51,14 +51,15 @@ export async function POST(req: NextRequest) {
 
     // Insert sale
     statements.push({
-      sql: `INSERT INTO sales (invoice_number, user_id, customer_id, shift_id, customer_name, customer_phone, subtotal, tax_amount, discount_amount, discount_type, discount_value, total_amount, payment_method, payment_status, cash_received, change_amount, notes, sale_date, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, datetime('now'), datetime('now'), datetime('now'))`,
+      sql: `INSERT INTO sales (invoice_number, user_id, customer_id, shift_id, customer_name, customer_phone, subtotal, tax_amount, discount_amount, discount_type, discount_value, total_amount, payment_method, payment_status, cash_received, change_amount, notes, sale_date, company_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, datetime('now'), ?, datetime('now'), datetime('now'))`,
       args: [
         invoiceNumber, session.user_id, data.customer_id || null, data.shift_id || null,
         data.customer_name || null, data.customer_phone || null,
         data.subtotal, data.tax_amount, data.discount_amount,
         data.discount_type || null, data.discount_value || 0, data.total_amount,
-        data.payment_method || 'cash', data.cash_received || 0, data.change_amount || 0, data.notes || null
+        data.payment_method || 'cash', data.cash_received || 0, data.change_amount || 0, data.notes || null,
+        company_id
       ]
     });
 
