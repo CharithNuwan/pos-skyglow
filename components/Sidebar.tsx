@@ -139,7 +139,7 @@ export default function Sidebar({ user }: SidebarProps) {
             <Link href="/sales" className={`sidebar-link ${isActive('/sales') ? 'active' : ''}`} onClick={closeSidebar}>
               <i className="bi bi-receipt" /> Sales
             </Link>
-            <Link href="/reports" className={`sidebar-link ${isActive('/reports') ? 'active' : ''}`} onClick={closeSidebar}>
+            <Link href="/reports" className={`sidebar-link ${pathname === '/reports' ? 'active' : ''}`} onClick={closeSidebar}>
               <i className="bi bi-bar-chart" /> Reports
             </Link>
             <Link href="/reports/cashier" className={`sidebar-link ${isActive('/reports/cashier') ? 'active' : ''}`} onClick={closeSidebar}>
