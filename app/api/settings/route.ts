@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, execute } from '@/lib/db';
+import { queryOne, query, execute } from '@/lib/db';
 import { requireSession, hasRole } from '@/lib/auth';
 export const dynamic = 'force-dynamic';
 
@@ -26,11 +26,21 @@ export async function POST(req: NextRequest) {
     if (!hasRole(session.role, 'admin')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     const updates = await req.json();
     for (const [key, value] of Object.entries(updates)) {
-      await execute(
-        `INSERT INTO settings (setting_key, setting_value, company_id) VALUES (?, ?, ?)
-         ON CONFLICT(company_id, setting_key) DO UPDATE SET setting_value=excluded.setting_value, updated_at=datetime('now')`,
-        [key, String(value), company_id]
+      const existing = await queryOne<{ setting_id: number }>(
+        `SELECT setting_id FROM settings WHERE company_id = ? AND setting_key = ?`,
+        [company_id, key]
       );
+      if (existing) {
+        await execute(
+          `UPDATE settings SET setting_value = ? WHERE company_id = ? AND setting_key = ?`,
+          [String(value), company_id, key]
+        );
+      } else {
+        await execute(
+          `INSERT INTO settings (company_id, setting_key, setting_value) VALUES (?, ?, ?)`,
+          [company_id, key, String(value)]
+        );
+      }
     }
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
