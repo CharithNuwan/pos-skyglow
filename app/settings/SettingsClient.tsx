@@ -5,6 +5,7 @@ export default function SettingsClient() {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const [testPrintMsg, setTestPrintMsg] = useState('');
 
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(setSettings);
@@ -24,6 +25,46 @@ export default function SettingsClient() {
 
   function update(key: string, val: string) {
     setSettings(s => ({ ...s, [key]: val }));
+  }
+
+  async function testPrint() {
+    setTestPrintMsg('Sending…');
+    try {
+      const res = await fetch('/api/print-jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          type: 'receipt',
+          payload: {
+            invoice_number: 'TEST-' + Date.now(),
+            sale_id: 0,
+            items: [{ name: 'Test item', qty: 1, unit_price: 9.99, total: 9.99 }],
+            subtotal: 9.99,
+            tax_amount: 0,
+            discount_amount: 0,
+            total_amount: 9.99,
+            payment_method: 'cash',
+            sale_date: new Date().toISOString(),
+            shop_name: settings.shop_name || 'My Shop',
+            shop_address: settings.shop_address || '',
+            shop_phone: settings.shop_phone || '',
+            currency_symbol: settings.currency_symbol || '$',
+            receipt_header: settings.receipt_header || '',
+            receipt_footer: settings.receipt_footer || '',
+          },
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTestPrintMsg('Test print job sent. If Print Bridge is running, the receipt will print shortly.');
+        setTimeout(() => setTestPrintMsg(''), 5000);
+      } else {
+        setTestPrintMsg(data.error || 'Failed');
+      }
+    } catch (e) {
+      setTestPrintMsg('Error: ' + (e instanceof Error ? e.message : 'Request failed'));
+    }
   }
 
   return (
@@ -185,6 +226,29 @@ export default function SettingsClient() {
             <div className="col-md-6">
               <label className="form-label">Receipt Footer Text</label>
               <input className="form-control" value={settings.receipt_footer || ''} onChange={e => update('receipt_footer', e.target.value)} placeholder="Please come again!" />
+            </div>
+
+            {/* Test print — sends a test receipt job to Print Bridge */}
+            <div className="col-12 mt-2">
+              <hr />
+              <label className="form-label fw-600">
+                <i className="bi bi-printer me-1"/>Test print
+              </label>
+              <p className="text-muted small mb-2">
+                Send a test receipt to the Print Bridge app. Make sure the app is running and polling.
+              </p>
+              <div className="d-flex align-items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  className="btn btn-outline-primary"
+                  onClick={testPrint}
+                >
+                  <i className="bi bi-printer me-1"/>Send test receipt
+                </button>
+                {testPrintMsg && (
+                  <span className="small text-muted">{testPrintMsg}</span>
+                )}
+              </div>
             </div>
 
             {/* Print Bridge — API token for Android app */}

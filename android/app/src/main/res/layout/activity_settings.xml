@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Server URL"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary" />
+        <EditText
+            android:id="@+id/settings_server_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textUri"
+            android:hint="https://your-pos-server.com"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Print API Token"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary" />
+        <EditText
+            android:id="@+id/settings_token"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword"
+            android:hint="Paste token from POS Settings"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Company ID"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary" />
+        <EditText
+            android:id="@+id/settings_company_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:hint="1"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Shop name (optional)"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary" />
+        <EditText
+            android:id="@+id/settings_shop_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:hint="My Shop"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bluetooth printer"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary" />
+        <Button
+            android:id="@+id/settings_select_printer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Select printer"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/settings_test_print"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Test print"
+            android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/settings_save"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save" />
+    </LinearLayout>
+</ScrollView>

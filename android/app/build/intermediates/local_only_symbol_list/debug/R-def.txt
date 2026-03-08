@@ -1,0 +1,20 @@
+R_DEF: Internal format may change without notice
+local
+id main_btn_settings
+id main_btn_start
+id main_btn_stop
+id main_log
+id main_printer
+id main_status
+id printer_list
+id settings_company_id
+id settings_save
+id settings_select_printer
+id settings_server_url
+id settings_shop_name
+id settings_token
+layout activity_main
+layout activity_printer_select
+layout activity_settings
+string app_name
+style Theme.PrintBridge

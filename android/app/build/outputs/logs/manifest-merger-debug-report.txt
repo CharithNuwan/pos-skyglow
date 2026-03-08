@@ -1,0 +1,365 @@
+-- Merging decision tree log ---
+manifest
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:2:1-50:12
+INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:2:1-50:12
+INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:2:1-50:12
+INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:2:1-50:12
+MERGED from [androidx.databinding:viewbinding:8.4.2] C:\Users\charitha\.gradle\caches\transforms-4\a4717da33b6a97eb023287097e561e2c\transformed\viewbinding-8.4.2\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.material:material:1.11.0] C:\Users\charitha\.gradle\caches\transforms-4\fc030479ad993a262460da54e14f255b\transformed\material-1.11.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\charitha\.gradle\caches\transforms-4\a18d1f4a8921d05eeb1516b8dab435a9\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\charitha\.gradle\caches\transforms-4\265016d6fe5c8acfef843c8718c1ba11\transformed\appcompat-resources-1.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\charitha\.gradle\caches\transforms-4\dc3282d22712a6a70692c2773d8d108d\transformed\appcompat-1.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.emoji2:emoji2-views-helper:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\d8e18e07f575e354822a655e09903ea2\transformed\emoji2-views-helper-1.2.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\23f9a88230230f72b2d6fde206b0e555\transformed\viewpager2-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.fragment:fragment:1.3.6] C:\Users\charitha\.gradle\caches\transforms-4\42a51ea2a8c3dcb1b27c9f07bbbfe12e\transformed\fragment-1.3.6\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.activity:activity:1.8.0] C:\Users\charitha\.gradle\caches\transforms-4\5fa497fe1b98e88b20147e90dd0ad9b7\transformed\activity-1.8.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\14ff8140c39b27c1b950488a9dc82238\transformed\drawerlayout-1.1.1\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\5c0242daced30021e141df7518505018\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\3f5f76535327a21097910f26e0247a44\transformed\dynamicanimation-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.transition:transition:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\2674b54b7e0a29dcd2dafecb8411544b\transformed\transition-1.2.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\70e8d9a0eda4d403191a5d186ed9df8c\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\be38a264c5aaf0ed5b77095387c5174e\transformed\vectordrawable-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\918a174f8cb2815e47722638a6680e24\transformed\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\e345ebe065ffd13d6295d3ed52ea095d\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\b1ab55cbdc79a48fc0d7729925c2434c\transformed\loader-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.recyclerview:recyclerview:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\f9f9336d4409fb86644577be048b2dc1\transformed\recyclerview-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\332ea5b84a3f0cf589fa95493390fd41\transformed\customview-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:17:1-30:12
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\charitha\.gradle\caches\transforms-4\c83669ee799fdfcdfdc0d795ad9ee351\transformed\savedstate-1.2.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\9929a55bf997a4805609a0a0ffed2c7d\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\254a0f4435254313ed56386e4a2ac14c\transformed\lifecycle-livedata-core-2.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\16a8525ad37617adc8615de141684ef8\transformed\lifecycle-livedata-2.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\dab087b0d1fcbd2dc1b21ddbf16341c7\transformed\lifecycle-viewmodel-2.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\07209156a0ccd92b478c26e675e1fd07\transformed\lifecycle-runtime-2.6.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\c5a791d2103f06f9ddecb70e0fe2d1bb\transformed\lifecycle-viewmodel-savedstate-2.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.core:core-ktx:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\7140be1f88c21af4520b32e917c421da\transformed\core-ktx-1.12.0\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\a604d3c66ab66c37ead308ca0ee234e4\transformed\annotation-experimental-1.3.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\a3222a63e0be1ecc7b4c76ef1cb594f3\transformed\cursoradapter-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\4acf27fc93b205cb86694d0ccb206c4c\transformed\cardview-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\7b34a896da4abee774496789a0782ab1\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\3894ebc10045834b2cc59918210cf6c4\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\771e15d5e53dfea915456593e80e5d32\transformed\startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\014c0d3ee07e289651e9b52d5afd5df0\transformed\tracing-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\charitha\.gradle\caches\transforms-4\3922ef509ceed9429815257ab00b0ef2\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\cd241f888e9f401224760e4b2b3a03d2\transformed\documentfile-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\a813a3f8f0184b36ad2f91c3313bd07b\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.print:print:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\119af33dcee3ee66f04a8178cb04f466\transformed\print-1.0.0\AndroidManifest.xml:17:1-22:12
+	package
+		INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml
+	android:versionName
+		INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml
+	android:versionCode
+		INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:2:11-69
+uses-permission#android.permission.INTERNET
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:3:5-67
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:3:22-64
+uses-permission#android.permission.BLUETOOTH
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:4:5-95
+	android:maxSdkVersion
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:4:66-92
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:4:22-65
+uses-permission#android.permission.BLUETOOTH_CONNECT
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:5:5-76
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:5:22-73
+uses-permission#android.permission.FOREGROUND_SERVICE
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:6:5-77
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:6:22-74
+uses-permission#android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:7:5-94
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:7:22-91
+uses-permission#android.permission.POST_NOTIFICATIONS
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:8:5-77
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:8:22-74
+uses-permission#android.permission.RECEIVE_BOOT_COMPLETED
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:9:5-81
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:9:22-78
+application
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:10:5-49:19
+INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:10:5-49:19
+MERGED from [com.google.android.material:material:1.11.0] C:\Users\charitha\.gradle\caches\transforms-4\fc030479ad993a262460da54e14f255b\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
+MERGED from [com.google.android.material:material:1.11.0] C:\Users\charitha\.gradle\caches\transforms-4\fc030479ad993a262460da54e14f255b\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\charitha\.gradle\caches\transforms-4\a18d1f4a8921d05eeb1516b8dab435a9\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\charitha\.gradle\caches\transforms-4\a18d1f4a8921d05eeb1516b8dab435a9\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
+MERGED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:28:5-89
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\9929a55bf997a4805609a0a0ffed2c7d\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\9929a55bf997a4805609a0a0ffed2c7d\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\3894ebc10045834b2cc59918210cf6c4\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\3894ebc10045834b2cc59918210cf6c4\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\771e15d5e53dfea915456593e80e5d32\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\771e15d5e53dfea915456593e80e5d32\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+	android:extractNativeLibs
+		INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml
+	android:appComponentFactory
+		ADDED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
+	android:supportsRtl
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:16:9-35
+	android:label
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:14:9-41
+	android:roundIcon
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:15:9-61
+	android:icon
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:13:9-56
+	android:allowBackup
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:12:9-35
+	android:theme
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:17:9-49
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:11:9-39
+activity#com.posskyglow.printbridge.MainActivity
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:18:9-26:20
+	android:exported
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:20:13-36
+	android:theme
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:21:13-53
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:19:13-41
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:22:13-25:29
+action#android.intent.action.MAIN
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:23:17-69
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:23:25-66
+category#android.intent.category.LAUNCHER
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:24:17-77
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:24:27-74
+activity#com.posskyglow.printbridge.SettingsActivity
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:27:9-31:56
+	android:label
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:30:13-37
+	android:exported
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:29:13-37
+	android:theme
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:31:13-53
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:28:13-45
+activity#com.posskyglow.printbridge.PrinterSelectActivity
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:32:9-36:56
+	android:label
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:35:13-43
+	android:exported
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:34:13-37
+	android:theme
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:36:13-53
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:33:13-50
+service#com.posskyglow.printbridge.PrintService
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:37:9-41:63
+	android:enabled
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:39:13-35
+	android:exported
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:40:13-37
+	android:foregroundServiceType
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:41:13-60
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:38:13-41
+receiver#com.posskyglow.printbridge.BootReceiver
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:42:9-48:20
+	android:exported
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:44:13-36
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:43:13-41
+intent-filter#action:name:android.intent.action.BOOT_COMPLETED
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:45:13-47:29
+action#android.intent.action.BOOT_COMPLETED
+ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:46:17-79
+	android:name
+		ADDED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml:46:25-76
+uses-sdk
+INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml
+INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml
+MERGED from [androidx.databinding:viewbinding:8.4.2] C:\Users\charitha\.gradle\caches\transforms-4\a4717da33b6a97eb023287097e561e2c\transformed\viewbinding-8.4.2\AndroidManifest.xml:5:5-44
+MERGED from [androidx.databinding:viewbinding:8.4.2] C:\Users\charitha\.gradle\caches\transforms-4\a4717da33b6a97eb023287097e561e2c\transformed\viewbinding-8.4.2\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.material:material:1.11.0] C:\Users\charitha\.gradle\caches\transforms-4\fc030479ad993a262460da54e14f255b\transformed\material-1.11.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.material:material:1.11.0] C:\Users\charitha\.gradle\caches\transforms-4\fc030479ad993a262460da54e14f255b\transformed\material-1.11.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\charitha\.gradle\caches\transforms-4\a18d1f4a8921d05eeb1516b8dab435a9\transformed\constraintlayout-2.1.4\AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\charitha\.gradle\caches\transforms-4\a18d1f4a8921d05eeb1516b8dab435a9\transformed\constraintlayout-2.1.4\AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\charitha\.gradle\caches\transforms-4\265016d6fe5c8acfef843c8718c1ba11\transformed\appcompat-resources-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\charitha\.gradle\caches\transforms-4\265016d6fe5c8acfef843c8718c1ba11\transformed\appcompat-resources-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\charitha\.gradle\caches\transforms-4\dc3282d22712a6a70692c2773d8d108d\transformed\appcompat-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat:1.6.1] C:\Users\charitha\.gradle\caches\transforms-4\dc3282d22712a6a70692c2773d8d108d\transformed\appcompat-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\d8e18e07f575e354822a655e09903ea2\transformed\emoji2-views-helper-1.2.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\d8e18e07f575e354822a655e09903ea2\transformed\emoji2-views-helper-1.2.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\23f9a88230230f72b2d6fde206b0e555\transformed\viewpager2-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\23f9a88230230f72b2d6fde206b0e555\transformed\viewpager2-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.3.6] C:\Users\charitha\.gradle\caches\transforms-4\42a51ea2a8c3dcb1b27c9f07bbbfe12e\transformed\fragment-1.3.6\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.3.6] C:\Users\charitha\.gradle\caches\transforms-4\42a51ea2a8c3dcb1b27c9f07bbbfe12e\transformed\fragment-1.3.6\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.activity:activity:1.8.0] C:\Users\charitha\.gradle\caches\transforms-4\5fa497fe1b98e88b20147e90dd0ad9b7\transformed\activity-1.8.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.8.0] C:\Users\charitha\.gradle\caches\transforms-4\5fa497fe1b98e88b20147e90dd0ad9b7\transformed\activity-1.8.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\14ff8140c39b27c1b950488a9dc82238\transformed\drawerlayout-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\14ff8140c39b27c1b950488a9dc82238\transformed\drawerlayout-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\5c0242daced30021e141df7518505018\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\5c0242daced30021e141df7518505018\transformed\coordinatorlayout-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\3f5f76535327a21097910f26e0247a44\transformed\dynamicanimation-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\3f5f76535327a21097910f26e0247a44\transformed\dynamicanimation-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.transition:transition:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\2674b54b7e0a29dcd2dafecb8411544b\transformed\transition-1.2.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.transition:transition:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\2674b54b7e0a29dcd2dafecb8411544b\transformed\transition-1.2.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\70e8d9a0eda4d403191a5d186ed9df8c\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\70e8d9a0eda4d403191a5d186ed9df8c\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\be38a264c5aaf0ed5b77095387c5174e\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\be38a264c5aaf0ed5b77095387c5174e\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\918a174f8cb2815e47722638a6680e24\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\918a174f8cb2815e47722638a6680e24\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\e345ebe065ffd13d6295d3ed52ea095d\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\e345ebe065ffd13d6295d3ed52ea095d\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\b1ab55cbdc79a48fc0d7729925c2434c\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\b1ab55cbdc79a48fc0d7729925c2434c\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.recyclerview:recyclerview:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\f9f9336d4409fb86644577be048b2dc1\transformed\recyclerview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.recyclerview:recyclerview:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\f9f9336d4409fb86644577be048b2dc1\transformed\recyclerview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\332ea5b84a3f0cf589fa95493390fd41\transformed\customview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.1.0] C:\Users\charitha\.gradle\caches\transforms-4\332ea5b84a3f0cf589fa95493390fd41\transformed\customview-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\charitha\.gradle\caches\transforms-4\c83669ee799fdfcdfdc0d795ad9ee351\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\charitha\.gradle\caches\transforms-4\c83669ee799fdfcdfdc0d795ad9ee351\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\9929a55bf997a4805609a0a0ffed2c7d\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\9929a55bf997a4805609a0a0ffed2c7d\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\254a0f4435254313ed56386e4a2ac14c\transformed\lifecycle-livedata-core-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\254a0f4435254313ed56386e4a2ac14c\transformed\lifecycle-livedata-core-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\16a8525ad37617adc8615de141684ef8\transformed\lifecycle-livedata-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\16a8525ad37617adc8615de141684ef8\transformed\lifecycle-livedata-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\dab087b0d1fcbd2dc1b21ddbf16341c7\transformed\lifecycle-viewmodel-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\dab087b0d1fcbd2dc1b21ddbf16341c7\transformed\lifecycle-viewmodel-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\07209156a0ccd92b478c26e675e1fd07\transformed\lifecycle-runtime-2.6.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\07209156a0ccd92b478c26e675e1fd07\transformed\lifecycle-runtime-2.6.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\c5a791d2103f06f9ddecb70e0fe2d1bb\transformed\lifecycle-viewmodel-savedstate-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\c5a791d2103f06f9ddecb70e0fe2d1bb\transformed\lifecycle-viewmodel-savedstate-2.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core-ktx:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\7140be1f88c21af4520b32e917c421da\transformed\core-ktx-1.12.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-ktx:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\7140be1f88c21af4520b32e917c421da\transformed\core-ktx-1.12.0\AndroidManifest.xml:5:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\a604d3c66ab66c37ead308ca0ee234e4\transformed\annotation-experimental-1.3.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\a604d3c66ab66c37ead308ca0ee234e4\transformed\annotation-experimental-1.3.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\a3222a63e0be1ecc7b4c76ef1cb594f3\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\a3222a63e0be1ecc7b4c76ef1cb594f3\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\4acf27fc93b205cb86694d0ccb206c4c\transformed\cardview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\4acf27fc93b205cb86694d0ccb206c4c\transformed\cardview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\7b34a896da4abee774496789a0782ab1\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\7b34a896da4abee774496789a0782ab1\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\3894ebc10045834b2cc59918210cf6c4\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\3894ebc10045834b2cc59918210cf6c4\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\771e15d5e53dfea915456593e80e5d32\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\771e15d5e53dfea915456593e80e5d32\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\014c0d3ee07e289651e9b52d5afd5df0\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\014c0d3ee07e289651e9b52d5afd5df0\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\charitha\.gradle\caches\transforms-4\3922ef509ceed9429815257ab00b0ef2\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\charitha\.gradle\caches\transforms-4\3922ef509ceed9429815257ab00b0ef2\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\cd241f888e9f401224760e4b2b3a03d2\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\cd241f888e9f401224760e4b2b3a03d2\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\a813a3f8f0184b36ad2f91c3313bd07b\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\a813a3f8f0184b36ad2f91c3313bd07b\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\119af33dcee3ee66f04a8178cb04f466\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.print:print:1.0.0] C:\Users\charitha\.gradle\caches\transforms-4\119af33dcee3ee66f04a8178cb04f466\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
+	android:targetSdkVersion
+		INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from C:\Users\charitha\OneDrive - Bileeta Pvt. Ltd\Documents\my projects\pos-skyglow\android\app\src\main\AndroidManifest.xml
+provider#androidx.startup.InitializationProvider
+ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\9929a55bf997a4805609a0a0ffed2c7d\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\9929a55bf997a4805609a0a0ffed2c7d\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\771e15d5e53dfea915456593e80e5d32\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\charitha\.gradle\caches\transforms-4\771e15d5e53dfea915456593e80e5d32\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
+	tools:node
+		ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:28:13-31
+	android:authorities
+		ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:26:13-68
+	android:exported
+		ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:27:13-37
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:25:13-67
+meta-data#androidx.emoji2.text.EmojiCompatInitializer
+ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.2.0] C:\Users\charitha\.gradle\caches\transforms-4\945ee5cc86ae6770ddb8a83d171399d5\transformed\emoji2-1.2.0\AndroidManifest.xml:30:17-75
+permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
+permission#com.posskyglow.printbridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
+uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
+uses-permission#com.posskyglow.printbridge.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.12.0] C:\Users\charitha\.gradle\caches\transforms-4\1c6d5a8e5397dd408184d7396955493d\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
+meta-data#androidx.lifecycle.ProcessLifecycleInitializer
+ADDED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\9929a55bf997a4805609a0a0ffed2c7d\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\9929a55bf997a4805609a0a0ffed2c7d\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\charitha\.gradle\caches\transforms-4\9929a55bf997a4805609a0a0ffed2c7d\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:30:17-78
+meta-data#androidx.profileinstaller.ProfileInstallerInitializer
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+receiver#androidx.profileinstaller.ProfileInstallReceiver
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+	android:enabled
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+	android:permission
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+	android:directBootAware
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+action#androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+action#androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+action#androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+action#androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\charitha\.gradle\caches\transforms-4\92960cd7e235d84674b95506ed42e256\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:25-92

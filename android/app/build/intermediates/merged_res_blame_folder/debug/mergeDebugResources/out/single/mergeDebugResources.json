@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "C:\\Users\\charitha\\.gradle\\daemon\\8.7\\com.posskyglow.printbridge.app-debug-31:\\layout_activity_settings.xml.flat",
+        "source": "C:\\Users\\charitha\\.gradle\\daemon\\8.7\\com.posskyglow.printbridge.app-main-33:\\layout\\activity_settings.xml"
+    },
+    {
+        "merged": "com.posskyglow.printbridge.app-debug-31:/layout_activity_settings.xml.flat",
+        "source": "com.posskyglow.printbridge.app-main-33:/layout/activity_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\charitha\\.gradle\\daemon\\8.7\\com.posskyglow.printbridge.app-debug-31:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\charitha\\.gradle\\daemon\\8.7\\com.posskyglow.printbridge.app-main-33:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\charitha\\.gradle\\daemon\\8.7\\com.posskyglow.printbridge.app-debug-31:\\layout_activity_printer_select.xml.flat",
+        "source": "C:\\Users\\charitha\\.gradle\\daemon\\8.7\\com.posskyglow.printbridge.app-main-33:\\layout\\activity_printer_select.xml"
+    }
+]
