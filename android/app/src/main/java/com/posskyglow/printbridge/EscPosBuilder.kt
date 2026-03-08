@@ -161,4 +161,72 @@ object EscPosBuilder {
         send(GS, 0x56, 0)
         return out.toByteArray()
     }
+
+    /**
+     * Builds a "font size check" receipt showing Normal, Double height, Double width, Bold, and Quad (2x2).
+     * Use this to see which modes your thermal printer supports.
+     */
+    fun buildFontSizeCheckReceipt(shopName: String = "Shop"): ByteArray {
+        val out = mutableListOf<Byte>()
+        fun send(vararg b: Int) = b.forEach { out.add(it.toByte()) }
+        fun sendStr(s: String) = out.addAll(s.toByteArray(CHARSET).toList())
+
+        send(ESC, 0x40)
+        send(ESC, 0x61, 1)   // center
+        send(GS, 0x21, 0x10)  // double height
+        sendStr("Font size check")
+        send(LF)
+        send(GS, 0x21, 0x00)
+        sendStr(shopName.take(32))
+        send(LF)
+        sendStr(java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date()))
+        send(LF)
+        send(ESC, 0x61, 0)   // left
+        sendStr("--------------------------------")
+        send(LF)
+        sendStr("Normal (1x1):")
+        send(LF)
+        sendStr("The quick brown fox")
+        send(LF)
+        sendStr("--------------------------------")
+        send(LF)
+        sendStr("Double height (2x1):")
+        send(LF)
+        send(GS, 0x21, 0x10)
+        sendStr("Tall text 2x1")
+        send(LF)
+        send(GS, 0x21, 0x00)
+        sendStr("--------------------------------")
+        send(LF)
+        sendStr("Double width (1x2):")
+        send(LF)
+        send(GS, 0x21, 0x01)
+        sendStr("Wide 1x2")
+        send(LF)
+        send(GS, 0x21, 0x00)
+        sendStr("--------------------------------")
+        send(LF)
+        sendStr("Bold:")
+        send(LF)
+        send(GS, 0x21, 0x08)
+        sendStr("Bold text")
+        send(LF)
+        send(GS, 0x21, 0x00)
+        sendStr("--------------------------------")
+        send(LF)
+        sendStr("Quad / 2x2 (if supported):")
+        send(LF)
+        send(GS, 0x21, 0x11)
+        sendStr("2x2")
+        send(LF)
+        send(GS, 0x21, 0x00)
+        sendStr("--------------------------------")
+        send(LF)
+        sendStr("Compare lines above to see")
+        send(LF)
+        sendStr("what your printer supports.")
+        send(LF, LF)
+        send(GS, 0x56, 0)
+        return out.toByteArray()
+    }
 }

@@ -3473,6 +3473,7 @@ id select_dialog_listview
 id selected
 id selection_type
 id settings_company_id
+id settings_font_size_check
 id settings_save
 id settings_select_printer
 id settings_server_url

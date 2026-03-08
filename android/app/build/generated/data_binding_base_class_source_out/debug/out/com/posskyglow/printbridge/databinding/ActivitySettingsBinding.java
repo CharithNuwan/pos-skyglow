@@ -24,6 +24,9 @@ public final class ActivitySettingsBinding implements ViewBinding {
   public final EditText settingsCompanyId;
 
   @NonNull
+  public final Button settingsFontSizeCheck;
+
+  @NonNull
   public final Button settingsSave;
 
   @NonNull
@@ -42,11 +45,13 @@ public final class ActivitySettingsBinding implements ViewBinding {
   public final EditText settingsToken;
 
   private ActivitySettingsBinding(@NonNull ScrollView rootView, @NonNull EditText settingsCompanyId,
-      @NonNull Button settingsSave, @NonNull Button settingsSelectPrinter,
-      @NonNull EditText settingsServerUrl, @NonNull EditText settingsShopName,
-      @NonNull Button settingsTestPrint, @NonNull EditText settingsToken) {
+      @NonNull Button settingsFontSizeCheck, @NonNull Button settingsSave,
+      @NonNull Button settingsSelectPrinter, @NonNull EditText settingsServerUrl,
+      @NonNull EditText settingsShopName, @NonNull Button settingsTestPrint,
+      @NonNull EditText settingsToken) {
     this.rootView = rootView;
     this.settingsCompanyId = settingsCompanyId;
+    this.settingsFontSizeCheck = settingsFontSizeCheck;
     this.settingsSave = settingsSave;
     this.settingsSelectPrinter = settingsSelectPrinter;
     this.settingsServerUrl = settingsServerUrl;
@@ -88,6 +93,12 @@ public final class ActivitySettingsBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.settings_font_size_check;
+      Button settingsFontSizeCheck = ViewBindings.findChildViewById(rootView, id);
+      if (settingsFontSizeCheck == null) {
+        break missingId;
+      }
+
       id = R.id.settings_save;
       Button settingsSave = ViewBindings.findChildViewById(rootView, id);
       if (settingsSave == null) {
@@ -124,9 +135,9 @@ public final class ActivitySettingsBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivitySettingsBinding((ScrollView) rootView, settingsCompanyId, settingsSave,
-          settingsSelectPrinter, settingsServerUrl, settingsShopName, settingsTestPrint,
-          settingsToken);
+      return new ActivitySettingsBinding((ScrollView) rootView, settingsCompanyId,
+          settingsFontSizeCheck, settingsSave, settingsSelectPrinter, settingsServerUrl,
+          settingsShopName, settingsTestPrint, settingsToken);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

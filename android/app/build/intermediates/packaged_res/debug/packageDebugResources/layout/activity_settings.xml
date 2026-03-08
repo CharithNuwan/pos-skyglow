@@ -83,6 +83,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Test print"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/settings_font_size_check"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Font size check"
             android:layout_marginBottom="24dp" />
 
         <Button

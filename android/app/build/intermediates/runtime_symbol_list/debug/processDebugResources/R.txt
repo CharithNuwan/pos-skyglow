@@ -3472,6 +3472,7 @@ int id select_dialog_listview 0x7f08018b
 int id selected 0x7f08018c
 int id selection_type 0x7f08018d
 int id settings_company_id 0x7f08018e
+int id settings_font_size_check 0x7f080200
 int id settings_save 0x7f08018f
 int id settings_select_printer 0x7f080190
 int id settings_server_url 0x7f080191

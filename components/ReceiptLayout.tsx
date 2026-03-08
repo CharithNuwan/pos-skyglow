@@ -34,6 +34,12 @@ export interface ReceiptSettings {
   currency_symbol?: string;
   receipt_width?: string;
   receipt_font_size?: string;
+  /** Title (shop name) font size in px */
+  receipt_title_size?: string;
+  /** Header block (address, phone, receipt header line) font size in px */
+  receipt_header_size?: string;
+  /** Footer block (payment, footer text, thank you) font size in px */
+  receipt_footer_size?: string;
 }
 
 const SAMPLE_SALE: ReceiptSale = {
@@ -74,7 +80,10 @@ export default function ReceiptLayout({
   const items = mode === 'preview' ? SAMPLE_ITEMS : (itemsProp ?? []);
   const widthMm = widthMmProp ?? parseInt(settings?.receipt_width || '80', 10);
   const widthPx = Math.round(widthMm * 3.78);
-  const fontSize = fontSizeProp ?? parseInt(settings?.receipt_font_size || '13', 10);
+  const bodySize = fontSizeProp ?? parseInt(settings?.receipt_font_size || '13', 10);
+  const titleSize = parseInt(settings?.receipt_title_size || '18', 10);
+  const headerSize = parseInt(settings?.receipt_header_size || '13', 10);
+  const footerSize = parseInt(settings?.receipt_footer_size || '12', 10);
   const curr = settings?.currency_symbol || '$';
 
   return (
@@ -88,18 +97,20 @@ export default function ReceiptLayout({
         padding: '1.25rem',
         borderRadius: 8,
         boxShadow: mode === 'preview' ? '0 1px 4px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.1)',
-        fontSize,
+        fontSize: bodySize,
         fontFamily: 'monospace',
         ...style,
       }}
     >
-      {/* Shop Header */}
+      {/* Shop Header — title + header block */}
       <div style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
-        <div style={{ fontWeight: 700, fontSize: fontSize + 4 }}>{settings?.shop_name || 'POS System'}</div>
-        {settings?.shop_address && <div style={{ color: '#555', marginTop: 2 }}>{settings.shop_address}</div>}
-        {settings?.shop_phone && <div style={{ color: '#555' }}>{settings.shop_phone}</div>}
-        {settings?.shop_email && <div style={{ color: '#555' }}>{settings.shop_email}</div>}
-        {settings?.receipt_header && <div style={{ marginTop: 6, fontStyle: 'italic' }}>{settings.receipt_header}</div>}
+        <div style={{ fontWeight: 700, fontSize: titleSize }}>{settings?.shop_name || 'POS System'}</div>
+        <div style={{ fontSize: headerSize, color: '#555', marginTop: 2 }}>
+          {settings?.shop_address && <div>{settings.shop_address}</div>}
+          {settings?.shop_phone && <div>{settings.shop_phone}</div>}
+          {settings?.shop_email && <div>{settings.shop_email}</div>}
+        </div>
+        {settings?.receipt_header && <div style={{ fontSize: headerSize, marginTop: 6, fontStyle: 'italic' }}>{settings.receipt_header}</div>}
       </div>
 
       <div style={{ borderTop: '1px dashed #999', margin: '8px 0' }} />
@@ -176,7 +187,7 @@ export default function ReceiptLayout({
           display: 'flex',
           justifyContent: 'space-between',
           fontWeight: 700,
-          fontSize: fontSize + 3,
+          fontSize: bodySize + 2,
           borderTop: '2px solid #000',
           paddingTop: 6,
           marginTop: 4,
@@ -202,7 +213,7 @@ export default function ReceiptLayout({
       <div style={{ borderTop: '1px dashed #999', margin: '8px 0' }} />
 
       {/* Footer */}
-      <div style={{ textAlign: 'center' }}>
+      <div style={{ textAlign: 'center', fontSize: footerSize }}>
         <div>
           <strong>Payment:</strong>{' '}
           {sale.payment_method?.charAt(0).toUpperCase() + sale.payment_method?.slice(1)}
@@ -210,7 +221,7 @@ export default function ReceiptLayout({
         {settings?.receipt_footer && (
           <div style={{ marginTop: 6, fontStyle: 'italic' }}>{settings.receipt_footer}</div>
         )}
-        <div style={{ marginTop: 6, color: '#888', fontSize: fontSize - 2 }}>
+        <div style={{ marginTop: 6, color: '#888', fontSize: footerSize - 1 }}>
           *** Thank you for your business ***
         </div>
       </div>

@@ -7,6 +7,7 @@ export default function SettingsClient() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [testPrintMsg, setTestPrintMsg] = useState('');
+  const [fontCheckMsg, setFontCheckMsg] = useState('');
   const [companyId, setCompanyId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -71,6 +72,30 @@ export default function SettingsClient() {
       }
     } catch (e) {
       setTestPrintMsg('Error: ' + (e instanceof Error ? e.message : 'Request failed'));
+    }
+  }
+
+  async function fontSizeCheckPrint() {
+    setFontCheckMsg('Sending…');
+    try {
+      const res = await fetch('/api/print-jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          type: 'font_size_check',
+          payload: { shop_name: settings.shop_name || 'My Shop' },
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFontCheckMsg('Font size check sent. Check your printer to see which modes it supports.');
+        setTimeout(() => setFontCheckMsg(''), 6000);
+      } else {
+        setFontCheckMsg(data.error || 'Failed');
+      }
+    } catch (e) {
+      setFontCheckMsg('Error: ' + (e instanceof Error ? e.message : 'Request failed'));
     }
   }
 
@@ -166,34 +191,55 @@ export default function SettingsClient() {
               </div>
             </div>
 
-            {/* Font Size */}
-            <div className="col-md-4">
-              <label className="form-label fw-600">
-                Font Size (px)
-                <span className="ms-1 text-muted" style={{ fontSize: '0.75rem' }}>Receipt text size</span>
-              </label>
-              <div className="d-flex gap-2 mb-2">
-                {['11', '13', '15'].map(s => (
-                  <button
-                    key={s}
-                    type="button"
-                    className={`btn btn-sm flex-fill ${settings.receipt_font_size === s ? 'btn-primary' : 'btn-outline-secondary'}`}
-                    onClick={() => update('receipt_font_size', s)}
-                  >
-                    {s}px
-                  </button>
-                ))}
-              </div>
-              <div className="input-group input-group-sm">
-                <input
-                  type="number"
-                  className="form-control"
-                  min="8"
-                  max="20"
-                  value={settings.receipt_font_size || '13'}
-                  onChange={e => update('receipt_font_size', e.target.value)}
-                />
-                <span className="input-group-text">px</span>
+            {/* Receipt font sizes — Title, Header, Body, Footer */}
+            <div className="col-12">
+              <label className="form-label fw-600">Receipt font sizes (px)</label>
+              <p className="text-muted small mb-2">Set font size for each part of the receipt (web &amp; preview).</p>
+              <div className="row g-2">
+                <div className="col-6 col-md-3">
+                  <label className="form-label small">Title (shop name)</label>
+                  <input
+                    type="number"
+                    className="form-control form-control-sm"
+                    min="10"
+                    max="28"
+                    value={settings.receipt_title_size || '18'}
+                    onChange={e => update('receipt_title_size', e.target.value)}
+                  />
+                </div>
+                <div className="col-6 col-md-3">
+                  <label className="form-label small">Header (address, phone)</label>
+                  <input
+                    type="number"
+                    className="form-control form-control-sm"
+                    min="8"
+                    max="22"
+                    value={settings.receipt_header_size || '13'}
+                    onChange={e => update('receipt_header_size', e.target.value)}
+                  />
+                </div>
+                <div className="col-6 col-md-3">
+                  <label className="form-label small">Body (items, totals)</label>
+                  <input
+                    type="number"
+                    className="form-control form-control-sm"
+                    min="8"
+                    max="20"
+                    value={settings.receipt_font_size || '13'}
+                    onChange={e => update('receipt_font_size', e.target.value)}
+                  />
+                </div>
+                <div className="col-6 col-md-3">
+                  <label className="form-label small">Footer</label>
+                  <input
+                    type="number"
+                    className="form-control form-control-sm"
+                    min="8"
+                    max="18"
+                    value={settings.receipt_footer_size || '12'}
+                    onChange={e => update('receipt_footer_size', e.target.value)}
+                  />
+                </div>
               </div>
             </div>
 
@@ -254,10 +300,20 @@ export default function SettingsClient() {
                 >
                   <i className="bi bi-printer me-1"/>Send test receipt
                 </button>
-                {testPrintMsg && (
-                  <span className="small text-muted">{testPrintMsg}</span>
-                )}
+                {testPrintMsg && <span className="small text-muted">{testPrintMsg}</span>}
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={fontSizeCheckPrint}
+                  title="Print a receipt showing Normal, Double height, Double width, Bold, and Quad (2x2) so you can see what your printer supports"
+                >
+                  <i className="bi bi-type me-1"/>Print font size check
+                </button>
+                {fontCheckMsg && <span className="small text-muted">{fontCheckMsg}</span>}
               </div>
+              <p className="form-text mb-0 mt-1">
+                <strong>Font size check</strong> prints a receipt with Normal, Double height, Double width, Bold, and 2×2 text. Compare the lines on your printer to see which modes it supports (e.g. TechnoPos TP-P502).
+              </p>
             </div>
 
             {/* Print Bridge — API token for Android app */}

@@ -31,6 +31,10 @@ class SettingsActivity : AppCompatActivity() {
             doTestPrint()
         }
 
+        findViewById<Button>(R.id.settings_font_size_check).setOnClickListener {
+            doFontSizeCheckPrint()
+        }
+
         findViewById<Button>(R.id.settings_save).setOnClickListener {
             val url = findViewById<EditText>(R.id.settings_server_url).text.toString().trim().removeSuffix("/")
             val token = findViewById<EditText>(R.id.settings_token).text.toString().trim()
@@ -72,6 +76,30 @@ class SettingsActivity : AppCompatActivity() {
                     Toast.makeText(this, "Test print sent ✓", Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(this, "Test print failed. Check printer is on and paired.", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
+    }
+
+    private fun doFontSizeCheckPrint() {
+        val prefs = (application as PrintBridgeApp).preferences
+        if (prefs.printerAddress.isBlank()) {
+            Toast.makeText(this, "Select a printer first", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Bluetooth permission required", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val shopName = prefs.shopName.ifBlank { "Shop" }
+        Thread {
+            val success = BluetoothPrintHelper.sendToPrinter(prefs.printerAddress, EscPosBuilder.buildFontSizeCheckReceipt(shopName))
+            runOnUiThread {
+                if (success) {
+                    Toast.makeText(this, "Font size check printed ✓", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Print failed. Check printer is on and paired.", Toast.LENGTH_LONG).show()
                 }
             }
         }.start()

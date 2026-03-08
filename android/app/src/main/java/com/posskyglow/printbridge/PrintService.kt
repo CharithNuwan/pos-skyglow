@@ -173,7 +173,7 @@ class PrintService : Service() {
             socket = device.createRfcommSocketToServiceRecord(SPP_UUID)
             socket.connect()
             val bytes = when (job.type) {
-                "receipt" -> EscPosBuilder.buildReceipt(job.payload)
+                "font_size_check" -> EscPosBuilder.buildFontSizeCheckReceipt(job.payload.optString("shop_name", "Shop"))
                 else -> EscPosBuilder.buildReceipt(job.payload)
             }
             socket.outputStream.write(bytes)
