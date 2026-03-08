@@ -30,9 +30,23 @@ object EscPosBuilder {
         send(GS, 0x21, 0x00)  // normal
         sendStr(payload.optString("shop_phone", "").take(24))
         send(LF)
+        // Shop address (if enabled and present)
+        if (payload.optString("thermal_show_address", "1") != "0") {
+            payload.optString("shop_address", "").takeIf { it.isNotBlank() }?.let { addr ->
+                sendStr(addr.take(32))
+                send(LF)
+            }
+        }
         send(ESC, 0x61, 0)   // left align
         sendStr("--------------------------------")
         send(LF)
+        // Receipt header (if enabled and present)
+        if (payload.optString("thermal_show_header", "1") != "0") {
+            payload.optString("receipt_header", "").takeIf { it.isNotBlank() }?.let { h ->
+                sendStr(h.take(32))
+                send(LF)
+            }
+        }
         sendStr("Invoice: ${payload.optString("invoice_number", "")}")
         send(LF)
         sendStr("Date: ${payload.optString("sale_date", "").take(19)}")

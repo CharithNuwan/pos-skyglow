@@ -54,6 +54,8 @@ export default function SettingsClient() {
             currency_symbol: settings.currency_symbol || '$',
             receipt_header: settings.receipt_header || '',
             receipt_footer: settings.receipt_footer || '',
+            thermal_show_header: settings.thermal_show_header !== '0' ? '1' : '0',
+            thermal_show_address: settings.thermal_show_address !== '0' ? '1' : '0',
           },
         }),
       });
@@ -228,6 +230,27 @@ export default function SettingsClient() {
             <div className="col-md-6">
               <label className="form-label">Receipt Footer Text</label>
               <input className="form-control" value={settings.receipt_footer || ''} onChange={e => update('receipt_footer', e.target.value)} placeholder="Please come again!" />
+            </div>
+
+            {/* Thermal receipt layout — what appears on printed slip */}
+            <div className="col-12 mt-2">
+              <hr />
+              <label className="form-label fw-600">Thermal receipt layout</label>
+              <p className="text-muted small mb-2">Choose what appears on the printed receipt (Print Bridge).</p>
+              <div className="d-flex flex-wrap gap-4">
+                <div className="form-check">
+                  <input className="form-check-input" type="checkbox" id="thermal_show_header"
+                    checked={settings.thermal_show_header !== '0'}
+                    onChange={e => update('thermal_show_header', e.target.checked ? '1' : '0')} />
+                  <label className="form-check-label" htmlFor="thermal_show_header">Show receipt header on thermal</label>
+                </div>
+                <div className="form-check">
+                  <input className="form-check-input" type="checkbox" id="thermal_show_address"
+                    checked={settings.thermal_show_address !== '0'}
+                    onChange={e => update('thermal_show_address', e.target.checked ? '1' : '0')} />
+                  <label className="form-check-label" htmlFor="thermal_show_address">Show shop address on thermal</label>
+                </div>
+              </div>
             </div>
 
             {/* Test print — sends a test receipt job to Print Bridge */}
