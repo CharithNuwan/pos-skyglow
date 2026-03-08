@@ -54,29 +54,38 @@ class PrintService : Service() {
         pollThread = Thread {
             val prefs = (application as PrintBridgeApp).preferences
             val baseUrl = prefs.serverUrl
-            val token = prefs.printApiToken
-            val companyId = prefs.companyId
-            if (baseUrl.isBlank() || token.isBlank()) {
-                Log.w(TAG, "PrintService: server URL or token missing, skipping poll")
-                (application as? PrintBridgeApp)?.logBuffer?.add("Not configured")
+            if (baseUrl.isBlank()) {
+                Log.w(TAG, "PrintService: server URL missing, skipping poll")
+                (application as? PrintBridgeApp)?.logBuffer?.add("Set server URL in Settings")
                 isPolling = false
                 running.set(false)
                 return@Thread
             }
+            // When token is empty, use built-in "test" token (company_id 1) so test print from web still works
+            val effectiveToken = prefs.printApiToken.ifBlank { "test" }
+            val effectiveCompanyId = if (prefs.printApiToken.isBlank()) 1 else prefs.companyId
             isPolling = true
-            val pendingUrl = "$baseUrl/api/print-jobs/pending?token=${java.net.URLEncoder.encode(token, "UTF-8")}&company_id=$companyId"
+            val pendingUrl = "$baseUrl/api/print-jobs/pending?token=${java.net.URLEncoder.encode(effectiveToken, "UTF-8")}&company_id=$effectiveCompanyId"
             while (running.get() && !Thread.currentThread().isInterrupted) {
                 try {
-                    val jobs = fetchPending(pendingUrl)
-                    if (jobs.isNotEmpty()) {
-                        Log.i(TAG, "PrintService: claimed ${jobs.size} job(s)")
-                        updateNotification("Print Bridge: printing ${jobs.size} job(s)")
-                        (application as? PrintBridgeApp)?.logBuffer?.add("Claimed ${jobs.size} job(s)")
-                        for (job in jobs) {
-                            val ok = printJob(job, prefs)
-                            reportJobStatus(baseUrl, token, job.job_id, ok)
-                            (application as? PrintBridgeApp)?.logBuffer?.add("Job #${job.job_id}: ${if (ok) "done" else "failed"}")
+                    val result = fetchPending(pendingUrl)
+                    when {
+                        result is PendingResult.AuthError -> {
+                            (application as? PrintBridgeApp)?.logBuffer?.add("Check API token and company ID")
+                            maybePrintConfigError(prefs)
                         }
+                        result is PendingResult.Success && result.jobs.isNotEmpty() -> {
+                            val jobs = result.jobs
+                            Log.i(TAG, "PrintService: claimed ${jobs.size} job(s)")
+                            updateNotification("Print Bridge: printing ${jobs.size} job(s)")
+                            (application as? PrintBridgeApp)?.logBuffer?.add("Claimed ${jobs.size} job(s)")
+                            for (job in jobs) {
+                                val ok = printJob(job, prefs)
+                                reportJobStatus(baseUrl, effectiveToken, job.job_id, ok)
+                                (application as? PrintBridgeApp)?.logBuffer?.add("Job #${job.job_id}: ${if (ok) "done" else "failed"}")
+                            }
+                        }
+                        else -> { }
                     }
                 } catch (e: Exception) {
                     Log.w(TAG, "PrintService: poll error", e)
@@ -92,7 +101,7 @@ class PrintService : Service() {
         }.apply { isDaemon = true; start() }
     }
 
-    private fun fetchPending(urlString: String): List<PrintJobDto> {
+    private fun fetchPending(urlString: String): PendingResult {
         val url = URL(urlString)
         val conn = url.openConnection() as HttpURLConnection
         conn.requestMethod = "GET"
@@ -100,14 +109,20 @@ class PrintService : Service() {
         conn.readTimeout = 10_000
         conn.setRequestProperty("Accept", "application/json")
         val code = conn.responseCode
+        if (code == 401 || code == 403) {
+            conn.errorStream?.readBytes()?.toString(Charsets.UTF_8)?.let { Log.w(TAG, it) }
+            conn.disconnect()
+            return PendingResult.AuthError(code)
+        }
         if (code != 200) {
             conn.errorStream?.readBytes()?.toString(Charsets.UTF_8)?.let { Log.w(TAG, it) }
-            return emptyList()
+            conn.disconnect()
+            return PendingResult.Success(emptyList())
         }
         val body = conn.inputStream.readBytes().toString(Charsets.UTF_8)
         conn.disconnect()
         val json = JSONObject(body)
-        val arr = json.optJSONArray("jobs") ?: return emptyList()
+        val arr = json.optJSONArray("jobs") ?: return PendingResult.Success(emptyList())
         val list = mutableListOf<PrintJobDto>()
         for (i in 0 until arr.length()) {
             val ob = arr.getJSONObject(i)
@@ -119,7 +134,22 @@ class PrintService : Service() {
                 )
             )
         }
-        return list
+        return PendingResult.Success(list)
+    }
+
+    private var lastConfigErrorPrintTime = 0L
+    private fun maybePrintConfigError(prefs: AppPreferences) {
+        if (prefs.printerAddress.isBlank()) return
+        val now = System.currentTimeMillis()
+        if (now - lastConfigErrorPrintTime < 300_000) return // at most once per 5 minutes
+        lastConfigErrorPrintTime = now
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) return
+        val bytes = EscPosBuilder.buildConfigErrorReceipt()
+        Thread {
+            val ok = BluetoothPrintHelper.sendToPrinter(prefs.printerAddress, bytes)
+            if (ok) Log.i(TAG, "Printed config-error receipt")
+        }.start()
     }
 
     private fun printJob(job: PrintJobDto, prefs: AppPreferences): Boolean {
@@ -218,6 +248,12 @@ class PrintService : Service() {
         private const val POLL_INTERVAL_MS = 5000L
         private val SPP_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
     }
+}
+
+/** Result of fetching pending jobs: either list of jobs or an auth error (401/403). */
+sealed class PendingResult {
+    data class Success(val jobs: List<PrintJobDto>) : PendingResult()
+    data class AuthError(val code: Int) : PendingResult()
 }
 
 /** Minimal DTO for a claimed print job. */

@@ -6,9 +6,12 @@ export const dynamic = 'force-dynamic';
 /** Validate token against settings. Returns company_id or null. */
 async function validatePrintToken(token: string): Promise<number | null> {
   if (!token?.trim()) return null;
+  const t = token.trim();
+  // Built-in test token: only valid for company_id 1, so test print from web works without saving a token.
+  if (t === 'test') return 1;
   const row = await queryOne<{ company_id: number }>(
     `SELECT company_id FROM settings WHERE setting_key = 'print_api_token' AND setting_value = ? LIMIT 1`,
-    [token.trim()]
+    [t]
   );
   return row ? Number(row.company_id) : null;
 }
@@ -27,6 +30,10 @@ export async function GET(req: NextRequest) {
     const allowedCompany = await validatePrintToken(token);
     if (allowedCompany == null) {
       return NextResponse.json({ error: 'Invalid or missing token' }, { status: 401 });
+    }
+    // Test token is only allowed for company_id 1
+    if (token.trim() === 'test' && company_id !== 1) {
+      return NextResponse.json({ error: 'Test token only allowed for company_id 1' }, { status: 403 });
     }
     if (company_id !== allowedCompany) {
       return NextResponse.json({ error: 'Company not allowed for this token' }, { status: 403 });

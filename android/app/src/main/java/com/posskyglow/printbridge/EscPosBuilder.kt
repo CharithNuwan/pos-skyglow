@@ -21,10 +21,11 @@ object EscPosBuilder {
 
         // Init
         send(ESC, 0x40) // ESC @
-        // Center + double height for shop name
+        // Center + double height for shop name (use "Testing" for test receipts so user knows config may be wrong)
         send(ESC, 0x61, 1)   // center
         send(GS, 0x21, 0x10)  // double height
-        sendStr(payload.optString("shop_name", "Receipt").take(32))
+        val shopTitle = if (payload.optString("invoice_number", "").startsWith("TEST-")) "Testing" else payload.optString("shop_name", "Receipt")
+        sendStr(shopTitle.take(32))
         send(LF)
         send(GS, 0x21, 0x00)  // normal
         sendStr(payload.optString("shop_phone", "").take(24))
@@ -116,6 +117,34 @@ object EscPosBuilder {
         sendStr("If you see this, the printer")
         send(LF)
         sendStr("is working correctly.")
+        send(LF, LF)
+        send(GS, 0x56, 0)
+        return out.toByteArray()
+    }
+
+    /** Builds a short receipt for auth/config errors so user knows printer works but token/company ID may be wrong. */
+    fun buildConfigErrorReceipt(): ByteArray {
+        val out = mutableListOf<Byte>()
+        fun send(vararg b: Int) = b.forEach { out.add(it.toByte()) }
+        fun sendStr(s: String) = out.addAll(s.toByteArray(CHARSET).toList())
+        send(ESC, 0x40)
+        send(ESC, 0x61, 1)
+        send(GS, 0x21, 0x10)
+        sendStr("Testing")
+        send(LF)
+        send(GS, 0x21, 0x00)
+        sendStr("Check API token")
+        send(LF)
+        sendStr("and company ID")
+        send(LF)
+        send(ESC, 0x61, 0)
+        sendStr("--------------------------------")
+        send(LF)
+        sendStr("If you see this, printer")
+        send(LF)
+        sendStr("works but token or")
+        send(LF)
+        sendStr("company ID is wrong.")
         send(LF, LF)
         send(GS, 0x56, 0)
         return out.toByteArray()
