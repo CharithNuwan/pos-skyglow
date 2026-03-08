@@ -52,37 +52,37 @@ class PrintService : Service() {
     private fun startPolling() {
         if (running.getAndSet(true)) return
         pollThread = Thread {
-            val prefs = (application as PrintBridgeApp).preferences
-            val baseUrl = prefs.serverUrl
-            if (baseUrl.isBlank()) {
-                Log.w(TAG, "PrintService: server URL missing, skipping poll")
-                (application as? PrintBridgeApp)?.logBuffer?.add("Set server URL in Settings")
-                isPolling = false
-                running.set(false)
-                return@Thread
-            }
-            // When token is empty, use built-in "test" token (company_id 1) so test print from web still works
-            val effectiveToken = prefs.printApiToken.ifBlank { "test" }
-            val effectiveCompanyId = if (prefs.printApiToken.isBlank()) 1 else prefs.companyId
+            val app = application as? PrintBridgeApp ?: return@Thread
             isPolling = true
-            val pendingUrl = "$baseUrl/api/print-jobs/pending?token=${java.net.URLEncoder.encode(effectiveToken, "UTF-8")}&company_id=$effectiveCompanyId"
             while (running.get() && !Thread.currentThread().isInterrupted) {
+                val prefs = app.preferences
+                val baseUrl = prefs.serverUrl
+                if (baseUrl.isBlank()) {
+                    Log.w(TAG, "PrintService: server URL missing, skipping poll")
+                    app.logBuffer?.add("Set server URL in Settings")
+                    try { Thread.sleep(POLL_INTERVAL_MS) } catch (_: InterruptedException) { break }
+                    continue
+                }
+                // When token is empty, use built-in "test" token (company_id 1) so test print from web still works
+                val effectiveToken = prefs.printApiToken.ifBlank { "test" }
+                val effectiveCompanyId = if (prefs.printApiToken.isBlank()) 1 else prefs.companyId
+                val pendingUrl = "$baseUrl/api/print-jobs/pending?token=${java.net.URLEncoder.encode(effectiveToken, "UTF-8")}&company_id=$effectiveCompanyId"
                 try {
                     val result = fetchPending(pendingUrl)
                     when {
                         result is PendingResult.AuthError -> {
-                            (application as? PrintBridgeApp)?.logBuffer?.add("Check API token and company ID")
+                            app.logBuffer?.add("Check API token and company ID")
                             maybePrintConfigError(prefs)
                         }
                         result is PendingResult.Success && result.jobs.isNotEmpty() -> {
                             val jobs = result.jobs
                             Log.i(TAG, "PrintService: claimed ${jobs.size} job(s)")
                             updateNotification("Print Bridge: printing ${jobs.size} job(s)")
-                            (application as? PrintBridgeApp)?.logBuffer?.add("Claimed ${jobs.size} job(s)")
+                            app.logBuffer?.add("Claimed ${jobs.size} job(s)")
                             for (job in jobs) {
                                 val ok = printJob(job, prefs)
                                 reportJobStatus(baseUrl, effectiveToken, job.job_id, ok)
-                                (application as? PrintBridgeApp)?.logBuffer?.add("Job #${job.job_id}: ${if (ok) "done" else "failed"}")
+                                app.logBuffer?.add("Job #${job.job_id}: ${if (ok) "done" else "failed"}")
                             }
                         }
                         else -> { }

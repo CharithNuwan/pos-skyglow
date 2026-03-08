@@ -37,6 +37,7 @@ export default function POSClient() {
   const [notes, setNotes] = useState('');
   const [processing, setProcessing] = useState(false);
   const [lastSale, setLastSale] = useState<{ invoice_number: string; sale_id: number } | null>(null);
+  const [printJobError, setPrintJobError] = useState<string | null>(null);
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [barcodeSound, setBarcodeSound] = useState(true);
   const [posTab, setPosTab] = useState<'products'|'cart'>('products');
@@ -235,6 +236,7 @@ export default function POSClient() {
       const data = await res.json();
       if (data.success) {
         setLastSale({ invoice_number: data.invoice_number, sale_id: data.sale_id });
+        setPrintJobError(null);
         clearCart();
         loadData();
         // Fire-and-forget: enqueue receipt for Print Bridge (Android)
@@ -269,7 +271,9 @@ export default function POSClient() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type: 'receipt', payload }),
           credentials: 'same-origin',
-        }).catch(() => {});
+        })
+          .then(r => { if (!r.ok) setPrintJobError('Receipt not sent to Print Bridge — check token in Settings'); })
+          .catch(() => setPrintJobError('Receipt not sent to Print Bridge — check network and Settings'));
       } else {
         alert(data.error || 'Sale failed');
       }
@@ -307,6 +311,13 @@ export default function POSClient() {
             <a href={`/receipt/${lastSale.sale_id}`} target="_blank" className="btn btn-sm btn-success ms-2">
               <i className="bi bi-printer" /> Receipt
             </a>
+          </div>
+        )}
+        {printJobError && (
+          <div className="alert alert-warning py-1 px-3 mb-0 d-flex align-items-center gap-2">
+            <i className="bi bi-exclamation-triangle-fill" />
+            <span>{printJobError}</span>
+            <button type="button" className="btn btn-sm btn-outline-warning ms-2" onClick={() => setPrintJobError(null)} aria-label="Dismiss">×</button>
           </div>
         )}
       </div>
