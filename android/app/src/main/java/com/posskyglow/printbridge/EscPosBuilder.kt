@@ -14,7 +14,7 @@ object EscPosBuilder {
     private const val GS = 0x1D
     private const val LF = 0x0A
 
-    fun buildReceipt(payload: JSONObject): ByteArray {
+    fun buildReceipt(payload: JSONObject, barcodeRasterBytes: ByteArray? = null): ByteArray {
         val out = mutableListOf<Byte>()
         fun send(vararg b: Int) = b.forEach { out.add(it.toByte()) }
         fun sendStr(s: String) = out.addAll(s.toByteArray(CHARSET).toList())
@@ -50,39 +50,40 @@ object EscPosBuilder {
         payload.optString("customer_name", "").takeIf { it.isNotBlank() }?.let { sendStr("Customer: $it"); send(LF) }
         sendStr("--------------------------------")
         send(LF)
-        // ---- Items table: header then rows ----
-        sendStr(String.format("%-10s %2s %8s %8s", "Item", "Qty", "Price", "Total"))
+        // ---- Items table: header then rows (max 32 chars/line so .00 doesn't wrap) ----
+        sendStr(String.format("%-7s %2s %7s %7s", "Item", "Qty", "Price", "Total"))
         send(LF)
         val items = payload.optJSONArray("items")
         if (items != null) {
             for (i in 0 until items.length()) {
                 val it = items.getJSONObject(i)
-                val name = it.optString("name", "Item").take(10)
+                val name = it.optString("name", "Item").take(7)
                 val qty = it.optInt("qty", 1)
                 val unitPrice = it.optDouble("unit_price", 0.0)
                 val total = it.optDouble("total", 0.0)
-                sendStr(String.format("%-10s %2d %s%6.2f %s%6.2f", name, qty, sym, unitPrice, sym, total))
+                sendStr(String.format("%-7s %2d %s%6.2f %s%6.2f", name, qty, sym, unitPrice, sym, total))
                 send(LF)
             }
         }
         sendStr("--------------------------------")
         send(LF)
+        // Summary: label + amount in ≤32 chars so fractional part stays on one line
         val subtotal = payload.optDouble("subtotal", 0.0)
-        sendStr(String.format("Subtotal %s%.2f", sym, subtotal))
+        sendStr(String.format("%-22s%s%6.2f", "Subtotal", sym, subtotal))
         send(LF)
         val tax = payload.optDouble("tax_amount", 0.0)
         if (tax > 0) {
-            sendStr(String.format("Tax      %s%.2f", sym, tax))
+            sendStr(String.format("%-22s%s%6.2f", "Tax", sym, tax))
             send(LF)
         }
         val discount = payload.optDouble("discount_amount", 0.0)
         if (discount > 0) {
-            sendStr(String.format("Discount -%s%.2f", sym, discount))
+            sendStr(String.format("%-22s-%s%6.2f", "Discount", sym, discount))
             send(LF)
         }
         send(GS, 0x21, 0x08)  // bold
         val total = payload.optDouble("total_amount", 0.0)
-        sendStr(String.format("TOTAL    %s%.2f", sym, total))
+        sendStr(String.format("%-22s%s%6.2f", "TOTAL", sym, total))
         send(LF)
         send(GS, 0x21, 0x00)
         sendStr("--------------------------------")
@@ -90,26 +91,23 @@ object EscPosBuilder {
         sendStr("Payment: ${payload.optString("payment_method", "cash")}")
         send(LF)
         if (payload.optDouble("cash_received", 0.0) > 0) {
-            sendStr(String.format("Cash:    %s%.2f", sym, payload.getDouble("cash_received")))
+            sendStr(String.format("%-22s%s%6.2f", "Cash:", sym, payload.getDouble("cash_received")))
             send(LF)
-            sendStr(String.format("Change:  %s%.2f", sym, payload.optDouble("change_amount", 0.0)))
+            sendStr(String.format("%-22s%s%6.2f", "Change:", sym, payload.optDouble("change_amount", 0.0)))
             send(LF)
         }
         send(ESC, 0x61, 1)   // center for footer
         payload.optString("receipt_footer", "").takeIf { it.isNotBlank() }?.let { sendStr(it.take(32)); send(LF) }
         sendStr("*** Thank you for your business ***")
         send(LF)
-        // ---- Optional barcode (invoice number) for refund/damage lookup ----
+        // ---- Optional barcode as image (raster) when printer doesn't support GS k ----
         val inv = payload.optString("invoice_number", "")
-        if (payload.optString("thermal_show_barcode", "0") != "0" && inv.isNotBlank() && !inv.startsWith("TEST-")) {
+        if (barcodeRasterBytes != null && inv.isNotBlank()) {
             send(ESC, 0x61, 0)
             sendStr("--------------------------------")
             send(LF)
-            send(ESC, 0x61, 1)   // center barcode
-            val invBytes = inv.toByteArray(CHARSET)
-            val len = invBytes.size.coerceIn(0, 255)
-            send(GS, 0x6B, 0x49, len)  // GS k 73 n = CODE128, n bytes
-            invBytes.take(len).forEach { out.add(it) }
+            send(ESC, 0x61, 1)   // center barcode image
+            out.addAll(barcodeRasterBytes.toList())
             send(LF)
             sendStr(inv.take(32))  // human-readable below barcode
             send(LF)

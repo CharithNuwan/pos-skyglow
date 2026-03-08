@@ -174,7 +174,14 @@ class PrintService : Service() {
             socket.connect()
             val bytes = when (job.type) {
                 "font_size_check" -> EscPosBuilder.buildFontSizeCheckReceipt(job.payload.optString("shop_name", "Shop"))
-                else -> EscPosBuilder.buildReceipt(job.payload)
+                else -> {
+                    val payload = job.payload
+                    val inv = payload.optString("invoice_number", "")
+                    val barcodeRaster = if (payload.optString("thermal_show_barcode", "0") != "0" &&
+                        inv.isNotBlank() && !inv.startsWith("TEST-")
+                    ) BarcodeRasterHelper.barcodeToEscPosRaster(inv) else null
+                    EscPosBuilder.buildReceipt(payload, barcodeRaster)
+                }
             }
             socket.outputStream.write(bytes)
             socket.outputStream.flush()
