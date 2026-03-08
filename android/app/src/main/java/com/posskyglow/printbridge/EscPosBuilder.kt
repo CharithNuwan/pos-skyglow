@@ -184,10 +184,18 @@ object EscPosBuilder {
         send(ESC, 0x61, 0)   // left
         sendStr("--------------------------------")
         send(LF)
-        sendStr("Normal (1x1):")
+        sendStr("Normal / Font A (1x1):")
         send(LF)
         sendStr("The quick brown fox")
         send(LF)
+        sendStr("--------------------------------")
+        send(LF)
+        sendStr("Font B (small, if supported):")
+        send(LF)
+        send(ESC, 0x4D, 0x01)   // ESC M 1 = select Font B
+        sendStr("The quick brown fox")
+        send(LF)
+        send(ESC, 0x4D, 0x00)   // ESC M 0 = back to Font A
         sendStr("--------------------------------")
         send(LF)
         sendStr("Double height (2x1):")
