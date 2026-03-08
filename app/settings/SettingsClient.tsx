@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import ReceiptLayout from '@/components/ReceiptLayout';
 
 export default function SettingsClient() {
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -56,6 +57,8 @@ export default function SettingsClient() {
             receipt_footer: settings.receipt_footer || '',
             thermal_show_header: settings.thermal_show_header !== '0' ? '1' : '0',
             thermal_show_address: settings.thermal_show_address !== '0' ? '1' : '0',
+            shop_email: settings.shop_email || '',
+            cashier_name: 'System Administrator',
           },
         }),
       });
@@ -194,31 +197,12 @@ export default function SettingsClient() {
               </div>
             </div>
 
-            {/* Live Preview */}
-            <div className="col-md-4">
-              <label className="form-label fw-600">Preview</label>
-              <div
-                style={{
-                  width: `${Math.round((parseInt(settings.receipt_width || '80') / 80) * 200)}px`,
-                  minWidth: 120,
-                  maxWidth: 260,
-                  border: '1px dashed #ccc',
-                  borderRadius: 4,
-                  padding: '0.5rem',
-                  fontSize: `${settings.receipt_font_size || 13}px`,
-                  background: '#fff',
-                  transition: 'all 0.2s',
-                }}
-              >
-                <div style={{ textAlign: 'center', fontWeight: 700 }}>{settings.shop_name || 'My Shop'}</div>
-                <div style={{ textAlign: 'center', fontSize: '0.85em', color: '#666' }}>{settings.shop_phone || ''}</div>
-                <hr style={{ margin: '4px 0' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Item x1</span><span>{settings.currency_symbol || '$'}9.99</span></div>
-                <hr style={{ margin: '4px 0' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL</span><span>{settings.currency_symbol || '$'}9.99</span></div>
-              </div>
-              <div className="mt-1 text-muted" style={{ fontSize: '0.72rem' }}>
-                Width: {settings.receipt_width || '80'}mm
+            {/* Full receipt preview — same design as receipt page */}
+            <div className="col-12 mt-3">
+              <label className="form-label fw-600">Full receipt preview</label>
+              <p className="text-muted small mb-2">How your receipt will look (web and thermal).</p>
+              <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
+                <ReceiptLayout mode="preview" settings={settings} />
               </div>
             </div>
 

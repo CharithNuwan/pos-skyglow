@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
       [saleId, data.payment_method || 'cash', data.total_amount]
     );
 
-    return NextResponse.json({ success: true, sale_id: saleId, invoice_number: invoiceNumber });
+    return NextResponse.json({ success: true, sale_id: saleId, invoice_number: invoiceNumber, cashier_name: session.full_name });
   } catch (e: unknown) {
     console.error('Sale error:', e);
     if ((e as Error).message === 'Unauthorized') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

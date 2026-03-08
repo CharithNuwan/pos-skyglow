@@ -262,11 +262,13 @@ export default function POSClient() {
           shop_name: settings.shop_name || '',
           shop_address: settings.shop_address || '',
           shop_phone: settings.shop_phone || '',
+          shop_email: settings.shop_email || '',
           currency_symbol: settings.currency_symbol || '$',
           receipt_header: settings.receipt_header || '',
           receipt_footer: settings.receipt_footer || '',
           thermal_show_header: settings.thermal_show_header !== '0' ? '1' : '0',
           thermal_show_address: settings.thermal_show_address !== '0' ? '1' : '0',
+          cashier_name: data.cashier_name || '',
         };
         fetch('/api/print-jobs', {
           method: 'POST',
