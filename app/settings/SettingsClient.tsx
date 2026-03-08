@@ -6,9 +6,11 @@ export default function SettingsClient() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [testPrintMsg, setTestPrintMsg] = useState('');
+  const [companyId, setCompanyId] = useState<number | null>(null);
 
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(setSettings);
+    fetch('/api/me').then(r => r.json()).then((d: { company_id?: number }) => setCompanyId(d.company_id ?? 1));
   }, []);
 
   async function save() {
@@ -254,6 +256,15 @@ export default function SettingsClient() {
             {/* Print Bridge — API token for Android app */}
             <div className="col-12 mt-2">
               <hr />
+              {companyId != null && (
+                <div className="mb-2">
+                  <label className="form-label fw-600">Company ID</label>
+                  <p className="text-muted small mb-1">Use this value in the Print Bridge app Settings → Company ID.</p>
+                  <div className="d-flex align-items-center gap-2">
+                    <code className="bg-light px-2 py-1 rounded" style={{ fontSize: '1rem' }}>{companyId}</code>
+                  </div>
+                </div>
+              )}
               <label className="form-label fw-600">
                 <i className="bi bi-phone me-1"/>Print Bridge — API Token
               </label>
