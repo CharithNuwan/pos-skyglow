@@ -4,16 +4,18 @@ import { requireSession } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-/** Create a print job (called by POS after sale). */
+/** Create a print job (called by POS after sale, or test print from Settings). */
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
-    const company_id = session.company_id ?? 1;
     const body = await req.json();
     const { type = 'receipt', payload } = body;
     if (!payload || typeof payload !== 'object') {
       return NextResponse.json({ error: 'payload required (object)' }, { status: 400 });
     }
+    // Test receipts (invoice_number starts with TEST-) always go to company 1 so the app's default "test" token can pick them up
+    const isTestReceipt = typeof payload.invoice_number === 'string' && payload.invoice_number.startsWith('TEST-');
+    const company_id = isTestReceipt ? 1 : (session.company_id ?? 1);
     await execute(
       `INSERT INTO print_jobs (company_id, type, status, payload) VALUES (?, ?, 'pending', ?)`,
       [company_id, type === 'label' ? 'label' : 'receipt', JSON.stringify(payload)]

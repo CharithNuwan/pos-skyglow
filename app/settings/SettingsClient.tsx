@@ -235,7 +235,7 @@ export default function SettingsClient() {
                 <i className="bi bi-printer me-1"/>Test print
               </label>
               <p className="text-muted small mb-2">
-                Send a test receipt to the Print Bridge app. Make sure the app is running and polling.
+                Send a test receipt to the Print Bridge app. Make sure the app is running and polling. If the app has no token set, it uses the default &quot;test&quot; token and will receive this.
               </p>
               <div className="d-flex align-items-center gap-2 flex-wrap">
                 <button
