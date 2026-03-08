@@ -58,6 +58,7 @@ export default function SettingsClient() {
             receipt_footer: settings.receipt_footer || '',
             thermal_show_header: settings.thermal_show_header !== '0' ? '1' : '0',
             thermal_show_address: settings.thermal_show_address !== '0' ? '1' : '0',
+            thermal_show_barcode: settings.thermal_show_barcode !== '0' ? '1' : '0',
             shop_email: settings.shop_email || '',
             cashier_name: 'System Administrator',
           },
@@ -279,6 +280,12 @@ export default function SettingsClient() {
                     checked={settings.thermal_show_address !== '0'}
                     onChange={e => update('thermal_show_address', e.target.checked ? '1' : '0')} />
                   <label className="form-check-label" htmlFor="thermal_show_address">Show shop address on thermal</label>
+                </div>
+                <div className="form-check">
+                  <input className="form-check-input" type="checkbox" id="thermal_show_barcode"
+                    checked={settings.thermal_show_barcode !== '0'}
+                    onChange={e => update('thermal_show_barcode', e.target.checked ? '1' : '0')} />
+                  <label className="form-check-label" htmlFor="thermal_show_barcode">Show barcode on thermal (for refund/damage lookup)</label>
                 </div>
               </div>
             </div>

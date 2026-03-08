@@ -13,6 +13,10 @@ export default function SalesClient() {
   const [status, setStatus] = useState('');
   const [search, setSearch] = useState('');
   const [refunding, setRefunding] = useState<number | null>(null);
+  const [lookupInvoice, setLookupInvoice] = useState('');
+  const [lookupSale, setLookupSale] = useState<Sale | null>(null);
+  const [lookupError, setLookupError] = useState('');
+  const [lookupLoading, setLookupLoading] = useState(false);
 
   useEffect(() => { load(); }, [page, dateFrom, dateTo, status, search]);
 
@@ -31,12 +35,84 @@ export default function SalesClient() {
     setRefunding(saleId);
     const res = await fetch(`/api/sales/${saleId}/refund`, { method: 'POST' });
     const data = await res.json();
-    if (data.success) { load(); } else { alert(data.error || 'Refund failed'); }
+    if (data.success) {
+      load();
+      setLookupSale(null);
+      setLookupInvoice('');
+      setLookupError('');
+    } else {
+      alert(data.error || 'Refund failed');
+    }
     setRefunding(null);
+  }
+
+  async function lookupByInvoice() {
+    const inv = lookupInvoice.trim();
+    if (!inv) return;
+    setLookupError('');
+    setLookupSale(null);
+    setLookupLoading(true);
+    try {
+      const res = await fetch(`/api/sales/by-invoice?invoice_number=${encodeURIComponent(inv)}`);
+      const data = await res.json();
+      if (res.ok) {
+        setLookupSale(data);
+      } else {
+        setLookupError(data.error || 'Sale not found');
+      }
+    } catch {
+      setLookupError('Request failed');
+    } finally {
+      setLookupLoading(false);
+    }
   }
 
   return (
     <div>
+      <div className="card mb-3">
+        <div className="card-body py-2">
+          <label className="form-label small fw-600">Look up by invoice (scan or type)</label>
+          <p className="text-muted small mb-2">Scan the barcode on the receipt or enter the invoice number to find a sale for refund.</p>
+          <div className="d-flex gap-2 align-items-center flex-wrap">
+            <input
+              type="text"
+              className="form-control form-control-sm"
+              style={{ maxWidth: 220 }}
+              placeholder="e.g. INV20260306NGG4"
+              value={lookupInvoice}
+              onChange={e => { setLookupInvoice(e.target.value); setLookupError(''); setLookupSale(null); }}
+              onKeyDown={e => e.key === 'Enter' && lookupByInvoice()}
+            />
+            <button type="button" className="btn btn-sm btn-primary" onClick={lookupByInvoice} disabled={lookupLoading || !lookupInvoice.trim()}>
+              {lookupLoading ? <span className="spinner-border spinner-border-sm" /> : <><i className="bi bi-upc-scan me-1" />Look up</>}
+            </button>
+            {lookupError && <span className="small text-danger">{lookupError}</span>}
+          </div>
+          {lookupSale && (
+            <div className="mt-2 p-2 rounded border bg-light d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div className="small">
+                <span className="fw-600 text-primary">{lookupSale.invoice_number}</span>
+                {' · '}
+                {lookupSale.customer_name || <span className="text-muted">Walk-in</span>}
+                {' · '}
+                <span className="fw-700">${Number(lookupSale.total_amount).toFixed(2)}</span>
+                {' · '}
+                <span className={`badge status-${lookupSale.payment_status}`}>{lookupSale.payment_status}</span>
+                {' · '}
+                <span className="text-muted">{new Date(lookupSale.sale_date).toLocaleString()}</span>
+              </div>
+              <div className="d-flex gap-1">
+                <Link href={`/receipt/${lookupSale.sale_id}`} target="_blank" className="btn btn-sm btn-outline-secondary"><i className="bi bi-receipt" /></Link>
+                {lookupSale.payment_status === 'completed' && (
+                  <button className="btn btn-sm btn-outline-danger" onClick={() => refund(lookupSale.sale_id)} disabled={refunding === lookupSale.sale_id}>
+                    {refunding === lookupSale.sale_id ? <span className="spinner-border spinner-border-sm" /> : <><i className="bi bi-arrow-counterclockwise me-1" />Refund</>}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
       <div className="card mb-3">
         <div className="card-body py-2">
           <div className="row g-2 align-items-end">

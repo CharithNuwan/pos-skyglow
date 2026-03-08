@@ -268,6 +268,7 @@ export default function POSClient() {
           receipt_footer: settings.receipt_footer || '',
           thermal_show_header: settings.thermal_show_header !== '0' ? '1' : '0',
           thermal_show_address: settings.thermal_show_address !== '0' ? '1' : '0',
+          thermal_show_barcode: settings.thermal_show_barcode !== '0' ? '1' : '0',
           cashier_name: data.cashier_name || '',
         };
         fetch('/api/print-jobs', {

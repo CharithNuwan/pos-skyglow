@@ -99,6 +99,21 @@ object EscPosBuilder {
         payload.optString("receipt_footer", "").takeIf { it.isNotBlank() }?.let { sendStr(it.take(32)); send(LF) }
         sendStr("*** Thank you for your business ***")
         send(LF)
+        // ---- Optional barcode (invoice number) for refund/damage lookup ----
+        val inv = payload.optString("invoice_number", "")
+        if (payload.optString("thermal_show_barcode", "0") != "0" && inv.isNotBlank() && !inv.startsWith("TEST-")) {
+            send(ESC, 0x61, 0)
+            sendStr("--------------------------------")
+            send(LF)
+            send(ESC, 0x61, 1)   // center barcode
+            val invBytes = inv.toByteArray(CHARSET)
+            val len = invBytes.size.coerceIn(0, 255)
+            send(GS, 0x6B, 0x49, len)  // GS k 73 n = CODE128, n bytes
+            invBytes.take(len).forEach { out.add(it) }
+            send(LF)
+            sendStr(inv.take(32))  // human-readable below barcode
+            send(LF)
+        }
         send(ESC, 0x61, 0)
         send(LF, LF)
         send(GS, 0x56, 0)  // full cut
