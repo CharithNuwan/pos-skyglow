@@ -1,0 +1,19 @@
+{
+  "name": "label-print-service",
+  "version": "1.0.0",
+  "description": "Windows service that polls POS print-jobs API for label jobs and prints to Xprinter without dialog",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "poll": "node index.js"
+  },
+  "dependencies": {
+    "bwip-js": "^4.8.0",
+    "pdf-to-printer": "^5.7.0",
+    "puppeteer": "^24.15.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

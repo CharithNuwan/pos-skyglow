@@ -44,6 +44,20 @@ Then open your POS URL in that Chrome window.
 2. Go to **Print Labels**, select products and options, then click **Print X Labels**.
 3. The labels are sent to the Xprinter with no print dialog.
 
+## Alternative: Windows label print service
+
+You can avoid the print dialog without using Chrome kiosk-printing by running the **label print service** on the PC connected to the Xprinter. The service polls the POS API for label jobs and prints them directly.
+
+1. **Set up a print API token** in the POS (Settings → Print API token). Use the same token as for the Android receipt printer if you have one.
+2. **On the PC with the Xprinter**, install and run the service from the repo:
+   - See [services/label-print-service/README.md](../services/label-print-service/README.md) for requirements, config (API_BASE_URL, PRINT_API_TOKEN), and how to run once or as a Windows service (e.g. with NSSM).
+3. Set the **Xprinter as default printer** (or set `PRINTER_NAME` when running the service).
+4. In the POS, go to **Print Labels**, select products, and click **Print via service**. The job is queued; the service picks it up and prints with no dialog.
+
+This option works from any browser and does not require Chrome or a special shortcut; the service must be running on the PC that has the printer.
+
+---
+
 ## Notes
 
 - Only that Chrome window (and any windows opened from it) use kiosk-printing. Other Chrome windows behave normally.

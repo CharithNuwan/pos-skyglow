@@ -49,6 +49,15 @@ export default function LabelPrintingDocPage() {
               <li>The labels are sent to the Xprinter with no print dialog.</li>
             </ol>
 
+            <h2 className="h5 mt-4 mb-2">Alternative: Windows label print service</h2>
+            <p>You can avoid the print dialog without Chrome kiosk-printing by running the <strong>label print service</strong> on the PC connected to the Xprinter. The service polls the POS API for label jobs and prints them directly.</p>
+            <ol>
+              <li>Set up a <strong>Print API token</strong> in Settings (same as for the Android receipt printer if you use one).</li>
+              <li>On the PC with the Xprinter, run the service from the repo: see <code>services/label-print-service/README.md</code> for config (API_BASE_URL, PRINT_API_TOKEN) and how to run once or as a Windows service (e.g. NSSM).</li>
+              <li>Set the Xprinter as default printer (or set PRINTER_NAME when running the service).</li>
+              <li>In Print Labels, click <strong>Print via service</strong>; the service picks up the job and prints with no dialog. Works from any browser.</li>
+            </ol>
+
             <h2 className="h5 mt-4 mb-2">Notes</h2>
             <ul>
               <li>Only that Chrome window (and any windows opened from it) use kiosk-printing. Other Chrome windows behave normally.</li>

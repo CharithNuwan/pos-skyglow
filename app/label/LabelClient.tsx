@@ -130,6 +130,7 @@ export default function LabelClient() {
   const [showName, setShowName] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showKioskHelp, setShowKioskHelp] = useState(false);
+  const [printViaServiceStatus, setPrintViaServiceStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle');
 
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(s => setShopName(s.shop_name || ''));
@@ -230,6 +231,45 @@ export default function LabelClient() {
 
   function escapeHtml(s: string) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /** Label payload shape for POST /api/print-jobs (type: 'label'). Used by Windows label-print service. */
+  function buildLabelPayload(): { shopName: string; size: string; showName: boolean; showShop: boolean; labels: { product_name: string; short_name: string; barcode: string; selling_price: number; copies: number }[] } {
+    return {
+      shopName,
+      size,
+      showName,
+      showShop,
+      labels: selectedProducts.map(p => ({
+        product_name: p.product_name,
+        short_name: p.short_name || p.product_name,
+        barcode: p.barcode || '',
+        selling_price: p.selling_price,
+        copies: selected[p.product_id] || 1,
+      })),
+    };
+  }
+
+  async function doPrintViaService() {
+    if (selectedProducts.length === 0) return;
+    setPrintViaServiceStatus('sending');
+    try {
+      const res = await fetch('/api/print-jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'label', payload: buildLabelPayload() }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || res.statusText);
+      }
+      setPrintViaServiceStatus('ok');
+      setTimeout(() => setPrintViaServiceStatus('idle'), 3000);
+    } catch (e) {
+      setPrintViaServiceStatus('error');
+      setTimeout(() => setPrintViaServiceStatus('idle'), 4000);
+      alert((e instanceof Error ? e.message : 'Failed to send to label printer.') + ' Ensure the label print service is running on this PC.');
+    }
   }
 
   // Portal: render whenever we have selected products so it's in DOM before print.
@@ -407,16 +447,29 @@ export default function LabelClient() {
             </div>
             {selectedProducts.length > 0 && (
               <div className="card-footer">
-                <div className="d-flex gap-2 mb-2">
+                <div className="d-flex gap-2 mb-2 flex-wrap align-items-center">
                   <button className="btn btn-outline-secondary btn-sm" onClick={() => setShowPreview(s => !s)}>
                     <i className="bi bi-eye me-1" />{showPreview ? 'Hide' : 'Preview'}
                   </button>
-                  <button className="btn btn-primary flex-fill" onClick={doPrint}>
+                  <button className="btn btn-primary" onClick={doPrint}>
                     <i className="bi bi-printer me-2" />Print {totalLabels} Labels
                   </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary"
+                    onClick={doPrintViaService}
+                    disabled={printViaServiceStatus === 'sending'}
+                  >
+                    {printViaServiceStatus === 'sending' && <span className="spinner-border spinner-border-sm me-1" role="status" />}
+                    {printViaServiceStatus === 'ok' && <i className="bi bi-check me-1" />}
+                    {printViaServiceStatus === 'error' && <i className="bi bi-exclamation-triangle me-1" />}
+                    Print via service
+                  </button>
+                  {printViaServiceStatus === 'ok' && <span className="small text-success">Sent to label printer</span>}
+                  {printViaServiceStatus === 'error' && <span className="small text-danger">Send failed</span>}
                 </div>
                 <div className="small text-muted">
-                  One-click printing (no dialog): Use Chrome with kiosk-printing and set the Xprinter as default printer.{' '}
+                  One-click (no dialog): Use Chrome with kiosk-printing and set the Xprinter as default, or use <strong>Print via service</strong> with the Windows label print service running on this PC.{' '}
                   <button type="button" className="btn btn-link btn-sm p-0 align-baseline" onClick={() => setShowKioskHelp(s => !s)}>
                     {showKioskHelp ? 'Hide' : 'How to enable'}
                   </button>
