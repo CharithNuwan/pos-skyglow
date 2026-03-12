@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import Link from 'next/link';
 import JsBarcode from 'jsbarcode';
 
 interface Product {
@@ -128,6 +129,7 @@ export default function LabelClient() {
   const [showPreview, setShowPreview] = useState(false);
   const [showName, setShowName] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [showKioskHelp, setShowKioskHelp] = useState(false);
 
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(s => setShopName(s.shop_name || ''));
@@ -404,13 +406,32 @@ export default function LabelClient() {
               )}
             </div>
             {selectedProducts.length > 0 && (
-              <div className="card-footer d-flex gap-2">
-                <button className="btn btn-outline-secondary btn-sm" onClick={() => setShowPreview(s => !s)}>
-                  <i className="bi bi-eye me-1" />{showPreview ? 'Hide' : 'Preview'}
-                </button>
-                <button className="btn btn-primary flex-fill" onClick={doPrint}>
-                  <i className="bi bi-printer me-2" />Print {totalLabels} Labels
-                </button>
+              <div className="card-footer">
+                <div className="d-flex gap-2 mb-2">
+                  <button className="btn btn-outline-secondary btn-sm" onClick={() => setShowPreview(s => !s)}>
+                    <i className="bi bi-eye me-1" />{showPreview ? 'Hide' : 'Preview'}
+                  </button>
+                  <button className="btn btn-primary flex-fill" onClick={doPrint}>
+                    <i className="bi bi-printer me-2" />Print {totalLabels} Labels
+                  </button>
+                </div>
+                <div className="small text-muted">
+                  One-click printing (no dialog): Use Chrome with kiosk-printing and set the Xprinter as default printer.{' '}
+                  <button type="button" className="btn btn-link btn-sm p-0 align-baseline" onClick={() => setShowKioskHelp(s => !s)}>
+                    {showKioskHelp ? 'Hide' : 'How to enable'}
+                  </button>
+                </div>
+                {showKioskHelp && (
+                  <div className="small mt-2 p-2 bg-light rounded">
+                    <div className="fw-600 mb-1">Print without the dialog:</div>
+                    <ol className="mb-0 ps-3">
+                      <li>Set <strong>Xprinter XP-T202UA</strong> as the default printer in Windows (Settings → Printers).</li>
+                      <li>Run Chrome with <code>--kiosk-printing</code>: create a shortcut with Target <code>&quot;C:\...\chrome.exe&quot; --kiosk-printing</code>, or run from command line.</li>
+                      <li>Open the POS in that Chrome window; the same Print button will send labels straight to the printer.</li>
+                    </ol>
+                    <Link href="/docs/label-printing" className="d-block mt-2">Full guide</Link>
+                  </div>
+                )}
               </div>
             )}
           </div>
