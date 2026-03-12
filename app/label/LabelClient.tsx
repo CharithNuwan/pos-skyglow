@@ -1,6 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import JsBarcode from 'jsbarcode';
 
 interface Product {
   product_id: number;
@@ -12,31 +13,39 @@ interface Product {
   category_name: string;
 }
 
-// Barcode renderer using bars (no external library needed)
+// Real CODE128 barcode via JsBarcode
 function BarcodeDisplay({ value, width = 160, height = 50 }: { value: string; width?: number; height?: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (!value || !canvasRef.current) return;
+    try {
+      JsBarcode(canvasRef.current, value, {
+        format: 'CODE128',
+        width: 1.5,
+        height,
+        displayValue: true,
+        fontSize: 9,
+        margin: 2,
+      });
+    } catch (_) {}
+  }, [value, height]);
   if (!value) return <div style={{ width, height, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#999' }}>No barcode</div>;
-
-  // Simple Code128-like visual using CSS bars
-  const chars = value.split('');
-  const bars: number[] = [];
-  let seed = value.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const rand = () => { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return Math.abs(seed) / 0xffffffff; };
-
-  // Generate bar pattern from barcode value
-  for (let i = 0; i < 60; i++) {
-    bars.push(rand() > 0.5 ? 1 : 0);
-  }
-
   return (
     <div style={{ width, textAlign: 'center' }}>
-      <div style={{ display: 'flex', height, gap: 0, justifyContent: 'center', alignItems: 'stretch' }}>
-        {bars.map((b, i) => (
-          <div key={i} style={{ width: b ? 2 : 1.5, background: b ? '#000' : '#fff', flexShrink: 0 }} />
-        ))}
-      </div>
-      <div style={{ fontSize: 9, letterSpacing: 1, marginTop: 2, fontFamily: 'monospace' }}>{value}</div>
+      <canvas ref={canvasRef} style={{ maxWidth: '100%', height: `${height}px` }} />
     </div>
   );
+}
+
+function getBarcodeDataUrl(barcode: string, height: number = 40): string {
+  if (!barcode || typeof document === 'undefined') return '';
+  try {
+    const canvas = document.createElement('canvas');
+    JsBarcode(canvas, barcode, { format: 'CODE128', width: 1.5, height, displayValue: false, margin: 0 });
+    return canvas.toDataURL('image/png');
+  } catch (_) {
+    return '';
+  }
 }
 
 function Label({ product, shopName, copies, size, showName, showShop }: {
@@ -175,21 +184,23 @@ export default function LabelClient() {
 
   function doPrint() {
     setShowPreview(true);
-    // Use a dedicated print window so the dialog always shows label content (avoids empty preview in some browsers).
     const printWindow = window.open('', '_blank', 'noopener,noreferrer');
     if (!printWindow) {
+      alert('Allow popups for this site to print labels.');
       setTimeout(() => window.print(), 500);
       return;
     }
+    const barcodeH = size === 'xsmall' ? 28 : size === 'small' ? 35 : size === 'medium' ? 45 : 55;
     const labelHtml = selectedProducts.flatMap(p =>
       Array.from({ length: selected[p.product_id] }, () => {
         const name = (p.short_name || p.product_name).slice(0, size === 'xsmall' ? 18 : 28);
         const dims = size === 'xsmall' ? { w: 102, h: 68 } : size === 'small' ? { w: 130, h: 75 } : size === 'medium' ? { w: 180, h: 95 } : { w: 230, h: 115 };
+        const barcodeImg = p.barcode ? getBarcodeDataUrl(p.barcode, barcodeH) : '';
         return `
           <div class="label-item" style="width:${dims.w}px;height:${dims.h}px;border:1px solid #999;border-radius:3px;padding:${size === 'xsmall' ? '3px 4px' : '5px 6px'};display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin:3px;background:#fff;page-break-inside:avoid;font-family:Arial,sans-serif;">
             ${showShop && shopName ? `<div style="font-size:8px;color:#888;font-weight:600;">${escapeHtml(shopName.toUpperCase())}</div>` : ''}
             ${showName ? `<div style="font-size:${size === 'xsmall' ? 8 : size === 'large' ? 10 : 9}px;font-weight:600;text-align:center;">${escapeHtml(name)}</div>` : ''}
-            <div style="font-size:9px;letter-spacing:1px;margin-top:2px;">${escapeHtml(p.barcode || 'No barcode')}</div>
+            ${barcodeImg ? `<img src="${barcodeImg}" alt="" style="max-width:${dims.w - 16}px;height:${barcodeH}px;object-fit:contain;" />` : `<div style="font-size:9px;">${escapeHtml(p.barcode || 'No barcode')}</div>`}
             <div style="font-size:${size === 'xsmall' ? 12 : size === 'small' ? 15 : size === 'medium' ? 18 : 22}px;font-weight:800;">Rs ${Number(p.selling_price).toFixed(2)}</div>
           </div>`;
       })
@@ -198,19 +209,21 @@ export default function LabelClient() {
     doc.open();
     doc.write(`
       <!DOCTYPE html><html><head><title>Print Labels</title>
-      <style>
-        body { margin: 0; padding: 10px; background: #fff; }
-        .label-item { }
-      </style></head>
+      <style>body{margin:0;padding:10px;background:#fff;}</style></head>
       <body>${labelHtml}</body></html>
     `);
     doc.close();
     printWindow.focus();
-    setTimeout(() => {
+    // Wait for images and layout so print preview is not blank
+    const tryPrint = () => {
       printWindow.print();
       printWindow.onafterprint = () => printWindow.close();
-      printWindow.onfocus = () => printWindow.close();
-    }, 300);
+    };
+    if (printWindow.document.readyState === 'complete') {
+      setTimeout(tryPrint, 400);
+    } else {
+      printWindow.onload = () => setTimeout(tryPrint, 300);
+    }
   }
 
   function escapeHtml(s: string) {
