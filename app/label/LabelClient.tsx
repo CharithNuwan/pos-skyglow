@@ -175,31 +175,86 @@ export default function LabelClient() {
 
   function doPrint() {
     setShowPreview(true);
+    // Use a dedicated print window so the dialog always shows label content (avoids empty preview in some browsers).
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (!printWindow) {
+      setTimeout(() => window.print(), 500);
+      return;
+    }
+    const labelHtml = selectedProducts.flatMap(p =>
+      Array.from({ length: selected[p.product_id] }, () => {
+        const name = (p.short_name || p.product_name).slice(0, size === 'xsmall' ? 18 : 28);
+        const dims = size === 'xsmall' ? { w: 102, h: 68 } : size === 'small' ? { w: 130, h: 75 } : size === 'medium' ? { w: 180, h: 95 } : { w: 230, h: 115 };
+        return `
+          <div class="label-item" style="width:${dims.w}px;height:${dims.h}px;border:1px solid #999;border-radius:3px;padding:${size === 'xsmall' ? '3px 4px' : '5px 6px'};display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin:3px;background:#fff;page-break-inside:avoid;font-family:Arial,sans-serif;">
+            ${showShop && shopName ? `<div style="font-size:8px;color:#888;font-weight:600;">${escapeHtml(shopName.toUpperCase())}</div>` : ''}
+            ${showName ? `<div style="font-size:${size === 'xsmall' ? 8 : size === 'large' ? 10 : 9}px;font-weight:600;text-align:center;">${escapeHtml(name)}</div>` : ''}
+            <div style="font-size:9px;letter-spacing:1px;margin-top:2px;">${escapeHtml(p.barcode || 'No barcode')}</div>
+            <div style="font-size:${size === 'xsmall' ? 12 : size === 'small' ? 15 : size === 'medium' ? 18 : 22}px;font-weight:800;">Rs ${Number(p.selling_price).toFixed(2)}</div>
+          </div>`;
+      })
+    ).join('');
+    const doc = printWindow.document;
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html><html><head><title>Print Labels</title>
+      <style>
+        body { margin: 0; padding: 10px; background: #fff; }
+        .label-item { }
+      </style></head>
+      <body>${labelHtml}</body></html>
+    `);
+    doc.close();
+    printWindow.focus();
     setTimeout(() => {
-      window.print();
-    }, 500);
+      printWindow.print();
+      printWindow.onafterprint = () => printWindow.close();
+      printWindow.onfocus = () => printWindow.close();
+    }, 300);
   }
 
-  const printContent = showPreview && selectedProducts.length > 0 && typeof document !== 'undefined' ? createPortal(
-    <div id="label-print-root" style={{ display: 'none' }} aria-hidden="true">
-      <style>{`
+  function escapeHtml(s: string) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Portal: render whenever we have selected products so it's in DOM before print.
+  // Hide off-screen on screen (not display:none so print dialog can show it).
+  const printRootId = 'label-print-root';
+  const printContent = selectedProducts.length > 0 && typeof document !== 'undefined' ? createPortal(
+    <div
+      id={printRootId}
+      className="label-print-root"
+      aria-hidden="true"
+      style={{
+        position: 'fixed',
+        left: '-99999px',
+        top: 0,
+        width: '1px',
+        height: '1px',
+        overflow: 'hidden',
+        pointerEvents: 'none',
+      }}
+    >
+      <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body * { visibility: hidden; }
-          #label-print-root, #label-print-root * { visibility: visible; }
-          #label-print-root {
+          body > *:not(#${printRootId}) { display: none !important; }
+          #${printRootId} {
             display: block !important;
             position: fixed !important;
-            top: 0 !important;
             left: 0 !important;
+            top: 0 !important;
             right: 0 !important;
             bottom: 0 !important;
-            background: #fff;
-            padding: 10px;
-            overflow: auto;
+            width: auto !important;
+            height: auto !important;
+            overflow: auto !important;
+            background: #fff !important;
+            padding: 10px !important;
+            pointer-events: auto !important;
           }
-          .label-item { border: 1px solid #999 !important; page-break-inside: avoid; }
+          #${printRootId} .label-item { border: 1px solid #999 !important; page-break-inside: avoid !important; }
         }
-      `}</style>
+      `}} />
       {selectedProducts.map(p => (
         <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} />
       ))}
