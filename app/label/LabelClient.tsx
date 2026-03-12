@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface Product {
   product_id: number;
@@ -172,6 +173,40 @@ export default function LabelClient() {
   }).filter(Boolean);
   const totalLabels = Object.values(selected).reduce((a, b) => a + b, 0);
 
+  function doPrint() {
+    setShowPreview(true);
+    setTimeout(() => {
+      window.print();
+    }, 500);
+  }
+
+  const printContent = showPreview && selectedProducts.length > 0 && typeof document !== 'undefined' ? createPortal(
+    <div id="label-print-root" style={{ display: 'none' }} aria-hidden="true">
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          #label-print-root, #label-print-root * { visibility: visible; }
+          #label-print-root {
+            display: block !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            background: #fff;
+            padding: 10px;
+            overflow: auto;
+          }
+          .label-item { border: 1px solid #999 !important; page-break-inside: avoid; }
+        }
+      `}</style>
+      {selectedProducts.map(p => (
+        <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} />
+      ))}
+    </div>,
+    document.body
+  ) : null;
+
   return (
     <div>
       {/* Batch mode toggle */}
@@ -305,7 +340,7 @@ export default function LabelClient() {
                 <button className="btn btn-outline-secondary btn-sm" onClick={() => setShowPreview(s => !s)}>
                   <i className="bi bi-eye me-1" />{showPreview ? 'Hide' : 'Preview'}
                 </button>
-                <button className="btn btn-primary flex-fill" onClick={() => { setShowPreview(true); setTimeout(() => window.print(), 300); }}>
+                <button className="btn btn-primary flex-fill" onClick={doPrint}>
                   <i className="bi bi-printer me-2" />Print {totalLabels} Labels
                 </button>
               </div>
@@ -314,18 +349,11 @@ export default function LabelClient() {
         </div>
       </div>
 
-      {/* Preview / Print area */}
+      {/* On-screen preview (print uses portal to body so dialog shows labels) */}
       {showPreview && selectedProducts.length > 0 && (
         <div className="card mt-3">
           <div className="card-header fw-bold">Preview</div>
-          <div className="card-body" id="print-area">
-            <style>{`
-              @media print {
-                body > * { display: none !important; }
-                #print-area { display: block !important; position: fixed; top: 0; left: 0; }
-                .label-item { border: 1px dashed #999 !important; }
-              }
-            `}</style>
+          <div className="card-body">
             {selectedProducts.map(p => (
               <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} />
             ))}
