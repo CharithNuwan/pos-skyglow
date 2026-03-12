@@ -409,6 +409,9 @@ const migrations = [
     ('1234567890126', 'Coffee Beans 500g', 3, 8.50, 16.99, 40, 10, 'Premium arabica coffee beans')`,
   `INSERT OR IGNORE INTO products (barcode, product_name, category_id, cost_price, selling_price, quantity, minimum_stock, description) VALUES
     ('1234567890127', 'LED Desk Lamp', 4, 20.00, 45.99, 30, 8, 'Adjustable LED desk lamp with dimmer')`,
+
+  // ─── Expenses: capital vs recurring ─────────────────────────────────────
+  `ALTER TABLE expenses ADD COLUMN expense_type TEXT DEFAULT 'recurring'`,
 ];
 
 async function migrate() {

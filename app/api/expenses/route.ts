@@ -23,7 +23,12 @@ export async function GET(req: NextRequest) {
        WHERE company_id = ? AND date(expense_date) BETWEEN ? AND ? GROUP BY category ORDER BY total DESC`,
       [company_id, dateFrom, dateTo]
     );
-    return NextResponse.json({ expenses, summary, byCategory });
+    const byType = await query(
+      `SELECT COALESCE(expense_type, 'recurring') as expense_type, COALESCE(SUM(amount),0) as total, COUNT(*) as count FROM expenses
+       WHERE company_id = ? AND date(expense_date) BETWEEN ? AND ? GROUP BY COALESCE(expense_type, 'recurring') ORDER BY total DESC`,
+      [company_id, dateFrom, dateTo]
+    );
+    return NextResponse.json({ expenses, summary, byCategory, byType });
   } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }
 
@@ -31,13 +36,14 @@ export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
     const company_id = session.company_id || 1;
-    const { category, description, amount, payment_method, reference, expense_date } = await req.json();
+    const { category, description, amount, payment_method, reference, expense_date, expense_type } = await req.json();
     if (!description || !amount) return NextResponse.json({ error: 'Description and amount required' }, { status: 400 });
+    const type = expense_type === 'capital' ? 'capital' : 'recurring';
     await execute(
-      `INSERT INTO expenses (user_id, company_id, category, description, amount, payment_method, reference, expense_date, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+      `INSERT INTO expenses (user_id, company_id, category, description, amount, payment_method, reference, expense_date, expense_type, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
       [session.user_id, company_id, category || 'general', description, amount, payment_method || 'cash', reference || null,
-       expense_date || new Date().toISOString()]
+       expense_date || new Date().toISOString(), type]
     );
     return NextResponse.json({ success: true });
   } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }

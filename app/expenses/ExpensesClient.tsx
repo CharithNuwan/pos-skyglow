@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-const CATEGORIES = ['Rent', 'Utilities', 'Supplies', 'Salary', 'Transport', 'Marketing', 'Maintenance', 'Other'];
+const CATEGORIES = ['Rent', 'Utilities', 'Supplies', 'Salary', 'Transport', 'Marketing', 'Maintenance', 'Capital', 'Other'];
 
 export default function ExpensesClient() {
   const [data, setData] = useState<any>(null);
@@ -11,7 +11,7 @@ export default function ExpensesClient() {
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().slice(0,10));
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ category: 'Supplies', description: '', amount: '', payment_method: 'cash', reference: '', expense_date: new Date().toISOString().slice(0,16) });
+  const [form, setForm] = useState({ category: 'Supplies', expense_type: 'recurring' as 'recurring' | 'capital', description: '', amount: '', payment_method: 'cash', reference: '', expense_date: new Date().toISOString().slice(0,16) });
 
   useEffect(() => {
     fetch('/api/settings').then(r=>r.json()).then(s=>setCurr(s.currency_symbol||'Rs'));
@@ -33,7 +33,7 @@ export default function ExpensesClient() {
       body: JSON.stringify({ ...form, amount: parseFloat(form.amount) }),
     });
     const d = await res.json();
-    if (d.success) { setShowForm(false); setForm({ category: 'Supplies', description: '', amount: '', payment_method: 'cash', reference: '', expense_date: new Date().toISOString().slice(0,16) }); load(); }
+    if (d.success) { setShowForm(false); setForm({ category: 'Supplies', expense_type: 'recurring', description: '', amount: '', payment_method: 'cash', reference: '', expense_date: new Date().toISOString().slice(0,16) }); load(); }
     setSaving(false);
   }
 
@@ -45,7 +45,16 @@ export default function ExpensesClient() {
 
   const summary = data?.summary || {};
   const byCategory = data?.byCategory || [];
+  const byType = data?.byType || [];
   const expenses = data?.expenses || [];
+
+  function onCategoryChange(category: string) {
+    setForm(f => ({
+      ...f,
+      category,
+      expense_type: category === 'Capital' ? 'capital' : 'recurring',
+    }));
+  }
 
   return (
     <div>
@@ -74,9 +83,9 @@ export default function ExpensesClient() {
       </div>
 
       <div className="row g-3">
-        {/* Left - category breakdown */}
+        {/* Left - category & type breakdown */}
         <div className="col-lg-4">
-          <div className="card">
+          <div className="card mb-3">
             <div className="card-header fw-bold">By Category</div>
             <div className="card-body p-0">
               {byCategory.length === 0 ? <div className="text-center text-muted py-3">No data</div> : byCategory.map((c: any) => (
@@ -86,6 +95,20 @@ export default function ExpensesClient() {
                     <div className="text-muted" style={{ fontSize: '0.72rem' }}>{c.count} entries</div>
                   </div>
                   <div className="fw-bold text-danger small">{curr} {Number(c.total).toFixed(2)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-header fw-bold">By Type</div>
+            <div className="card-body p-0">
+              {byType.length === 0 ? <div className="text-center text-muted py-3">No data</div> : byType.map((t: any) => (
+                <div key={t.expense_type} className="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                  <div>
+                    <div className="fw-500 small text-capitalize">{t.expense_type === 'capital' ? 'One-time (Capital)' : 'Recurring'}</div>
+                    <div className="text-muted" style={{ fontSize: '0.72rem' }}>{t.count} entries</div>
+                  </div>
+                  <div className="fw-bold text-danger small">{curr} {Number(t.total).toFixed(2)}</div>
                 </div>
               ))}
             </div>
@@ -112,11 +135,18 @@ export default function ExpensesClient() {
                 <div className="row g-2">
                   <div className="col-md-4">
                     <label className="form-label small">Category</label>
-                    <select className="form-select form-select-sm" value={form.category} onChange={e => setForm(f=>({...f, category: e.target.value}))}>
+                    <select className="form-select form-select-sm" value={form.category} onChange={e => onCategoryChange(e.target.value)}>
                       {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                     </select>
                   </div>
-                  <div className="col-md-8">
+                  <div className="col-md-4">
+                    <label className="form-label small">Type</label>
+                    <select className="form-select form-select-sm" value={form.expense_type} onChange={e => setForm(f=>({...f, expense_type: e.target.value as 'recurring'|'capital'}))}>
+                      <option value="recurring">Recurring (e.g. electricity, water)</option>
+                      <option value="capital">One-time (Capital)</option>
+                    </select>
+                  </div>
+                  <div className="col-12">
                     <label className="form-label small">Description *</label>
                     <input className="form-control form-control-sm" placeholder="What was this expense for?" value={form.description} onChange={e => setForm(f=>({...f, description: e.target.value}))} />
                   </div>
@@ -158,11 +188,12 @@ export default function ExpensesClient() {
               : expenses.length === 0 ? <div className="text-center text-muted py-4">No expenses in this period</div>
               : (
                 <table className="table table-hover mb-0">
-                  <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Method</th><th>Amount</th><th></th></tr></thead>
+                  <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Method</th><th>Amount</th><th></th></tr></thead>
                   <tbody>
                     {expenses.map((e: any) => (
                       <tr key={e.expense_id}>
                         <td className="small text-muted">{new Date(e.expense_date).toLocaleDateString()}</td>
+                        <td><span className={`badge small ${(e.expense_type || 'recurring') === 'capital' ? 'bg-secondary' : 'bg-info text-dark'}`}>{(e.expense_type || 'recurring') === 'capital' ? 'Capital' : 'Recurring'}</span></td>
                         <td><span className="badge bg-light text-dark text-capitalize">{e.category}</span></td>
                         <td className="small">
                           <div className="fw-500">{e.description}</div>

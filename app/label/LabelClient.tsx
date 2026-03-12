@@ -43,9 +43,10 @@ function Label({ product, shopName, copies, size, showName, showShop }: {
 }) {
   const curr = 'Rs';
   const name = product.short_name || product.product_name;
-  const dims = size === 'small' ? { w: 130, h: 75 } : size === 'medium' ? { w: 180, h: 95 } : { w: 230, h: 115 };
-  const barcodeH = size === 'small' ? 35 : size === 'medium' ? 45 : 55;
-  const priceSize = size === 'small' ? 15 : size === 'medium' ? 18 : 22;
+  const dims = size === 'xsmall' ? { w: 102, h: 68 } : size === 'small' ? { w: 130, h: 75 } : size === 'medium' ? { w: 180, h: 95 } : { w: 230, h: 115 };
+  const barcodeH = size === 'xsmall' ? 28 : size === 'small' ? 35 : size === 'medium' ? 45 : 55;
+  const priceSize = size === 'xsmall' ? 12 : size === 'small' ? 15 : size === 'medium' ? 18 : 22;
+  const padding = size === 'xsmall' ? '3px 4px' : '5px 6px';
 
   return (
     <>
@@ -55,7 +56,7 @@ function Label({ product, shopName, copies, size, showName, showShop }: {
           height: dims.h,
           border: '1px dashed #aaa',
           borderRadius: 3,
-          padding: '5px 6px',
+          padding,
           display: 'inline-flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -75,8 +76,8 @@ function Label({ product, shopName, copies, size, showName, showShop }: {
 
           {/* Product name - optional */}
           {showName && (
-            <div style={{ fontSize: size === 'large' ? 10 : 9, fontWeight: 600, textAlign: 'center', lineHeight: 1.2, color: '#222' }}>
-              {name.length > 28 ? name.slice(0, 26) + '…' : name}
+            <div style={{ fontSize: size === 'xsmall' ? 8 : size === 'large' ? 10 : 9, fontWeight: 600, textAlign: 'center', lineHeight: 1.2, color: '#222' }}>
+              {name.length > (size === 'xsmall' ? 18 : 28) ? name.slice(0, (size === 'xsmall' ? 16 : 26)) + '…' : name}
             </div>
           )}
 
@@ -234,12 +235,12 @@ export default function LabelClient() {
               <div className="row g-3">
                 <div className="col-md-4">
                   <label className="form-label small fw-bold">Label Size</label>
-                  <div className="d-flex gap-1">
-                    {[['small','Small'],['medium','Medium'],['large','Large']].map(([v,l]) => (
-                      <button key={v} className={`btn btn-sm flex-fill ${size===v?'btn-primary':'btn-outline-secondary'}`} onClick={() => setSize(v)}>{l}</button>
+                  <div className="d-flex flex-wrap gap-1">
+                    {[['xsmall','30×20'],['small','Small'],['medium','Medium'],['large','Large']].map(([v,l]) => (
+                      <button key={v} className={`btn btn-sm ${size===v?'btn-primary':'btn-outline-secondary'}`} style={{ minWidth: 56 }} onClick={() => setSize(v)}>{l}</button>
                     ))}
                   </div>
-                  <div className="form-text">Small=38×23mm · Medium=50×28mm · Large=63×33mm</div>
+                  <div className="form-text">30×20mm (Xprinter) · Small=38×23mm · Medium=50×28mm · Large=63×33mm</div>
                 </div>
                 <div className="col-md-4">
                   <label className="form-label small fw-bold">Optional Info</label>
