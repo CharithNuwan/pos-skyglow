@@ -1,7 +1,13 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { Rnd } from 'react-rnd';
+
+const DOTS_PER_MM = 8;
+const BARCODE_DISPLAY_WIDTH = 120;
+const TEXT_DEFAULT_WIDTH = 80;
+const TEXT_DEFAULT_HEIGHT = 20;
 
 const PLACEHOLDERS = [
   { value: '@ItemCode', label: 'Item code' },
@@ -65,14 +71,11 @@ export default function TemplateDesignerClient() {
   const [heightMm, setHeightMm] = useState(25);
   const [gapMm, setGapMm] = useState(2);
   const [elements, setElements] = useState<LabelElement[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const elementsSectionRef = useRef<HTMLDivElement>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(2);
 
-  useEffect(() => {
-    if (elements.length > 0 && elementsSectionRef.current && typeof elementsSectionRef.current.scrollIntoView === 'function') {
-      elementsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  }, [elements.length]);
+  const canvasW = widthMm * DOTS_PER_MM;
+  const canvasH = heightMm * DOTS_PER_MM;
 
   const addText = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -83,7 +86,7 @@ export default function TemplateDesignerClient() {
         id: generateId(),
         type: 'text',
         x: 20,
-        y: 20 + prev.length * 25,
+        y: Math.min(20 + prev.length * 25, canvasH - TEXT_DEFAULT_HEIGHT - 5),
         font: '2',
         rotation: 0,
         xMul: 1,
@@ -91,7 +94,7 @@ export default function TemplateDesignerClient() {
         placeholder: '@ItemCode',
       },
     ]);
-  }, []);
+  }, [canvasH]);
 
   const addBarcode = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -102,11 +105,11 @@ export default function TemplateDesignerClient() {
         id: generateId(),
         type: 'barcode',
         x: 20,
-        y: 20 + prev.filter((item) => item.type === 'barcode').length * 60,
+        y: Math.min(20 + prev.filter((item) => item.type === 'barcode').length * 60, canvasH - 60),
         height: 50,
       },
     ]);
-  }, []);
+  }, [canvasH]);
 
   const updateElement = useCallback((id: string, updates: Partial<LabelElement>) => {
     setElements((prev) =>
@@ -116,8 +119,27 @@ export default function TemplateDesignerClient() {
 
   const removeElement = useCallback((id: string) => {
     setElements((prev) => prev.filter((el) => el.id !== id));
-    setEditingId((current) => (current === id ? null : current));
-  }, []);
+    if (selectedId === id) setSelectedId(null);
+  }, [selectedId]);
+
+  const handleDragStop = useCallback((id: string, _e: unknown, d: { x: number; y: number }) => {
+    const x = Math.max(0, Math.round(d.x));
+    const y = Math.max(0, Math.round(d.y));
+    updateElement(id, { x, y });
+  }, [updateElement]);
+
+  const handleResizeStopBarcode = useCallback((id: string, _e: unknown, _dir: unknown, ref: HTMLElement) => {
+    const height = Math.max(20, Math.min(canvasH - 5, Math.round(ref.offsetHeight)));
+    updateElement(id, { height });
+  }, [updateElement, canvasH]);
+
+  const handleResizeStopText = useCallback((id: string, _e: unknown, _dir: unknown, ref: HTMLElement) => {
+    const width = Math.max(20, Math.round(ref.offsetWidth));
+    const height = Math.max(12, Math.round(ref.offsetHeight));
+    const xMul = width / TEXT_DEFAULT_WIDTH;
+    const yMul = height / TEXT_DEFAULT_HEIGHT;
+    updateElement(id, { xMul, yMul });
+  }, [updateElement]);
 
   const exportTxt = useCallback(() => {
     const tspl = buildTspl(widthMm, heightMm, gapMm, elements);
@@ -133,26 +155,28 @@ export default function TemplateDesignerClient() {
   const reset = useCallback(() => {
     if (elements.length === 0 || confirm('Clear all elements?')) {
       setElements([]);
-      setEditingId(null);
+      setSelectedId(null);
     }
   }, [elements.length]);
 
   const loadDefaultBarcodePrice = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    const cw = widthMm * DOTS_PER_MM;
+    const ch = heightMm * DOTS_PER_MM;
     setElements([
       {
         id: generateId(),
         type: 'barcode',
         x: 20,
-        y: 95,
+        y: Math.min(20, ch - 55),
         height: 50,
       },
       {
         id: generateId(),
         type: 'text',
         x: 20,
-        y: 160,
+        y: Math.min(75, ch - TEXT_DEFAULT_HEIGHT - 5),
         font: '2',
         rotation: 0,
         xMul: 1,
@@ -160,7 +184,9 @@ export default function TemplateDesignerClient() {
         staticText: 'Rs @Price',
       },
     ]);
-  }, []);
+  }, [widthMm, heightMm]);
+
+  const selectedEl = selectedId ? elements.find((e) => e.id === selectedId) : null;
 
   return (
     <>
@@ -209,129 +235,190 @@ export default function TemplateDesignerClient() {
                 onChange={(e) => setGapMm(Number(e.target.value) || 2)}
               />
             </div>
+            <div className="col-auto">
+              <label className="form-label small fw-bold">Zoom</label>
+              <select
+                className="form-select form-select-sm"
+                style={{ width: 70 }}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+              >
+                <option value={1}>1x</option>
+                <option value={1.5}>1.5x</option>
+                <option value={2}>2x</option>
+                <option value={3}>3x</option>
+              </select>
+            </div>
             <div className="col-auto d-flex align-items-end gap-2">
               <button
                 type="button"
                 className="btn btn-outline-success btn-sm"
                 onClick={loadDefaultBarcodePrice}
                 onMouseDown={(e) => e.preventDefault()}
-                title="Load barcode + price only (same as default template)"
               >
                 Load default (barcode + price)
               </button>
-              <button
-                type="button"
-                className="btn btn-outline-primary btn-sm"
-                onClick={addText}
-                onMouseDown={(e) => e.preventDefault()}
-              >
+              <button type="button" className="btn btn-outline-primary btn-sm" onClick={addText} onMouseDown={(e) => e.preventDefault()}>
                 + ADD TEXT
               </button>
-              <button
-                type="button"
-                className="btn btn-outline-primary btn-sm"
-                onClick={addBarcode}
-                onMouseDown={(e) => e.preventDefault()}
-              >
+              <button type="button" className="btn btn-outline-primary btn-sm" onClick={addBarcode} onMouseDown={(e) => e.preventDefault()}>
                 + ADD BARCODE
               </button>
             </div>
           </div>
 
           <p className="small text-muted mb-2">
-            x, y are in printer dots (e.g. 8 dots/mm at 203 DPI). Add elements and set position/font/placeholder below. For a simple barcode + price label, use <strong>Load default (barcode + price)</strong> or add a BARCODE and a TEXT with placeholder Price (@Price).
+            Drag elements to move; drag handles to resize. Canvas uses 1 px = 1 printer dot (8 dots/mm). Select an element to edit placeholder/font/height below.
           </p>
 
-          <div className="mb-3" ref={elementsSectionRef}>
-            <strong className="small">Elements</strong>
-            {elements.length === 0 ? (
-              <div className="text-muted small py-2">No elements. Click <strong>Load default (barcode + price)</strong> or + ADD TEXT / + ADD BARCODE.</div>
-            ) : (
-              <ul className="list-group list-group-flush mt-1">
-                {elements.map((el) => (
-                  <li key={el.id} className="list-group-item d-flex flex-wrap align-items-center gap-2 py-2">
-                    <span className="badge bg-secondary">{el.type === 'text' ? 'TEXT' : 'BARCODE'}</span>
-                    <input
-                      type="number"
-                      className="form-control form-control-sm"
-                      style={{ width: 56 }}
-                      placeholder="x"
-                      value={el.x}
-                      onChange={(e) => updateElement(el.id, { x: Number(e.target.value) || 0 })}
-                    />
-                    <input
-                      type="number"
-                      className="form-control form-control-sm"
-                      style={{ width: 56 }}
-                      placeholder="y"
-                      value={el.y}
-                      onChange={(e) => updateElement(el.id, { y: Number(e.target.value) || 0 })}
-                    />
-                    {el.type === 'text' && (
-                      <>
-                        <select
-                          className="form-select form-select-sm"
-                          style={{ width: 140 }}
-                          value={el.placeholder ?? ''}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            updateElement(el.id, v ? { placeholder: v, staticText: undefined } : { placeholder: undefined });
-                          }}
-                        >
-                          <option value="">— Static text —</option>
-                          {PLACEHOLDERS.map((p) => (
-                            <option key={p.value} value={p.value}>
-                              {p.label}
-                            </option>
-                          ))}
-                        </select>
-                        {(!el.placeholder || editingId === el.id) && (
-                          <input
-                            type="text"
-                            className="form-control form-control-sm"
-                            style={{ width: 120 }}
-                            placeholder="Static text"
-                            value={el.staticText ?? ''}
-                            onChange={(e) => updateElement(el.id, { staticText: e.target.value })}
-                            onFocus={() => setEditingId(el.id)}
-                            onBlur={() => setEditingId(null)}
-                          />
-                        )}
-                        <span className="small text-muted">font</span>
-                        <input
-                          type="text"
-                          className="form-control form-control-sm"
-                          style={{ width: 36 }}
-                          value={el.font ?? '2'}
-                          onChange={(e) => updateElement(el.id, { font: e.target.value || '2' })}
-                        />
-                      </>
-                    )}
-                    {el.type === 'barcode' && (
-                      <>
-                        <span className="small text-muted">height</span>
-                        <input
-                          type="number"
-                          className="form-control form-control-sm"
-                          style={{ width: 56 }}
-                          value={el.height ?? 50}
-                          onChange={(e) => updateElement(el.id, { height: Number(e.target.value) || 50 })}
-                        />
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      className="btn btn-outline-danger btn-sm ms-auto"
-                      onClick={() => removeElement(el.id)}
-                      title="Remove"
+          <div className="mb-3">
+            <strong className="small">Canvas</strong>
+            <div
+              className="border bg-white overflow-hidden mt-1"
+              style={{
+                width: canvasW * zoom,
+                height: canvasH * zoom,
+                maxWidth: '100%',
+                transformOrigin: 'top left',
+              }}
+              onClick={() => setSelectedId(null)}
+              role="presentation"
+            >
+              <div
+                style={{
+                  width: canvasW,
+                  height: canvasH,
+                  transform: `scale(${zoom})`,
+                  transformOrigin: 'top left',
+                  position: 'relative' as const,
+                }}
+              >
+                {elements.map((el) => {
+                  if (el.type === 'barcode') {
+                    const h = el.height ?? 50;
+                    return (
+                      <Rnd
+                        key={el.id}
+                        position={{ x: el.x, y: el.y }}
+                        size={{ width: BARCODE_DISPLAY_WIDTH, height: h }}
+                        minHeight={20}
+                        maxHeight={canvasH - el.y}
+                        enableResize={{ top: false, right: false, bottom: true, left: false, topRight: false, bottomRight: false, bottomLeft: false, topLeft: false }}
+                        disableDragging={false}
+                        bounds="parent"
+                        onDragStop={(_e, d) => handleDragStop(el.id, _e, d)}
+                        onResizeStop={(_e, _dir, ref) => handleResizeStopBarcode(el.id, _e, _dir, ref)}
+                        onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+                        style={{
+                          border: selectedId === el.id ? '2px solid #0d6efd' : '1px dashed #999',
+                          boxSizing: 'border-box',
+                          background: '#f8f9fa',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 10,
+                          color: '#666',
+                        }}
+                      >
+                        BARCODE
+                      </Rnd>
+                    );
+                  }
+                  const tw = (el.xMul ?? 1) * TEXT_DEFAULT_WIDTH;
+                  const th = (el.yMul ?? 1) * TEXT_DEFAULT_HEIGHT;
+                  const label = el.placeholder || el.staticText || 'TEXT';
+                  return (
+                    <Rnd
+                      key={el.id}
+                      position={{ x: el.x, y: el.y }}
+                      size={{ width: tw, height: th }}
+                      minWidth={20}
+                      minHeight={12}
+                      enableResize={true}
+                      disableDragging={false}
+                      bounds="parent"
+                      onDragStop={(_e, d) => handleDragStop(el.id, _e, d)}
+                      onResizeStop={(_e, _dir, ref) => handleResizeStopText(el.id, _e, _dir, ref)}
+                      onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+                      style={{
+                        border: selectedId === el.id ? '2px solid #0d6efd' : '1px dashed #999',
+                        boxSizing: 'border-box',
+                        background: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: 2,
+                        fontSize: 10,
+                        overflow: 'hidden',
+                      }}
                     >
-                      <i className="bi bi-trash" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                      {label.length > 12 ? label.slice(0, 11) + '…' : label}
+                    </Rnd>
+                  );
+                })}
+              </div>
+            </div>
+            {elements.length === 0 && (
+              <div className="text-muted small py-2">No elements. Click Load default (barcode + price) or + ADD TEXT / + ADD BARCODE.</div>
             )}
           </div>
+
+          {selectedEl && (
+            <div className="mb-3 p-2 border rounded bg-light">
+              <strong className="small">Properties — {selectedEl.type === 'text' ? 'TEXT' : 'BARCODE'}</strong>
+              <div className="d-flex flex-wrap align-items-center gap-2 mt-2">
+                {selectedEl.type === 'text' && (
+                  <>
+                    <select
+                      className="form-select form-select-sm"
+                      style={{ width: 140 }}
+                      value={selectedEl.placeholder ?? ''}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        updateElement(selectedEl.id, v ? { placeholder: v, staticText: undefined } : { placeholder: undefined });
+                      }}
+                    >
+                      <option value="">— Static text —</option>
+                      {PLACEHOLDERS.map((p) => (
+                        <option key={p.value} value={p.value}>{p.label}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      style={{ width: 120 }}
+                      placeholder="Static text (e.g. Rs @Price)"
+                      value={selectedEl.staticText ?? ''}
+                      onChange={(e) => updateElement(selectedEl.id, { staticText: e.target.value })}
+                    />
+                    <span className="small text-muted">font</span>
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      style={{ width: 36 }}
+                      value={selectedEl.font ?? '2'}
+                      onChange={(e) => updateElement(selectedEl.id, { font: e.target.value || '2' })}
+                    />
+                  </>
+                )}
+                {selectedEl.type === 'barcode' && (
+                  <>
+                    <span className="small text-muted">height (dots)</span>
+                    <input
+                      type="number"
+                      className="form-control form-control-sm"
+                      style={{ width: 56 }}
+                      min={20}
+                      value={selectedEl.height ?? 50}
+                      onChange={(e) => updateElement(selectedEl.id, { height: Number(e.target.value) || 50 })}
+                    />
+                  </>
+                )}
+                <button type="button" className="btn btn-outline-danger btn-sm ms-auto" onClick={() => removeElement(selectedEl.id)} title="Remove">
+                  <i className="bi bi-trash" />
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="d-flex gap-2 flex-wrap">
             <button type="button" className="btn btn-primary" onClick={exportTxt} disabled={elements.length === 0}>
@@ -342,7 +429,7 @@ export default function TemplateDesignerClient() {
             </button>
           </div>
           <p className="form-text small mt-2 mb-0">
-            Export saves a TSPL .txt file. Copy it to the Xprinter service template folder (e.g. C:\BileetaBarcode\BarcodeTemplate\Source) and use template ID &quot;1&quot; or &quot;18&quot; for 50×25mm, or &quot;6&quot; for no-expiry template.
+            Export saves a TSPL .txt file. Copy it to the Xprinter service template folder. Use template ID &quot;1&quot; or &quot;18&quot; for 50×25mm, &quot;20&quot; for 30×20mm.
           </p>
         </div>
       </div>
