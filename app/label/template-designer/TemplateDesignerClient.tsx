@@ -4,8 +4,6 @@ import { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Rnd } from 'react-rnd';
 
-const DEBUG_RESIZE = true;
-
 const DOTS_PER_MM = 8;
 const BARCODE_DISPLAY_WIDTH = 120;
 const TEXT_DEFAULT_WIDTH = 80;
@@ -143,7 +141,6 @@ export default function TemplateDesignerClient() {
   const syncBarcodeHeight = useCallback((id: string, ref: HTMLElement) => {
     const rawH = (ref as HTMLDivElement).offsetHeight;
     const height = Math.max(20, Math.min(canvasH - 5, Math.round(rawH / zoom)));
-    if (DEBUG_RESIZE) console.log('[TemplateDesigner] onResizeStop BARCODE', { id, refHeight: rawH, zoom, heightDots: height });
     updateElement(id, { height });
   }, [updateElement, canvasH, zoom]);
 
@@ -154,7 +151,6 @@ export default function TemplateDesignerClient() {
           if (el.id !== id || el.type !== 'barcode') return el;
           const ch = el.height ?? 50;
           const newH = Math.max(20, Math.min(canvasH - 5, Math.round(ch + delta.height / zoom)));
-          if (DEBUG_RESIZE) console.log('[TemplateDesigner] onResize BARCODE', { id, deltaHeight: delta.height, zoom, currentH: ch, newH });
           return { ...el, height: newH };
         });
         return next;
@@ -169,7 +165,6 @@ export default function TemplateDesignerClient() {
     const rawH = el.offsetHeight;
     const width = Math.max(20, Math.round(rawW / zoom));
     const height = Math.max(12, Math.round(rawH / zoom));
-    if (DEBUG_RESIZE) console.log('[TemplateDesigner] onResizeStop TEXT', { id, refWidth: rawW, refHeight: rawH, zoom, widthDots: width, heightDots: height });
     updateElement(id, { width, height });
   }, [updateElement, zoom]);
 
@@ -182,7 +177,6 @@ export default function TemplateDesignerClient() {
           const ch = el.height ?? (el.yMul ?? 1) * TEXT_DEFAULT_HEIGHT;
           const newW = Math.max(20, Math.round(cw + delta.width / zoom));
           const newH = Math.max(12, Math.round(ch + delta.height / zoom));
-          if (DEBUG_RESIZE) console.log('[TemplateDesigner] onResize TEXT', { id, deltaW: delta.width, deltaH: delta.height, zoom, currentW: cw, currentH: ch, newW, newH });
           return { ...el, width: newW, height: newH };
         });
         return next;
@@ -348,7 +342,6 @@ export default function TemplateDesignerClient() {
                 {elements.map((el) => {
                   if (el.type === 'barcode') {
                     const h = el.height ?? 50;
-                    if (DEBUG_RESIZE) console.log('[TemplateDesigner] render BARCODE', { id: el.id, heightFromState: el.height, h, sizePx: { w: BARCODE_DISPLAY_WIDTH * zoom, h: h * zoom } });
                     return (
                       <Rnd
                         key={el.id}
@@ -381,7 +374,6 @@ export default function TemplateDesignerClient() {
                   const tw = el.width ?? (el.xMul ?? 1) * TEXT_DEFAULT_WIDTH;
                   const th = el.height ?? (el.yMul ?? 1) * TEXT_DEFAULT_HEIGHT;
                   const label = el.placeholder || el.staticText || 'TEXT';
-                  if (DEBUG_RESIZE) console.log('[TemplateDesigner] render TEXT', { id: el.id, widthFromState: el.width, heightFromState: el.height, tw, th, sizePx: { w: tw * zoom, h: th * zoom } });
                   return (
                     <Rnd
                       key={el.id}

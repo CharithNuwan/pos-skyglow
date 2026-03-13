@@ -1,11 +1,18 @@
 /**
  * Database migration script for Turso (SQLite-compatible)
  * Run: node scripts/migrate.js
+ * Skips (exits 0) when TURSO_DATABASE_URL is not set so CI/Vercel build can run without a DB.
  */
 const { createClient } = require('@libsql/client');
 
+const dbUrl = process.env.TURSO_DATABASE_URL;
+if (!dbUrl || dbUrl === 'undefined') {
+  console.log('Skipping migrations: TURSO_DATABASE_URL not set.');
+  process.exit(0);
+}
+
 const client = createClient({
-  url: process.env.TURSO_DATABASE_URL,
+  url: dbUrl,
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
