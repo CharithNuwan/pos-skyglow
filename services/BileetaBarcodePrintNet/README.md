@@ -27,7 +27,7 @@ Edit `appsettings.json` (or use environment variables):
     "TemplateBasePath": "C:\\BileetaBarcode\\BarcodeTemplate\\Source",
     "UsePrinterFile": true
   }
-}
+ }
 ```
 
 - **UsePrinterFile** `true`: printer name is read from the file at **PrinterFilePath** (one line = Windows printer share name, e.g. `XP-T202UA`).
