@@ -8,6 +8,9 @@ import html2canvas from 'html2canvas';
 
 export type BarcodeType = '1d' | 'ean8' | '2d';
 
+export type LabelBlockId = 'shop' | 'name' | 'barcode' | 'price';
+const DEFAULT_LABEL_ORDER: LabelBlockId[] = ['shop', 'name', 'barcode', 'price'];
+
 interface Product {
   product_id: number;
   product_name: string;
@@ -90,15 +93,42 @@ async function getBarcodeDataUrlAsync(barcode: string, height: number, barcodeTy
   }
 }
 
-function Label({ product, shopName, copies, size, showName, showShop, barcodeType = '1d' }: {
-  product: Product; shopName: string; copies: number; size: string; showName: boolean; showShop: boolean; barcodeType?: BarcodeType;
+function Label({ product, shopName, copies, size, showName, showShop, barcodeType = '1d', labelBlockOrder = DEFAULT_LABEL_ORDER, currencySymbol = 'Rs' }: {
+  product: Product; shopName: string; copies: number; size: string; showName: boolean; showShop: boolean; barcodeType?: BarcodeType; labelBlockOrder?: LabelBlockId[]; currencySymbol?: string;
 }) {
-  const curr = 'Rs';
   const name = product.short_name || product.product_name;
   const dims = size === 'xsmall' ? { w: 102, h: 68 } : size === 'small' ? { w: 130, h: 75 } : size === 'medium' ? { w: 180, h: 95 } : { w: 230, h: 115 };
   const barcodeH = size === 'xsmall' ? 28 : size === 'small' ? 35 : size === 'medium' ? 45 : 55;
   const priceSize = size === 'xsmall' ? 12 : size === 'small' ? 15 : size === 'medium' ? 18 : 22;
   const padding = size === 'xsmall' ? '3px 4px' : '5px 6px';
+
+  const renderBlock = (blockId: LabelBlockId) => {
+    switch (blockId) {
+      case 'shop':
+        return showShop && shopName ? (
+          <div key="shop" style={{ fontSize: 8, color: '#888', fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase' }}>{shopName}</div>
+        ) : null;
+      case 'name':
+        return showName ? (
+          <div key="name" style={{ fontSize: size === 'xsmall' ? 8 : size === 'large' ? 10 : 9, fontWeight: 600, textAlign: 'center', lineHeight: 1.2, color: '#222' }}>
+            {name.length > (size === 'xsmall' ? 18 : 28) ? name.slice(0, (size === 'xsmall' ? 16 : 26)) + '…' : name}
+          </div>
+        ) : null;
+      case 'barcode':
+        return product.barcode ? (
+          <BarcodeDisplay key="barcode" value={product.barcode} width={dims.w - 16} height={barcodeH} barcodeType={barcodeType} />
+        ) : (
+          <div key="barcode" style={{ fontSize: 9, color: '#aaa', height: barcodeH, display: 'flex', alignItems: 'center' }}>No barcode</div>
+        );
+      case 'price':
+        return (
+          <div key="price" style={{ fontSize: priceSize, fontWeight: 800, color: '#000', letterSpacing: 0.5, lineHeight: 1 }}>
+            {currencySymbol} {Number(product.selling_price).toFixed(2)}
+          </div>
+        );
+      default: return null;
+    }
+  };
 
   return (
     <>
@@ -119,36 +149,7 @@ function Label({ product, shopName, copies, size, showName, showShop, barcodeTyp
           pageBreakInside: 'avoid',
           fontFamily: 'Arial, sans-serif',
         }}>
-          {/* Shop name - optional */}
-          {showShop && shopName && (
-            <div style={{ fontSize: 8, color: '#888', fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase' }}>
-              {shopName}
-            </div>
-          )}
-
-          {/* Product name - optional */}
-          {showName && (
-            <div style={{ fontSize: size === 'xsmall' ? 8 : size === 'large' ? 10 : 9, fontWeight: 600, textAlign: 'center', lineHeight: 1.2, color: '#222' }}>
-              {name.length > (size === 'xsmall' ? 18 : 28) ? name.slice(0, (size === 'xsmall' ? 16 : 26)) + '…' : name}
-            </div>
-          )}
-
-          {/* Barcode - always shown */}
-          {product.barcode
-            ? <BarcodeDisplay value={product.barcode} width={dims.w - 16} height={barcodeH} barcodeType={barcodeType} />
-            : <div style={{ fontSize: 9, color: '#aaa', height: barcodeH, display: 'flex', alignItems: 'center' }}>No barcode</div>
-          }
-
-          {/* Price - always shown, prominent */}
-          <div style={{
-            fontSize: priceSize,
-            fontWeight: 800,
-            color: '#000',
-            letterSpacing: 0.5,
-            lineHeight: 1,
-          }}>
-            {curr} {Number(product.selling_price).toFixed(2)}
-          </div>
+          {labelBlockOrder.map(renderBlock)}
         </div>
       ))}
     </>
@@ -171,6 +172,9 @@ export default function LabelClient() {
   const [showName, setShowName] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [barcodeType, setBarcodeType] = useState<BarcodeType>('1d');
+  const [labelBlockOrder, setLabelBlockOrder] = useState<LabelBlockId[]>(DEFAULT_LABEL_ORDER);
+  const [currencySymbol, setCurrencySymbol] = useState('Rs');
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [showKioskHelp, setShowKioskHelp] = useState(false);
   const [printViaServiceStatus, setPrintViaServiceStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle');
   const [downloadingPng, setDownloadingPng] = useState(false);
@@ -245,14 +249,20 @@ export default function LabelClient() {
     const barcodeUrls = await Promise.all(
       labelItems.map(({ p }) => (p.barcode ? getBarcodeDataUrlAsync(p.barcode, barcodeH, barcodeType) : Promise.resolve('')))
     );
+    const priceSize = size === 'xsmall' ? 12 : size === 'small' ? 15 : size === 'medium' ? 18 : 22;
+    const nameSize = size === 'xsmall' ? 8 : size === 'large' ? 10 : 9;
     const labelHtml = labelItems.map(({ p, name }, i) => {
       const barcodeImg = barcodeUrls[i];
+      const blocks = labelBlockOrder.map((blockId) => {
+        if (blockId === 'shop') return showShop && shopName ? `<div style="font-size:8px;color:#888;font-weight:600;">${escapeHtml(shopName.toUpperCase())}</div>` : '';
+        if (blockId === 'name') return showName ? `<div style="font-size:${nameSize}px;font-weight:600;text-align:center;">${escapeHtml(name)}</div>` : '';
+        if (blockId === 'barcode') return barcodeImg ? `<img src="${barcodeImg}" alt="" style="max-width:100%;height:${barcodeH}px;object-fit:contain;" />` : `<div style="font-size:9px;">${escapeHtml(p.barcode || 'No barcode')}</div>`;
+        if (blockId === 'price') return `<div style="font-size:${priceSize}px;font-weight:800;">${escapeHtml(currencySymbol)} ${Number(p.selling_price).toFixed(2)}</div>`;
+        return '';
+      }).filter(Boolean);
       return `
           <div class="label-item" style="width:${dims.wMm}mm;height:${dims.hMm}mm;border:1px solid #999;border-radius:3px;padding:${size === 'xsmall' ? '3px 4px' : '5px 6px'};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#fff;page-break-after:always;font-family:Arial,sans-serif;box-sizing:border-box;">
-            ${showShop && shopName ? `<div style="font-size:8px;color:#888;font-weight:600;">${escapeHtml(shopName.toUpperCase())}</div>` : ''}
-            ${showName ? `<div style="font-size:${size === 'xsmall' ? 8 : size === 'large' ? 10 : 9}px;font-weight:600;text-align:center;">${escapeHtml(name)}</div>` : ''}
-            ${barcodeImg ? `<img src="${barcodeImg}" alt="" style="max-width:100%;height:${barcodeH}px;object-fit:contain;" />` : `<div style="font-size:9px;">${escapeHtml(p.barcode || 'No barcode')}</div>`}
-            <div style="font-size:${size === 'xsmall' ? 12 : size === 'small' ? 15 : size === 'medium' ? 18 : 22}px;font-weight:800;">Rs ${Number(p.selling_price).toFixed(2)}</div>
+            ${blocks.join('')}
           </div>`;
     }).join('');
     const doc = printWindow.document;
@@ -312,13 +322,15 @@ export default function LabelClient() {
   }
 
   /** Label payload shape for POST /api/print-jobs (type: 'label'). Used by Windows label-print service. */
-  function buildLabelPayload(): { shopName: string; size: string; showName: boolean; showShop: boolean; barcodeType: BarcodeType; labels: { product_name: string; short_name: string; barcode: string; selling_price: number; copies: number }[] } {
+  function buildLabelPayload(): { shopName: string; size: string; showName: boolean; showShop: boolean; barcodeType: BarcodeType; labelBlockOrder: LabelBlockId[]; currencySymbol: string; labels: { product_name: string; short_name: string; barcode: string; selling_price: number; copies: number }[] } {
     return {
       shopName,
       size,
       showName,
       showShop,
       barcodeType,
+      labelBlockOrder,
+      currencySymbol,
       labels: selectedProducts.map(p => ({
         product_name: p.product_name,
         short_name: p.short_name || p.product_name,
@@ -390,7 +402,7 @@ export default function LabelClient() {
         }
       `}} />
       {selectedProducts.map(p => (
-        <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} />
+        <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} labelBlockOrder={labelBlockOrder} currencySymbol={currencySymbol} />
       ))}
     </div>,
     document.body
@@ -493,6 +505,36 @@ export default function LabelClient() {
                   <input className="form-control form-control-sm" value={shopName} onChange={e => setShopName(e.target.value)} placeholder="Your shop name" disabled={!showShop} />
                 </div>
               </div>
+              <div className="mt-2">
+                <button type="button" className="btn btn-link btn-sm p-0" onClick={() => setShowTemplateEditor(e => !e)}>
+                  {showTemplateEditor ? 'Hide template editor' : 'Edit barcode template'}
+                </button>
+                {showTemplateEditor && (
+                  <div className="mt-2 p-2 bg-light rounded">
+                    <div className="small fw-600 mb-2">Label block order (drag or use arrows to reorder)</div>
+                    <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+                      {labelBlockOrder.map((id, idx) => (
+                        <span key={id} className="d-inline-flex align-items-center gap-1">
+                          <button type="button" className="btn btn-outline-secondary btn-sm py-0 px-1" disabled={idx === 0} onClick={() => {
+                            const next = [...labelBlockOrder];
+                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                            setLabelBlockOrder(next);
+                          }}>↑</button>
+                          <span className="badge bg-secondary">{id === 'shop' ? 'Shop' : id === 'name' ? 'Product name' : id === 'barcode' ? 'Barcode' : 'Price'}</span>
+                          <button type="button" className="btn btn-outline-secondary btn-sm py-0 px-1" disabled={idx === labelBlockOrder.length - 1} onClick={() => {
+                            const next = [...labelBlockOrder];
+                            [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                            setLabelBlockOrder(next);
+                          }}>↓</button>
+                        </span>
+                      ))}
+                    </div>
+                    <button type="button" className="btn btn-outline-secondary btn-sm me-2" onClick={() => setLabelBlockOrder([...DEFAULT_LABEL_ORDER])}>Reset order</button>
+                    <label className="small me-1">Currency:</label>
+                    <input type="text" className="form-control form-control-sm d-inline-block" style={{ width: 60 }} value={currencySymbol} onChange={e => setCurrencySymbol(e.target.value)} placeholder="Rs" />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -590,7 +632,7 @@ export default function LabelClient() {
           <div className="card-body">
             <div ref={previewContainerRef} style={{ width: previewW, minHeight: previewH, overflow: 'visible', display: 'inline-block' }}>
               {selectedProducts.map(p => (
-                <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} />
+                <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} labelBlockOrder={labelBlockOrder} currencySymbol={currencySymbol} />
               ))}
             </div>
             <div className="mt-2">
