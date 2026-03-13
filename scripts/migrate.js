@@ -5,14 +5,8 @@
  */
 const { createClient } = require('@libsql/client');
 
-const dbUrl = process.env.TURSO_DATABASE_URL;
-if (!dbUrl || dbUrl === 'undefined') {
-  console.log('Skipping migrations: TURSO_DATABASE_URL not set.');
-  process.exit(0);
-}
-
 const client = createClient({
-  url: dbUrl,
+  url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
