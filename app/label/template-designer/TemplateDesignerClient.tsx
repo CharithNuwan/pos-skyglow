@@ -10,6 +10,7 @@ const TEXT_DEFAULT_WIDTH = 80;
 const TEXT_DEFAULT_HEIGHT = 20;
 
 const PLACEHOLDERS = [
+  { value: '@CompanyName', label: 'Company name' },
   { value: '@ItemCode', label: 'Item code' },
   { value: '@Des1', label: 'Description line 1' },
   { value: '@Des2', label: 'Description line 2' },
@@ -34,9 +35,11 @@ interface LabelElement {
   rotation?: number;
   xMul?: number;
   yMul?: number;
+  /** Text element size in dots (persists resize). Barcode uses height only. */
+  width?: number;
+  height?: number;
   placeholder?: string;
   staticText?: string;
-  height?: number;
 }
 
 function generateId() {
@@ -54,8 +57,10 @@ function buildTspl(widthMm: number, heightMm: number, gapMm: number, elements: L
       const content = el.placeholder || (el.staticText ?? '').replace(/"/g, '""');
       const font = el.font ?? '2';
       const rot = el.rotation ?? 0;
-      const xMul = el.xMul ?? 1;
-      const yMul = el.yMul ?? 1;
+      const wDots = el.width ?? (el.xMul ?? 1) * TEXT_DEFAULT_WIDTH;
+      const hDots = el.height ?? (el.yMul ?? 1) * TEXT_DEFAULT_HEIGHT;
+      const xMul = wDots / TEXT_DEFAULT_WIDTH;
+      const yMul = hDots / TEXT_DEFAULT_HEIGHT;
       lines.push(`TEXT ${el.x},${el.y},"${font}",${rot},${xMul},${yMul},"${content}"`);
     } else if (el.type === 'barcode') {
       const h = el.height ?? 50;
@@ -94,8 +99,8 @@ export default function TemplateDesignerClient() {
         y: Math.min(20 + prev.length * 25, canvasH - TEXT_DEFAULT_HEIGHT - 5),
         font: '2',
         rotation: 0,
-        xMul: 1,
-        yMul: 1,
+        width: TEXT_DEFAULT_WIDTH,
+        height: TEXT_DEFAULT_HEIGHT,
         placeholder: '@ItemCode',
       },
     ]);
@@ -142,9 +147,7 @@ export default function TemplateDesignerClient() {
     const el = ref as HTMLDivElement;
     const width = Math.max(20, Math.round(el.offsetWidth / zoom));
     const height = Math.max(12, Math.round(el.offsetHeight / zoom));
-    const xMul = width / TEXT_DEFAULT_WIDTH;
-    const yMul = height / TEXT_DEFAULT_HEIGHT;
-    updateElement(id, { xMul, yMul });
+    updateElement(id, { width, height });
   }, [updateElement, zoom]);
 
   const exportTxt = useCallback(() => {
@@ -185,8 +188,8 @@ export default function TemplateDesignerClient() {
         y: Math.min(75, ch - TEXT_DEFAULT_HEIGHT - 5),
         font: '2',
         rotation: 0,
-        xMul: 1,
-        yMul: 1,
+        width: TEXT_DEFAULT_WIDTH,
+        height: TEXT_DEFAULT_HEIGHT,
         staticText: 'Rs @Price',
       },
     ]);
@@ -332,8 +335,8 @@ export default function TemplateDesignerClient() {
                       </Rnd>
                     );
                   }
-                  const tw = (el.xMul ?? 1) * TEXT_DEFAULT_WIDTH;
-                  const th = (el.yMul ?? 1) * TEXT_DEFAULT_HEIGHT;
+                  const tw = el.width ?? (el.xMul ?? 1) * TEXT_DEFAULT_WIDTH;
+                  const th = el.height ?? (el.yMul ?? 1) * TEXT_DEFAULT_HEIGHT;
                   const label = el.placeholder || el.staticText || 'TEXT';
                   return (
                     <Rnd

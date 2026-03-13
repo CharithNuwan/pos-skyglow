@@ -14,6 +14,7 @@ interface BarcodeTemplateItem {
   Quantity?: string;
   NoOfBarcode?: string;
   BarcodeTemplateId?: string;
+  CompanyName?: string;
   [key: string]: unknown;
 }
 import JsBarcode from 'jsbarcode';
@@ -396,6 +397,7 @@ export default function LabelClient() {
           Quantity: '1',
           NoOfBarcode: '1',
           BarcodeTemplateId: size === 'xsmall' ? '20' : '1',
+          CompanyName: shopName || undefined,
         });
       }
     }
@@ -568,13 +570,13 @@ export default function LabelClient() {
                     </div>
                     <div className="form-check form-switch mb-0">
                       <input className="form-check-input" type="checkbox" checked={showShop} onChange={e => setShowShop(e.target.checked)} id="chkShop" />
-                      <label className="form-check-label small" htmlFor="chkShop">Show shop name</label>
+                      <label className="form-check-label small" htmlFor="chkShop">Show company name</label>
                     </div>
                   </div>
                 </div>
                 <div className="col-md-4">
-                  <label className="form-label small fw-bold">Shop Name</label>
-                  <input className="form-control form-control-sm" value={shopName} onChange={e => setShopName(e.target.value)} placeholder="Your shop name" disabled={!showShop} />
+                  <label className="form-label small fw-bold">Company name</label>
+                  <input className="form-control form-control-sm" value={shopName} onChange={e => setShopName(e.target.value)} placeholder="Your company name" disabled={!showShop} />
                 </div>
               </div>
               <div className="mt-2">
@@ -592,7 +594,7 @@ export default function LabelClient() {
                             [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
                             setLabelBlockOrder(next);
                           }}>↑</button>
-                          <span className="badge bg-secondary">{id === 'shop' ? 'Shop' : id === 'name' ? 'Product name' : id === 'barcode' ? 'Barcode' : 'Price'}</span>
+                          <span className="badge bg-secondary">{id === 'shop' ? 'Company name' : id === 'name' ? 'Product name' : id === 'barcode' ? 'Barcode' : 'Price'}</span>
                           <button type="button" className="btn btn-outline-secondary btn-sm py-0 px-1" disabled={idx === labelBlockOrder.length - 1} onClick={() => {
                             const next = [...labelBlockOrder];
                             [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];

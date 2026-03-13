@@ -309,6 +309,7 @@ public class ValuesController : ControllerBase
                 }
 
                 string str = System.IO.File.ReadAllText(templateFile, Encoding.Default);
+                str = str.Replace("@CompanyName", item.CompanyName ?? "");
                 str = str.Replace("@Barcode", item.BarcodeNo ?? "");
                 str = str.Replace("@ItemCode", item.ProductCode ?? "");
                 str = str.Replace("@Des1", decs1);
