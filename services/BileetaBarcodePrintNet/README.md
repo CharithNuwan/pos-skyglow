@@ -40,13 +40,15 @@ Edit `appsettings.json` (or use environment variables):
 
 1. Create the template folder on the PC where the service runs (if it does not exist), e.g. `C:\BileetaBarcode\BarcodeTemplate\Source`, or use the parent `C:\BileetaBarcode\BarcodeTemplate`.
 2. Place a template file in that folder (or in the parent of Source). The service looks for any of these names in **TemplateBasePath** or its parent:
-   - `50mm25mm.txt` or `50mmx25mm.txt` (template ID 1/18)
-   - `50mm25mm.lbl` or `50mmx25mm.lbl` (same; **must be plain-text TSPL** with placeholders, not a binary label format)
+   - `50mm25mm.txt` or `50mmx25mm.txt` (template ID 1/18) — the project’s sample is **barcode + price only** (one BARCODE, one TEXT line with `@Price`).
+   - `50mm25mm.lbl` or `50mmx25mm.lbl` (same; **must be plain-text TSPL** with placeholders, not a binary format)
    - For template ID 6: `50mm25mmWoExp.txt` / `50mmx25mmWoExp.lbl`, etc.
-   - You can copy the sample from the project: `BarcodePrint\BileetaBarcodePrintNet\TemplateSource\50mm25mm.txt` into `C:\BileetaBarcode\BarcodeTemplate\Source\` or into `C:\BileetaBarcode\BarcodeTemplate\`.
-3. Templates are TSPL text. Placeholders `@Barcode`, `@ItemCode`, `@Des1`, `@Des2`, `@Price`, `@Qty`, etc. are replaced by the service. If you use a `.lbl` file, it must be saved as **plain text** (TSPL), not a proprietary binary format.
+   - Copy the sample from the project: `BileetaBarcodePrintNet\TemplateSource\50mm25mm.txt` into your TemplateBasePath (or its parent).
+3. Templates are TSPL text. Placeholders `@Barcode`, `@Price`, `@ItemCode`, `@Des1`, `@Des2`, `@Qty`, etc. are replaced by the service. The included `50mm25mm.txt` uses only `@Barcode` and `@Price` for a simple barcode + price label. If you use a `.lbl` file, it must be **plain text** (TSPL), not a binary format.
 
 If no template file is found, **PrintRequest** returns 500 with a message. LineFeed works without templates.
+
+**Troubleshooting — label shows barcode but no price:** Ensure your template file contains a TEXT line that uses the `@Price` placeholder (e.g. `TEXT 20,160,"2",0,1,1,"Rs @Price"`). Copy the project’s `TemplateSource\50mm25mm.txt` into the folder set by **TemplateBasePath** (or its parent), overwriting any existing file. The included sample is barcode + price only.
 
 **Label Designer (web):** In the AWMS UI, open **Settings → Printer Config** and click **Generate print template** to open the built-in label designer. There you can set label size (width/height in mm), add text and barcode elements with placeholders, drag to position them, and **Export .lbl** to download a TSPL file. Copy the downloaded file to the TemplateBasePath folder (or its parent) on the PC where the BarcodePrint service runs.
 

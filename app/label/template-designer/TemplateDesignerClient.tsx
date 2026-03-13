@@ -137,6 +137,31 @@ export default function TemplateDesignerClient() {
     }
   }, [elements.length]);
 
+  const loadDefaultBarcodePrice = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setElements([
+      {
+        id: generateId(),
+        type: 'barcode',
+        x: 20,
+        y: 95,
+        height: 50,
+      },
+      {
+        id: generateId(),
+        type: 'text',
+        x: 20,
+        y: 160,
+        font: '2',
+        rotation: 0,
+        xMul: 1,
+        yMul: 1,
+        staticText: 'Rs @Price',
+      },
+    ]);
+  }, []);
+
   return (
     <>
       <div className="mb-3">
@@ -187,6 +212,15 @@ export default function TemplateDesignerClient() {
             <div className="col-auto d-flex align-items-end gap-2">
               <button
                 type="button"
+                className="btn btn-outline-success btn-sm"
+                onClick={loadDefaultBarcodePrice}
+                onMouseDown={(e) => e.preventDefault()}
+                title="Load barcode + price only (same as default template)"
+              >
+                Load default (barcode + price)
+              </button>
+              <button
+                type="button"
                 className="btn btn-outline-primary btn-sm"
                 onClick={addText}
                 onMouseDown={(e) => e.preventDefault()}
@@ -205,13 +239,13 @@ export default function TemplateDesignerClient() {
           </div>
 
           <p className="small text-muted mb-2">
-            x, y are in printer dots (e.g. 8 dots/mm at 203 DPI). Add elements and set position/font/placeholder below.
+            x, y are in printer dots (e.g. 8 dots/mm at 203 DPI). Add elements and set position/font/placeholder below. For a simple barcode + price label, use <strong>Load default (barcode + price)</strong> or add a BARCODE and a TEXT with placeholder Price (@Price).
           </p>
 
           <div className="mb-3" ref={elementsSectionRef}>
             <strong className="small">Elements</strong>
             {elements.length === 0 ? (
-              <div className="text-muted small py-2">No elements. Click + ADD TEXT or + ADD BARCODE.</div>
+              <div className="text-muted small py-2">No elements. Click <strong>Load default (barcode + price)</strong> or + ADD TEXT / + ADD BARCODE.</div>
             ) : (
               <ul className="list-group list-group-flush mt-1">
                 {elements.map((el) => (
