@@ -39,6 +39,17 @@ function BarcodeDisplay({ value, width = 160, height = 50 }: { value: string; wi
   );
 }
 
+/** Label dimensions in px and mm for selected size (for print page size and PNG export). */
+function getLabelDims(size: string): { w: number; h: number; wMm: number; hMm: number } {
+  const map: Record<string, { w: number; h: number; wMm: number; hMm: number }> = {
+    xsmall: { w: 102, h: 68, wMm: 30, hMm: 20 },
+    small: { w: 130, h: 75, wMm: 38, hMm: 23 },
+    medium: { w: 180, h: 95, wMm: 50, hMm: 28 },
+    large: { w: 230, h: 115, wMm: 63, hMm: 33 },
+  };
+  return map[size] || map.medium;
+}
+
 function getBarcodeDataUrl(barcode: string, height: number = 40): string {
   if (!barcode || typeof document === 'undefined') return '';
   try {
@@ -196,17 +207,17 @@ export default function LabelClient() {
       setTimeout(() => window.print(), 500);
       return;
     }
+    const dims = getLabelDims(size);
     const barcodeH = size === 'xsmall' ? 28 : size === 'small' ? 35 : size === 'medium' ? 45 : 55;
     const labelHtml = selectedProducts.flatMap(p =>
       Array.from({ length: selected[p.product_id] }, () => {
         const name = (p.short_name || p.product_name).slice(0, size === 'xsmall' ? 18 : 28);
-        const dims = size === 'xsmall' ? { w: 102, h: 68 } : size === 'small' ? { w: 130, h: 75 } : size === 'medium' ? { w: 180, h: 95 } : { w: 230, h: 115 };
         const barcodeImg = p.barcode ? getBarcodeDataUrl(p.barcode, barcodeH) : '';
         return `
-          <div class="label-item" style="width:${dims.w}px;height:${dims.h}px;border:1px solid #999;border-radius:3px;padding:${size === 'xsmall' ? '3px 4px' : '5px 6px'};display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin:3px;background:#fff;page-break-inside:avoid;font-family:Arial,sans-serif;">
+          <div class="label-item" style="width:${dims.wMm}mm;height:${dims.hMm}mm;border:1px solid #999;border-radius:3px;padding:${size === 'xsmall' ? '3px 4px' : '5px 6px'};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#fff;page-break-after:always;font-family:Arial,sans-serif;box-sizing:border-box;">
             ${showShop && shopName ? `<div style="font-size:8px;color:#888;font-weight:600;">${escapeHtml(shopName.toUpperCase())}</div>` : ''}
             ${showName ? `<div style="font-size:${size === 'xsmall' ? 8 : size === 'large' ? 10 : 9}px;font-weight:600;text-align:center;">${escapeHtml(name)}</div>` : ''}
-            ${barcodeImg ? `<img src="${barcodeImg}" alt="" style="max-width:${dims.w - 16}px;height:${barcodeH}px;object-fit:contain;" />` : `<div style="font-size:9px;">${escapeHtml(p.barcode || 'No barcode')}</div>`}
+            ${barcodeImg ? `<img src="${barcodeImg}" alt="" style="max-width:100%;height:${barcodeH}px;object-fit:contain;" />` : `<div style="font-size:9px;">${escapeHtml(p.barcode || 'No barcode')}</div>`}
             <div style="font-size:${size === 'xsmall' ? 12 : size === 'small' ? 15 : size === 'medium' ? 18 : 22}px;font-weight:800;">Rs ${Number(p.selling_price).toFixed(2)}</div>
           </div>`;
       })
@@ -215,7 +226,11 @@ export default function LabelClient() {
     doc.open();
     doc.write(`
       <!DOCTYPE html><html><head><title>Print Labels</title>
-      <style>body{margin:0;padding:10px;background:#fff;}</style></head>
+      <style>
+        @page { size: ${dims.wMm}mm ${dims.hMm}mm; margin: 0; }
+        body { margin: 0; padding: 0; background: #fff; }
+        .label-item:last-child { page-break-after: auto !important; }
+      </style></head>
       <body>${labelHtml}</body></html>
     `);
     doc.close();
@@ -242,7 +257,7 @@ export default function LabelClient() {
     try {
       const canvas = await html2canvas(previewContainerRef.current, {
         backgroundColor: '#ffffff',
-        scale: 2,
+        scale: 1,
         useCORS: true,
       });
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
@@ -520,11 +535,15 @@ export default function LabelClient() {
       </div>
 
       {/* On-screen preview (print uses portal to body so dialog shows labels) */}
-      {showPreview && selectedProducts.length > 0 && (
+      {showPreview && selectedProducts.length > 0 && (() => {
+        const dims = getLabelDims(size);
+        const previewW = totalLabels * (dims.w + 6);
+        const previewH = dims.h + 6;
+        return (
         <div className="card mt-3">
           <div className="card-header fw-bold">Preview</div>
           <div className="card-body">
-            <div ref={previewContainerRef}>
+            <div ref={previewContainerRef} style={{ width: previewW, height: previewH, overflow: 'hidden', display: 'inline-block' }}>
               {selectedProducts.map(p => (
                 <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} />
               ))}
@@ -542,7 +561,8 @@ export default function LabelClient() {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
