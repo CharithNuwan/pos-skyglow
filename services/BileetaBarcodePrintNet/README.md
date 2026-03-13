@@ -30,8 +30,9 @@ Edit `appsettings.json` (or use environment variables):
 }
 ```
 
-- **UsePrinterFile** `true`: printer name is read from the file at **PrinterFilePath** (one line = printer share name).
-- **UsePrinterFile** `false`: use **PrinterName** directly.
+- **UsePrinterFile** `true`: printer name is read from the file at **PrinterFilePath** (one line = Windows printer share name, e.g. `XP-T202UA`).
+- **UsePrinterFile** `false`: use **PrinterName** directly (e.g. `XP-T202UA` for Xprinter XP-T202UA).
+- Set **PrinterName** or the contents of **Printer.txt** to your printer’s share name (e.g. `XP-T202UA`). The service sends output to `\\localhost\<PrinterName>`.
 - **PrinterComPort** (optional): COM port for direct status query (e.g. `COM3`). Use this for TSPL/ZPL-compatible printers (e.g. TTP-244 Pro) connected via **RS-232** or a virtual COM port so the app can detect paper out/error via the ZPL `~HS` command. If the printer is connected only via USB, it may not appear as a COM port in Windows—use RS-232 or check if your model has a USB virtual COM driver. Leave empty to use Windows printer status only.
 - **TemplateBasePath**: folder containing template files (e.g. `50mm25mm.txt`, `50mmx25mm.lbl`). The service also looks in the **parent** of this folder (e.g. `C:\BileetaBarcode\BarcodeTemplate` if TemplateBasePath is `...\BarcodeTemplate\Source`).
 
