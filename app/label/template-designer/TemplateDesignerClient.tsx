@@ -77,6 +77,11 @@ export default function TemplateDesignerClient() {
   const canvasW = widthMm * DOTS_PER_MM;
   const canvasH = heightMm * DOTS_PER_MM;
 
+  // Template ID and file name for current dimensions (so user knows what to use in Xprinter folder)
+  const is30x20 = widthMm === 30 && heightMm === 20;
+  const templateId = is30x20 ? '20' : '1';
+  const templateFileName = is30x20 ? '30mm20mm.txt' : '50mm25mm.txt';
+
   const addText = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -123,23 +128,24 @@ export default function TemplateDesignerClient() {
   }, [selectedId]);
 
   const handleDragStop = useCallback((id: string, _e: unknown, d: { x: number; y: number }) => {
-    const x = Math.max(0, Math.round(d.x));
-    const y = Math.max(0, Math.round(d.y));
+    const x = Math.max(0, Math.round(d.x / zoom));
+    const y = Math.max(0, Math.round(d.y / zoom));
     updateElement(id, { x, y });
-  }, [updateElement]);
+  }, [updateElement, zoom]);
 
   const handleResizeStopBarcode = useCallback((id: string, _e: unknown, _dir: unknown, ref: HTMLElement) => {
-    const height = Math.max(20, Math.min(canvasH - 5, Math.round(ref.offsetHeight)));
+    const height = Math.max(20, Math.min(canvasH - 5, Math.round((ref as HTMLDivElement).offsetHeight / zoom)));
     updateElement(id, { height });
-  }, [updateElement, canvasH]);
+  }, [updateElement, canvasH, zoom]);
 
   const handleResizeStopText = useCallback((id: string, _e: unknown, _dir: unknown, ref: HTMLElement) => {
-    const width = Math.max(20, Math.round(ref.offsetWidth));
-    const height = Math.max(12, Math.round(ref.offsetHeight));
+    const el = ref as HTMLDivElement;
+    const width = Math.max(20, Math.round(el.offsetWidth / zoom));
+    const height = Math.max(12, Math.round(el.offsetHeight / zoom));
     const xMul = width / TEXT_DEFAULT_WIDTH;
     const yMul = height / TEXT_DEFAULT_HEIGHT;
     updateElement(id, { xMul, yMul });
-  }, [updateElement]);
+  }, [updateElement, zoom]);
 
   const exportTxt = useCallback(() => {
     const tspl = buildTspl(widthMm, heightMm, gapMm, elements);
@@ -271,6 +277,10 @@ export default function TemplateDesignerClient() {
             Drag elements to move; drag handles to resize. Canvas uses 1 px = 1 printer dot (8 dots/mm). Select an element to edit placeholder/font/height below.
           </p>
 
+          <div className="alert alert-info py-2 px-3 mb-3 small">
+            <strong>Template ID for this design:</strong> Use <strong>{templateId}</strong> — save the exported file as <strong>{templateFileName}</strong> in the Xprinter template folder (e.g. C:\BileetaBarcode\BarcodeTemplate\Source). On Print Labels, the template ID is sent automatically: choose label size <strong>30×20</strong> to use ID 20, or <strong>50×25 / other</strong> to use ID 1.
+          </div>
+
           <div className="mb-3">
             <strong className="small">Canvas</strong>
             <div
@@ -279,17 +289,15 @@ export default function TemplateDesignerClient() {
                 width: canvasW * zoom,
                 height: canvasH * zoom,
                 maxWidth: '100%',
-                transformOrigin: 'top left',
+                position: 'relative' as const,
               }}
               onClick={() => setSelectedId(null)}
               role="presentation"
             >
               <div
                 style={{
-                  width: canvasW,
-                  height: canvasH,
-                  transform: `scale(${zoom})`,
-                  transformOrigin: 'top left',
+                  width: canvasW * zoom,
+                  height: canvasH * zoom,
                   position: 'relative' as const,
                 }}
               >
@@ -299,10 +307,10 @@ export default function TemplateDesignerClient() {
                     return (
                       <Rnd
                         key={el.id}
-                        position={{ x: el.x, y: el.y }}
-                        size={{ width: BARCODE_DISPLAY_WIDTH, height: h }}
-                        minHeight={20}
-                        maxHeight={canvasH - el.y}
+                        position={{ x: el.x * zoom, y: el.y * zoom }}
+                        size={{ width: BARCODE_DISPLAY_WIDTH * zoom, height: h * zoom }}
+                        minHeight={20 * zoom}
+                        maxHeight={(canvasH - el.y) * zoom}
                         enableResize={{ top: false, right: false, bottom: true, left: false, topRight: false, bottomRight: false, bottomLeft: false, topLeft: false }}
                         disableDragging={false}
                         bounds="parent"
@@ -316,7 +324,7 @@ export default function TemplateDesignerClient() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: 10,
+                          fontSize: Math.max(10, 10 * zoom),
                           color: '#666',
                         }}
                       >
@@ -330,10 +338,10 @@ export default function TemplateDesignerClient() {
                   return (
                     <Rnd
                       key={el.id}
-                      position={{ x: el.x, y: el.y }}
-                      size={{ width: tw, height: th }}
-                      minWidth={20}
-                      minHeight={12}
+                      position={{ x: el.x * zoom, y: el.y * zoom }}
+                      size={{ width: tw * zoom, height: th * zoom }}
+                      minWidth={20 * zoom}
+                      minHeight={12 * zoom}
                       enableResize={true}
                       disableDragging={false}
                       bounds="parent"
@@ -347,7 +355,7 @@ export default function TemplateDesignerClient() {
                         display: 'flex',
                         alignItems: 'center',
                         padding: 2,
-                        fontSize: 10,
+                        fontSize: Math.max(10, 10 * zoom),
                         overflow: 'hidden',
                       }}
                     >
@@ -429,7 +437,7 @@ export default function TemplateDesignerClient() {
             </button>
           </div>
           <p className="form-text small mt-2 mb-0">
-            Export saves a TSPL .txt file. Copy it to the Xprinter service template folder. Use template ID &quot;1&quot; or &quot;18&quot; for 50×25mm, &quot;20&quot; for 30×20mm.
+            Export saves a TSPL .txt file. Copy it to the Xprinter template folder as <strong>{templateFileName}</strong>. Print Labels sends template ID <strong>{templateId}</strong> when you use label size {is30x20 ? '30×20' : '50×25 or other'}.
           </p>
         </div>
       </div>
