@@ -138,17 +138,47 @@ export default function TemplateDesignerClient() {
     updateElement(id, { x, y });
   }, [updateElement, zoom]);
 
-  const handleResizeStopBarcode = useCallback((id: string, _e: unknown, _dir: unknown, ref: HTMLElement) => {
+  const syncBarcodeHeight = useCallback((id: string, ref: HTMLElement) => {
     const height = Math.max(20, Math.min(canvasH - 5, Math.round((ref as HTMLDivElement).offsetHeight / zoom)));
     updateElement(id, { height });
   }, [updateElement, canvasH, zoom]);
 
-  const handleResizeStopText = useCallback((id: string, _e: unknown, _dir: unknown, ref: HTMLElement) => {
+  const handleResizeBarcode = useCallback(
+    (id: string, _e: MouseEvent | TouchEvent, _dir: unknown, _ref: HTMLElement, delta: { width: number; height: number }) => {
+      setElements((prev) =>
+        prev.map((el) => {
+          if (el.id !== id || el.type !== 'barcode') return el;
+          const ch = el.height ?? 50;
+          const newH = Math.max(20, Math.min(canvasH - 5, Math.round(ch + delta.height / zoom)));
+          return { ...el, height: newH };
+        })
+      );
+    },
+    [canvasH, zoom]
+  );
+
+  const syncTextSize = useCallback((id: string, ref: HTMLElement) => {
     const el = ref as HTMLDivElement;
     const width = Math.max(20, Math.round(el.offsetWidth / zoom));
     const height = Math.max(12, Math.round(el.offsetHeight / zoom));
     updateElement(id, { width, height });
   }, [updateElement, zoom]);
+
+  const handleResizeText = useCallback(
+    (id: string, _e: MouseEvent | TouchEvent, _dir: unknown, _ref: HTMLElement, delta: { width: number; height: number }) => {
+      setElements((prev) =>
+        prev.map((el) => {
+          if (el.id !== id || el.type !== 'text') return el;
+          const cw = el.width ?? (el.xMul ?? 1) * TEXT_DEFAULT_WIDTH;
+          const ch = el.height ?? (el.yMul ?? 1) * TEXT_DEFAULT_HEIGHT;
+          const newW = Math.max(20, Math.round(cw + delta.width / zoom));
+          const newH = Math.max(12, Math.round(ch + delta.height / zoom));
+          return { ...el, width: newW, height: newH };
+        })
+      );
+    },
+    [zoom]
+  );
 
   const exportTxt = useCallback(() => {
     const tspl = buildTspl(widthMm, heightMm, gapMm, elements);
@@ -318,7 +348,8 @@ export default function TemplateDesignerClient() {
                         disableDragging={false}
                         bounds="parent"
                         onDragStop={(_e, d) => handleDragStop(el.id, _e, d)}
-                        onResizeStop={(_e, _dir, ref) => handleResizeStopBarcode(el.id, _e, _dir, ref)}
+                        onResize={(_e, _dir, _ref, delta) => handleResizeBarcode(el.id, _e, _dir, _ref, delta)}
+                        onResizeStop={(_e, _dir, ref) => syncBarcodeHeight(el.id, ref)}
                         onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
                         style={{
                           border: selectedId === el.id ? '2px solid #0d6efd' : '1px dashed #999',
@@ -349,7 +380,8 @@ export default function TemplateDesignerClient() {
                       disableDragging={false}
                       bounds="parent"
                       onDragStop={(_e, d) => handleDragStop(el.id, _e, d)}
-                      onResizeStop={(_e, _dir, ref) => handleResizeStopText(el.id, _e, _dir, ref)}
+                      onResize={(_e, _dir, _ref, delta) => handleResizeText(el.id, _e, _dir, _ref, delta)}
+                      onResizeStop={(_e, _dir, ref) => syncTextSize(el.id, ref)}
                       onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
                       style={{
                         border: selectedId === el.id ? '2px solid #0d6efd' : '1px dashed #999',
