@@ -2,11 +2,18 @@
 const nextConfig = {
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000'],
+      allowedOrigins: [
+        'localhost:3000',
+        '.vercel.app',
+        process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
+      ].filter(Boolean),
     },
   },
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      { hostname: 'localhost' },
+      { hostname: '**.vercel.app' },
+    ],
   },
 }
 

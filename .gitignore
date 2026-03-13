@@ -1,1 +1,14 @@
+# Dependencies
 node_modules/
+
+# Build output (local build)
+.next/
+out/
+
+# Vercel (local link / deploy cache)
+.vercel
+
+# Local env (never commit secrets)
+.env
+.env.local
+.env.*.local
