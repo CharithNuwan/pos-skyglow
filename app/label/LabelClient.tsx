@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import JsBarcode from 'jsbarcode';
+import html2canvas from 'html2canvas';
 
 interface Product {
   product_id: number;
@@ -131,6 +132,8 @@ export default function LabelClient() {
   const [showShop, setShowShop] = useState(false);
   const [showKioskHelp, setShowKioskHelp] = useState(false);
   const [printViaServiceStatus, setPrintViaServiceStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle');
+  const [downloadingPng, setDownloadingPng] = useState(false);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(s => setShopName(s.shop_name || ''));
@@ -231,6 +234,31 @@ export default function LabelClient() {
 
   function escapeHtml(s: string) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  async function downloadPreviewPng() {
+    if (!previewContainerRef.current) return;
+    setDownloadingPng(true);
+    try {
+      const canvas = await html2canvas(previewContainerRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+      });
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `label-preview-${Date.now()}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert('Could not create image.');
+    } finally {
+      setDownloadingPng(false);
+    }
   }
 
   /** Label payload shape for POST /api/print-jobs (type: 'label'). Used by Windows label-print service. */
@@ -496,9 +524,22 @@ export default function LabelClient() {
         <div className="card mt-3">
           <div className="card-header fw-bold">Preview</div>
           <div className="card-body">
-            {selectedProducts.map(p => (
-              <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} />
-            ))}
+            <div ref={previewContainerRef}>
+              {selectedProducts.map(p => (
+                <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} />
+              ))}
+            </div>
+            <div className="mt-2">
+              <button
+                type="button"
+                className="btn btn-outline-secondary btn-sm"
+                onClick={downloadPreviewPng}
+                disabled={downloadingPng}
+              >
+                {downloadingPng ? <span className="spinner-border spinner-border-sm me-1" role="status" /> : <i className="bi bi-download me-1" />}
+                Download PNG
+              </button>
+            </div>
           </div>
         </div>
       )}
