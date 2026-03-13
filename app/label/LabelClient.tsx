@@ -282,10 +282,13 @@ export default function LabelClient() {
     if (!previewContainerRef.current) return;
     setDownloadingPng(true);
     try {
+      // Brief delay so canvas (barcode) and all text are fully painted before capture
+      await new Promise((r) => setTimeout(r, 150));
       const canvas = await html2canvas(previewContainerRef.current, {
         backgroundColor: '#ffffff',
         scale: 1,
         useCORS: true,
+        logging: false,
       });
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
       if (!blob) return;
@@ -579,7 +582,7 @@ export default function LabelClient() {
         <div className="card mt-3">
           <div className="card-header fw-bold">Preview</div>
           <div className="card-body">
-            <div ref={previewContainerRef} style={{ width: previewW, height: previewH, overflow: 'hidden', display: 'inline-block' }}>
+            <div ref={previewContainerRef} style={{ width: previewW, minHeight: previewH, overflow: 'visible', display: 'inline-block' }}>
               {selectedProducts.map(p => (
                 <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} />
               ))}
