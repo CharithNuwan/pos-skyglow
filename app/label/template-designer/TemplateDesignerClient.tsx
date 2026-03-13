@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Rnd } from 'react-rnd';
 
 const DOTS_PER_MM = 8;
-const BARCODE_DISPLAY_WIDTH = 120;
+const BARCODE_DEFAULT_WIDTH = 120;
+const BARCODE_DEFAULT_HEIGHT = 50;
 const TEXT_DEFAULT_WIDTH = 80;
 const TEXT_DEFAULT_HEIGHT = 20;
 
@@ -35,7 +36,7 @@ interface LabelElement {
   rotation?: number;
   xMul?: number;
   yMul?: number;
-  /** Text element size in dots (persists resize). Barcode uses height only. */
+  /** Size in dots (persists resize). Both text and barcode use width & height. */
   width?: number;
   height?: number;
   placeholder?: string;
@@ -63,7 +64,7 @@ function buildTspl(widthMm: number, heightMm: number, gapMm: number, elements: L
       const yMul = hDots / TEXT_DEFAULT_HEIGHT;
       lines.push(`TEXT ${el.x},${el.y},"${font}",${rot},${xMul},${yMul},"${content}"`);
     } else if (el.type === 'barcode') {
-      const h = el.height ?? 50;
+      const h = el.height ?? BARCODE_DEFAULT_HEIGHT;
       lines.push(`BARCODE ${el.x},${el.y},"128",${h},1,0,2,2,"@Barcode"`);
     }
   }
@@ -116,7 +117,8 @@ export default function TemplateDesignerClient() {
         type: 'barcode',
         x: 20,
         y: Math.min(20 + prev.filter((item) => item.type === 'barcode').length * 60, canvasH - 60),
-        height: 50,
+        width: BARCODE_DEFAULT_WIDTH,
+        height: BARCODE_DEFAULT_HEIGHT,
       },
     ]);
   }, [canvasH]);
@@ -138,25 +140,30 @@ export default function TemplateDesignerClient() {
     updateElement(id, { x, y });
   }, [updateElement, zoom]);
 
-  const syncBarcodeHeight = useCallback((id: string, ref: HTMLElement) => {
-    const rawH = (ref as HTMLDivElement).offsetHeight;
+  const syncBarcodeSize = useCallback((id: string, ref: HTMLElement) => {
+    const el = ref as HTMLDivElement;
+    const rawW = el.offsetWidth;
+    const rawH = el.offsetHeight;
+    const width = Math.max(40, Math.min(canvasW - 10, Math.round(rawW / zoom)));
     const height = Math.max(20, Math.min(canvasH - 5, Math.round(rawH / zoom)));
-    updateElement(id, { height });
-  }, [updateElement, canvasH, zoom]);
+    updateElement(id, { width, height });
+  }, [updateElement, canvasW, canvasH, zoom]);
 
   const handleResizeBarcode = useCallback(
     (id: string, _e: MouseEvent | TouchEvent, _dir: unknown, _ref: HTMLElement, delta: { width: number; height: number }) => {
       setElements((prev) => {
         const next = prev.map((el) => {
           if (el.id !== id || el.type !== 'barcode') return el;
-          const ch = el.height ?? 50;
+          const cw = el.width ?? BARCODE_DEFAULT_WIDTH;
+          const ch = el.height ?? BARCODE_DEFAULT_HEIGHT;
+          const newW = Math.max(40, Math.min(canvasW - 10, Math.round(cw + delta.width / zoom)));
           const newH = Math.max(20, Math.min(canvasH - 5, Math.round(ch + delta.height / zoom)));
-          return { ...el, height: newH };
+          return { ...el, width: newW, height: newH };
         });
         return next;
       });
     },
-    [canvasH, zoom]
+    [canvasW, canvasH, zoom]
   );
 
   const syncTextSize = useCallback((id: string, ref: HTMLElement) => {
@@ -214,7 +221,8 @@ export default function TemplateDesignerClient() {
         type: 'barcode',
         x: 20,
         y: Math.min(20, ch - 55),
-        height: 50,
+        width: BARCODE_DEFAULT_WIDTH,
+        height: BARCODE_DEFAULT_HEIGHT,
       },
       {
         id: generateId(),
@@ -312,7 +320,7 @@ export default function TemplateDesignerClient() {
           </div>
 
           <p className="small text-muted mb-2">
-            Drag elements to move; drag handles to resize. Canvas uses 1 px = 1 printer dot (8 dots/mm). Select an element to edit placeholder/font/height below.
+            Drag elements to move; drag the blue handles (right edge, bottom edge, or bottom-right corner) to resize width and height. Select an element to edit properties below.
           </p>
 
           <div className="alert alert-info py-2 px-3 mb-3 small">
@@ -341,20 +349,29 @@ export default function TemplateDesignerClient() {
               >
                 {elements.map((el) => {
                   if (el.type === 'barcode') {
-                    const h = el.height ?? 50;
+                    const bw = el.width ?? BARCODE_DEFAULT_WIDTH;
+                    const bh = el.height ?? BARCODE_DEFAULT_HEIGHT;
+                    const resizeHandleStyles = {
+                      bottom: { height: 10, background: 'rgba(13, 110, 253, 0.6)', cursor: 'ns-resize' } as React.CSSProperties,
+                      right: { width: 10, background: 'rgba(13, 110, 253, 0.6)', cursor: 'ew-resize' } as React.CSSProperties,
+                      bottomRight: { width: 14, height: 14, background: 'rgba(13, 110, 253, 0.8)', cursor: 'nwse-resize' } as React.CSSProperties,
+                    };
                     return (
                       <Rnd
                         key={el.id}
                         position={{ x: el.x * zoom, y: el.y * zoom }}
-                        size={{ width: BARCODE_DISPLAY_WIDTH * zoom, height: h * zoom }}
+                        size={{ width: bw * zoom, height: bh * zoom }}
+                        minWidth={40 * zoom}
                         minHeight={20 * zoom}
+                        maxWidth={(canvasW - el.x) * zoom}
                         maxHeight={(canvasH - el.y) * zoom}
-                        enableResize={{ top: false, right: false, bottom: true, left: false, topRight: false, bottomRight: false, bottomLeft: false, topLeft: false }}
+                        enableResize={{ top: false, right: true, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: false, topLeft: false }}
+                        resizeHandleStyles={resizeHandleStyles}
                         disableDragging={false}
                         bounds="parent"
                         onDragStop={(_e, d) => handleDragStop(el.id, _e, d)}
                         onResize={(_e, _dir, _ref, delta) => handleResizeBarcode(el.id, _e, _dir, _ref, delta)}
-                        onResizeStop={(_e, _dir, ref) => syncBarcodeHeight(el.id, ref)}
+                        onResizeStop={(_e, _dir, ref) => syncBarcodeSize(el.id, ref)}
                         onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
                         style={{
                           border: selectedId === el.id ? '2px solid #0d6efd' : '1px dashed #999',
@@ -374,6 +391,11 @@ export default function TemplateDesignerClient() {
                   const tw = el.width ?? (el.xMul ?? 1) * TEXT_DEFAULT_WIDTH;
                   const th = el.height ?? (el.yMul ?? 1) * TEXT_DEFAULT_HEIGHT;
                   const label = el.placeholder || el.staticText || 'TEXT';
+                  const textResizeHandleStyles = {
+                    bottom: { height: 10, background: 'rgba(13, 110, 253, 0.6)', cursor: 'ns-resize' } as React.CSSProperties,
+                    right: { width: 10, background: 'rgba(13, 110, 253, 0.6)', cursor: 'ew-resize' } as React.CSSProperties,
+                    bottomRight: { width: 14, height: 14, background: 'rgba(13, 110, 253, 0.8)', cursor: 'nwse-resize' } as React.CSSProperties,
+                  };
                   return (
                     <Rnd
                       key={el.id}
@@ -382,6 +404,7 @@ export default function TemplateDesignerClient() {
                       minWidth={20 * zoom}
                       minHeight={12 * zoom}
                       enableResize={true}
+                      resizeHandleStyles={textResizeHandleStyles}
                       disableDragging={false}
                       bounds="parent"
                       onDragStop={(_e, d) => handleDragStop(el.id, _e, d)}
@@ -450,14 +473,23 @@ export default function TemplateDesignerClient() {
                 )}
                 {selectedEl.type === 'barcode' && (
                   <>
-                    <span className="small text-muted">height (dots)</span>
+                    <span className="small text-muted">width</span>
+                    <input
+                      type="number"
+                      className="form-control form-control-sm"
+                      style={{ width: 56 }}
+                      min={40}
+                      value={selectedEl.width ?? BARCODE_DEFAULT_WIDTH}
+                      onChange={(e) => updateElement(selectedEl.id, { width: Number(e.target.value) || BARCODE_DEFAULT_WIDTH })}
+                    />
+                    <span className="small text-muted">height</span>
                     <input
                       type="number"
                       className="form-control form-control-sm"
                       style={{ width: 56 }}
                       min={20}
-                      value={selectedEl.height ?? 50}
-                      onChange={(e) => updateElement(selectedEl.id, { height: Number(e.target.value) || 50 })}
+                      value={selectedEl.height ?? BARCODE_DEFAULT_HEIGHT}
+                      onChange={(e) => updateElement(selectedEl.id, { height: Number(e.target.value) || BARCODE_DEFAULT_HEIGHT })}
                     />
                   </>
                 )}
