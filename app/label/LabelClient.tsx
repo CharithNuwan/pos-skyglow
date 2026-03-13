@@ -3,7 +3,10 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import JsBarcode from 'jsbarcode';
+import QRCode from 'qrcode';
 import html2canvas from 'html2canvas';
+
+export type BarcodeType = '1d' | '2d';
 
 interface Product {
   product_id: number;
@@ -15,26 +18,33 @@ interface Product {
   category_name: string;
 }
 
-// Real CODE128 barcode via JsBarcode
-function BarcodeDisplay({ value, width = 160, height = 50 }: { value: string; width?: number; height?: number }) {
+// 1D: CODE128 via JsBarcode. 2D: QR code via qrcode.
+function BarcodeDisplay({ value, width = 160, height = 50, barcodeType = '1d' }: { value: string; width?: number; height?: number; barcodeType?: BarcodeType }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     if (!value || !canvasRef.current) return;
-    try {
-      JsBarcode(canvasRef.current, value, {
-        format: 'CODE128',
-        width: 1.5,
-        height,
-        displayValue: true,
-        fontSize: 9,
-        margin: 2,
+    if (barcodeType === '2d') {
+      const size = Math.min(width, height, 120);
+      QRCode.toCanvas(canvasRef.current, value, { width: size, margin: 1 }, (err) => {
+        if (err) console.warn('QR render failed', err);
       });
-    } catch (_) {}
-  }, [value, height]);
+    } else {
+      try {
+        JsBarcode(canvasRef.current, value, {
+          format: 'CODE128',
+          width: 1.5,
+          height,
+          displayValue: true,
+          fontSize: 9,
+          margin: 2,
+        });
+      } catch (_) {}
+    }
+  }, [value, height, width, barcodeType]);
   if (!value) return <div style={{ width, height, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#999' }}>No barcode</div>;
   return (
     <div style={{ width, textAlign: 'center' }}>
-      <canvas ref={canvasRef} style={{ maxWidth: '100%', height: `${height}px` }} />
+      <canvas ref={canvasRef} style={{ maxWidth: '100%', height: barcodeType === '2d' ? `${Math.min(width, height, 120)}px` : `${height}px` }} />
     </div>
   );
 }
@@ -50,8 +60,9 @@ function getLabelDims(size: string): { w: number; h: number; wMm: number; hMm: n
   return map[size] || map.medium;
 }
 
-function getBarcodeDataUrl(barcode: string, height: number = 40): string {
+function getBarcodeDataUrl(barcode: string, height: number = 40, barcodeType: BarcodeType = '1d'): string {
   if (!barcode || typeof document === 'undefined') return '';
+  if (barcodeType === '2d') return ''; // 2D uses getBarcodeDataUrlAsync
   try {
     const canvas = document.createElement('canvas');
     JsBarcode(canvas, barcode, { format: 'CODE128', width: 1.5, height, displayValue: false, margin: 0 });
@@ -61,8 +72,21 @@ function getBarcodeDataUrl(barcode: string, height: number = 40): string {
   }
 }
 
-function Label({ product, shopName, copies, size, showName, showShop }: {
-  product: Product; shopName: string; copies: number; size: string; showName: boolean; showShop: boolean;
+async function getBarcodeDataUrlAsync(barcode: string, height: number, barcodeType: BarcodeType): Promise<string> {
+  if (!barcode || typeof document === 'undefined') return '';
+  try {
+    if (barcodeType === '2d') {
+      const size = Math.min(120, height * 2);
+      return await QRCode.toDataURL(barcode, { width: size, margin: 1 });
+    }
+    return getBarcodeDataUrl(barcode, height, '1d');
+  } catch (_) {
+    return '';
+  }
+}
+
+function Label({ product, shopName, copies, size, showName, showShop, barcodeType = '1d' }: {
+  product: Product; shopName: string; copies: number; size: string; showName: boolean; showShop: boolean; barcodeType?: BarcodeType;
 }) {
   const curr = 'Rs';
   const name = product.short_name || product.product_name;
@@ -106,7 +130,7 @@ function Label({ product, shopName, copies, size, showName, showShop }: {
 
           {/* Barcode - always shown */}
           {product.barcode
-            ? <BarcodeDisplay value={product.barcode} width={dims.w - 16} height={barcodeH} />
+            ? <BarcodeDisplay value={product.barcode} width={dims.w - 16} height={barcodeH} barcodeType={barcodeType} />
             : <div style={{ fontSize: 9, color: '#aaa', height: barcodeH, display: 'flex', alignItems: 'center' }}>No barcode</div>
           }
 
@@ -141,6 +165,7 @@ export default function LabelClient() {
   const [showPreview, setShowPreview] = useState(false);
   const [showName, setShowName] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [barcodeType, setBarcodeType] = useState<BarcodeType>('1d');
   const [showKioskHelp, setShowKioskHelp] = useState(false);
   const [printViaServiceStatus, setPrintViaServiceStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle');
   const [downloadingPng, setDownloadingPng] = useState(false);
@@ -199,7 +224,7 @@ export default function LabelClient() {
   }).filter(Boolean);
   const totalLabels = Object.values(selected).reduce((a, b) => a + b, 0);
 
-  function doPrint() {
+  async function doPrint() {
     setShowPreview(true);
     const printWindow = window.open('', '_blank', 'noopener,noreferrer');
     if (!printWindow) {
@@ -209,19 +234,22 @@ export default function LabelClient() {
     }
     const dims = getLabelDims(size);
     const barcodeH = size === 'xsmall' ? 28 : size === 'small' ? 35 : size === 'medium' ? 45 : 55;
-    const labelHtml = selectedProducts.flatMap(p =>
-      Array.from({ length: selected[p.product_id] }, () => {
-        const name = (p.short_name || p.product_name).slice(0, size === 'xsmall' ? 18 : 28);
-        const barcodeImg = p.barcode ? getBarcodeDataUrl(p.barcode, barcodeH) : '';
-        return `
+    const labelItems = selectedProducts.flatMap(p =>
+      Array.from({ length: selected[p.product_id] }, () => ({ p, name: (p.short_name || p.product_name).slice(0, size === 'xsmall' ? 18 : 28) }))
+    );
+    const barcodeUrls = await Promise.all(
+      labelItems.map(({ p }) => (p.barcode ? getBarcodeDataUrlAsync(p.barcode, barcodeH, barcodeType) : Promise.resolve('')))
+    );
+    const labelHtml = labelItems.map(({ p, name }, i) => {
+      const barcodeImg = barcodeUrls[i];
+      return `
           <div class="label-item" style="width:${dims.wMm}mm;height:${dims.hMm}mm;border:1px solid #999;border-radius:3px;padding:${size === 'xsmall' ? '3px 4px' : '5px 6px'};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#fff;page-break-after:always;font-family:Arial,sans-serif;box-sizing:border-box;">
             ${showShop && shopName ? `<div style="font-size:8px;color:#888;font-weight:600;">${escapeHtml(shopName.toUpperCase())}</div>` : ''}
             ${showName ? `<div style="font-size:${size === 'xsmall' ? 8 : size === 'large' ? 10 : 9}px;font-weight:600;text-align:center;">${escapeHtml(name)}</div>` : ''}
             ${barcodeImg ? `<img src="${barcodeImg}" alt="" style="max-width:100%;height:${barcodeH}px;object-fit:contain;" />` : `<div style="font-size:9px;">${escapeHtml(p.barcode || 'No barcode')}</div>`}
             <div style="font-size:${size === 'xsmall' ? 12 : size === 'small' ? 15 : size === 'medium' ? 18 : 22}px;font-weight:800;">Rs ${Number(p.selling_price).toFixed(2)}</div>
           </div>`;
-      })
-    ).join('');
+    }).join('');
     const doc = printWindow.document;
     doc.open();
     doc.write(`
@@ -235,7 +263,6 @@ export default function LabelClient() {
     `);
     doc.close();
     printWindow.focus();
-    // Wait for images and layout so print preview is not blank
     const tryPrint = () => {
       printWindow.print();
       printWindow.onafterprint = () => printWindow.close();
@@ -277,12 +304,13 @@ export default function LabelClient() {
   }
 
   /** Label payload shape for POST /api/print-jobs (type: 'label'). Used by Windows label-print service. */
-  function buildLabelPayload(): { shopName: string; size: string; showName: boolean; showShop: boolean; labels: { product_name: string; short_name: string; barcode: string; selling_price: number; copies: number }[] } {
+  function buildLabelPayload(): { shopName: string; size: string; showName: boolean; showShop: boolean; barcodeType: BarcodeType; labels: { product_name: string; short_name: string; barcode: string; selling_price: number; copies: number }[] } {
     return {
       shopName,
       size,
       showName,
       showShop,
+      barcodeType,
       labels: selectedProducts.map(p => ({
         product_name: p.product_name,
         short_name: p.short_name || p.product_name,
@@ -354,7 +382,7 @@ export default function LabelClient() {
         }
       `}} />
       {selectedProducts.map(p => (
-        <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} />
+        <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} />
       ))}
     </div>,
     document.body
@@ -429,6 +457,14 @@ export default function LabelClient() {
                     ))}
                   </div>
                   <div className="form-text">30×20mm (Xprinter) · Small=38×23mm · Medium=50×28mm · Large=63×33mm</div>
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label small fw-bold">Barcode type</label>
+                  <div className="d-flex flex-wrap gap-1">
+                    <button type="button" className={`btn btn-sm ${barcodeType === '1d' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setBarcodeType('1d')}>1D (CODE128)</button>
+                    <button type="button" className={`btn btn-sm ${barcodeType === '2d' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setBarcodeType('2d')}>2D (QR)</button>
+                  </div>
+                  <div className="form-text">Scanner supports 1D and 2D</div>
                 </div>
                 <div className="col-md-4">
                   <label className="form-label small fw-bold">Optional Info</label>
@@ -545,7 +581,7 @@ export default function LabelClient() {
           <div className="card-body">
             <div ref={previewContainerRef} style={{ width: previewW, height: previewH, overflow: 'hidden', display: 'inline-block' }}>
               {selectedProducts.map(p => (
-                <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} />
+                <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} />
               ))}
             </div>
             <div className="mt-2">
