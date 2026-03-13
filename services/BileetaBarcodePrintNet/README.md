@@ -2,7 +2,7 @@
 
 HTTP API service (exposed as **Xprinter**) that sends barcode label data to a local printer. Compatible with the legacy BarcodePrint Windows Service API (same endpoints and payload).
 
-**Base URL:** `http://localhost:8080/Xprinter/` (on the same machine). All API calls are under this path. From another device on the same network, use `http://<PC_IP>:8080/Xprinter/`. The service listens on all interfaces (`0.0.0.0:8080`). If Windows Firewall blocks the connection, add an inbound rule to allow TCP port 8080.
+**Base URL:** `http://localhost:8083/Xprinter/` (on the same machine). All API calls are under this path. From another device on the same network, use `http://<PC_IP>:8083/Xprinter/`. The service listens on all interfaces (`0.0.0.0:8083`). If Windows Firewall blocks the connection, add an inbound rule to allow TCP port 8083.
 
 ## Endpoints
 
@@ -126,7 +126,7 @@ dotnet restore
 dotnet run
 ```
 
-Then open: http://localhost:8080/Values/Test
+Then open: http://localhost:8083/Xprinter/Values/Test
 
 ## Run as a Windows Service
 

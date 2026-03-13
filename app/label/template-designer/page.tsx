@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import AppLayout from '@/components/AppLayout';
 
@@ -67,8 +67,17 @@ export default function TemplateDesignerPage() {
   const [gapMm, setGapMm] = useState(2);
   const [elements, setElements] = useState<LabelElement[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const elementsSectionRef = useRef<HTMLDivElement>(null);
 
-  const addText = useCallback(() => {
+  useEffect(() => {
+    if (elements.length > 0 && elementsSectionRef.current) {
+      elementsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [elements.length]);
+
+  const addText = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setElements((prev) => [
       ...prev,
       {
@@ -85,7 +94,9 @@ export default function TemplateDesignerPage() {
     ]);
   }, []);
 
-  const addBarcode = useCallback(() => {
+  const addBarcode = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setElements((prev) => [
       ...prev,
       {
@@ -175,10 +186,20 @@ export default function TemplateDesignerPage() {
               />
             </div>
             <div className="col-auto d-flex align-items-end gap-2">
-              <button type="button" className="btn btn-outline-primary btn-sm" onClick={addText}>
+              <button
+                type="button"
+                className="btn btn-outline-primary btn-sm"
+                onClick={addText}
+                onMouseDown={(e) => e.preventDefault()}
+              >
                 + ADD TEXT
               </button>
-              <button type="button" className="btn btn-outline-primary btn-sm" onClick={addBarcode}>
+              <button
+                type="button"
+                className="btn btn-outline-primary btn-sm"
+                onClick={addBarcode}
+                onMouseDown={(e) => e.preventDefault()}
+              >
                 + ADD BARCODE
               </button>
             </div>
@@ -188,7 +209,7 @@ export default function TemplateDesignerPage() {
             x, y are in printer dots (e.g. 8 dots/mm at 203 DPI). Add elements and set position/font/placeholder below.
           </p>
 
-          <div className="mb-3">
+          <div className="mb-3" ref={elementsSectionRef}>
             <strong className="small">Elements</strong>
             {elements.length === 0 ? (
               <div className="text-muted small py-2">No elements. Click + ADD TEXT or + ADD BARCODE.</div>

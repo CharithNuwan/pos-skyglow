@@ -330,14 +330,14 @@ export default function SettingsClient() {
                 <i className="bi bi-upc-scan me-1"/>Xprinter service URL (barcode labels)
               </label>
               <p className="text-muted small mb-2">
-                Base URL for the Xprinter .NET service. Used by &quot;Print via Xprinter&quot; on Print Labels. Default: <code>http://localhost:8080/Xprinter</code>
+                Base URL for the Xprinter .NET service. Used by &quot;Print via Xprinter&quot; on Print Labels. Default: <code>http://localhost:8083/Xprinter</code>
               </p>
               <input
                 type="url"
                 className="form-control font-monospace"
                 value={settings.xprinter_service_url || ''}
                 onChange={e => update('xprinter_service_url', e.target.value)}
-                placeholder="http://localhost:8080/Xprinter"
+                placeholder="http://localhost:8083/Xprinter"
               />
             </div>
 

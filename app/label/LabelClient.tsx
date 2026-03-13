@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 
-const DEFAULT_XPRINTER_BASE_URL = 'http://localhost:8080/Xprinter';
+const DEFAULT_XPRINTER_BASE_URL = 'http://localhost:8083/Xprinter';
 
 /** Payload item for Xprinter .NET service POST /Values/PrintRequest */
 interface BarcodeTemplateItem {
