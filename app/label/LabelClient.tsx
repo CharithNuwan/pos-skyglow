@@ -395,7 +395,7 @@ export default function LabelClient() {
           SellingPrice: Number(p.selling_price).toFixed(2),
           Quantity: '1',
           NoOfBarcode: '1',
-          BarcodeTemplateId: '1',
+          BarcodeTemplateId: size === 'xsmall' ? '20' : '1',
         });
       }
     }

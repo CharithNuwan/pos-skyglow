@@ -40,7 +40,8 @@ Edit `appsettings.json` (or use environment variables):
 
 1. Create the template folder on the PC where the service runs (if it does not exist), e.g. `C:\BileetaBarcode\BarcodeTemplate\Source`, or use the parent `C:\BileetaBarcode\BarcodeTemplate`.
 2. Place a template file in that folder (or in the parent of Source). The service looks for any of these names in **TemplateBasePath** or its parent:
-   - `50mm25mm.txt` or `50mmx25mm.txt` (template ID 1/18) — the project’s sample is **barcode + price only** (one BARCODE, one TEXT line with `@Price`).
+   - `50mm25mm.txt` or `50mmx25mm.txt` (template ID 1/18) — **barcode + price only**.
+   - `30mm20mm.txt` or `30mmx20mm.txt` (template ID **20**) — for 30×20 mm labels; use when printing 30×20 from the POS (label size “30×20”).
    - `50mm25mm.lbl` or `50mmx25mm.lbl` (same; **must be plain-text TSPL** with placeholders, not a binary format)
    - For template ID 6: `50mm25mmWoExp.txt` / `50mmx25mmWoExp.lbl`, etc.
    - Copy the sample from the project: `BileetaBarcodePrintNet\TemplateSource\50mm25mm.txt` into your TemplateBasePath (or its parent).
@@ -48,7 +49,7 @@ Edit `appsettings.json` (or use environment variables):
 
 If no template file is found, **PrintRequest** returns 500 with a message. LineFeed works without templates.
 
-**Troubleshooting — label shows barcode but no price:** Ensure your template file contains a TEXT line that uses the `@Price` placeholder (e.g. `TEXT 20,160,"2",0,1,1,"Rs @Price"`). Copy the project’s `TemplateSource\50mm25mm.txt` into the folder set by **TemplateBasePath** (or its parent), overwriting any existing file. The included sample is barcode + price only.
+**Troubleshooting — label shows barcode but no price:** (1) Ensure your template file contains a TEXT line with the `@Price` placeholder. (2) The service picks the file by **name**: for template ID 1 it loads `50mm25mm.txt`; for template ID 20 (30×20 mm) it loads `30mm20mm.txt`. If you use 30×20 labels, save your template as **30mm20mm.txt** and choose label size **30×20** in the POS so it sends template ID 20. Copy the project’s `TemplateSource\30mm20mm.txt` or `50mm25mm.txt` into **TemplateBasePath** (or its parent) as needed.
 
 **Label Designer (web):** In the AWMS UI, open **Settings → Printer Config** and click **Generate print template** to open the built-in label designer. There you can set label size (width/height in mm), add text and barcode elements with placeholders, drag to position them, and **Export .lbl** to download a TSPL file. Copy the downloaded file to the TemplateBasePath folder (or its parent) on the PC where the BarcodePrint service runs.
 

@@ -287,6 +287,13 @@ public class ValuesController : ControllerBase
                     templateFile = ResolveTemplateFile(basePath, baseName, baseNameWithX) ?? Path.Combine(basePath, "50mm25mmWoExp.txt");
                     tempFile = Path.Combine(Path.GetTempPath(), "50mm25mmWoExp_Temp.txt");
                 }
+                else if (templateId == "20")
+                {
+                    baseName = "30mm20mm";
+                    baseNameWithX = "30mmx20mm";
+                    templateFile = ResolveTemplateFile(basePath, baseName, baseNameWithX) ?? Path.Combine(basePath, "30mm20mm.txt");
+                    tempFile = Path.Combine(Path.GetTempPath(), "30mm20mm_Temp.txt");
+                }
                 else
                 {
                     baseName = "50mm25mm";
