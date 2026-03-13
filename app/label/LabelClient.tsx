@@ -2,6 +2,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+
+const DEFAULT_XPRINTER_BASE_URL = 'http://localhost:8080/Xprinter';
+
+/** Payload item for Xprinter .NET service POST /Values/PrintRequest */
+interface BarcodeTemplateItem {
+  ProductCode?: string;
+  ProductDesc?: string;
+  BarcodeNo?: string;
+  SellingPrice?: string;
+  Quantity?: string;
+  NoOfBarcode?: string;
+  BarcodeTemplateId?: string;
+  [key: string]: unknown;
+}
 import JsBarcode from 'jsbarcode';
 import QRCode from 'qrcode';
 import html2canvas from 'html2canvas';
@@ -177,11 +191,17 @@ export default function LabelClient() {
   const [showTemplateEditor, setShowTemplateEditor] = useState(false);
   const [showKioskHelp, setShowKioskHelp] = useState(false);
   const [printViaServiceStatus, setPrintViaServiceStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle');
+  const [printViaXprinterStatus, setPrintViaXprinterStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle');
+  const [xprinterBaseUrl, setXprinterBaseUrl] = useState(DEFAULT_XPRINTER_BASE_URL);
   const [downloadingPng, setDownloadingPng] = useState(false);
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch('/api/settings').then(r => r.json()).then(s => setShopName(s.shop_name || ''));
+    fetch('/api/settings').then(r => r.json()).then(s => {
+      setShopName(s.shop_name || '');
+      const url = (s.xprinter_service_url || '').trim() || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_XPRINTER_SERVICE_URL) || DEFAULT_XPRINTER_BASE_URL;
+      setXprinterBaseUrl(url.replace(/\/$/, ''));
+    });
   }, []);
 
   useEffect(() => {
@@ -360,6 +380,58 @@ export default function LabelClient() {
       setPrintViaServiceStatus('error');
       setTimeout(() => setPrintViaServiceStatus('idle'), 4000);
       alert((e instanceof Error ? e.message : 'Failed to send to label printer.') + ' Ensure the label print service is running on this PC.');
+    }
+  }
+
+  function buildBarcodeTemplates(): BarcodeTemplateItem[] {
+    const items: BarcodeTemplateItem[] = [];
+    for (const p of selectedProducts) {
+      const copies = selected[p.product_id] || 1;
+      for (let i = 0; i < copies; i++) {
+        items.push({
+          ProductCode: String(p.product_id),
+          ProductDesc: p.short_name || p.product_name || '',
+          BarcodeNo: p.barcode || '',
+          SellingPrice: Number(p.selling_price).toFixed(2),
+          Quantity: '1',
+          NoOfBarcode: '1',
+          BarcodeTemplateId: '1',
+        });
+      }
+    }
+    return items;
+  }
+
+  async function doPrintViaXprinter() {
+    if (selectedProducts.length === 0) return;
+    setPrintViaXprinterStatus('sending');
+    try {
+      const base = xprinterBaseUrl.replace(/\/$/, '');
+      const url = `${base}/Values/PrintRequest`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildBarcodeTemplates()),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        let msg = res.statusText;
+        try {
+          const j = JSON.parse(text);
+          if (typeof j === 'object' && j !== null && 'message' in j) msg = (j as { message?: string }).message ?? text;
+          else if (typeof text === 'string' && text.length < 200) msg = text;
+        } catch {
+          if (text.length < 200) msg = text;
+        }
+        throw new Error(msg);
+      }
+      setPrintViaXprinterStatus('ok');
+      setTimeout(() => setPrintViaXprinterStatus('idle'), 3000);
+    } catch (e) {
+      setPrintViaXprinterStatus('error');
+      setTimeout(() => setPrintViaXprinterStatus('idle'), 4000);
+      const message = e instanceof Error ? e.message : 'Request failed';
+      alert('Xprinter: ' + message + ' Ensure the Xprinter service is running at ' + xprinterBaseUrl + ' and the template file is in its template folder.');
     }
   }
 
@@ -595,8 +667,25 @@ export default function LabelClient() {
                     {printViaServiceStatus === 'error' && <i className="bi bi-exclamation-triangle me-1" />}
                     Print via service
                   </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-success"
+                    onClick={doPrintViaXprinter}
+                    disabled={printViaXprinterStatus === 'sending'}
+                    title={`Send to Xprinter at ${xprinterBaseUrl}`}
+                  >
+                    {printViaXprinterStatus === 'sending' && <span className="spinner-border spinner-border-sm me-1" role="status" />}
+                    {printViaXprinterStatus === 'ok' && <i className="bi bi-check me-1" />}
+                    {printViaXprinterStatus === 'error' && <i className="bi bi-exclamation-triangle me-1" />}
+                    Print via Xprinter
+                  </button>
+                  <Link href="/label/template-designer" className="btn btn-outline-secondary btn-sm">
+                    <i className="bi bi-palette me-1" /> Template designer
+                  </Link>
                   {printViaServiceStatus === 'ok' && <span className="small text-success">Sent to label printer</span>}
                   {printViaServiceStatus === 'error' && <span className="small text-danger">Send failed</span>}
+                  {printViaXprinterStatus === 'ok' && <span className="small text-success">Sent to Xprinter</span>}
+                  {printViaXprinterStatus === 'error' && <span className="small text-danger">Xprinter failed</span>}
                 </div>
                 <div className="small text-muted">
                   One-click (no dialog): Use Chrome with kiosk-printing and set the Xprinter as default, or use <strong>Print via service</strong> with the Windows label print service running on this PC.{' '}
