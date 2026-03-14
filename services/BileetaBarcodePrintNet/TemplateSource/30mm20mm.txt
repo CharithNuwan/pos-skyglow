@@ -2,6 +2,6 @@ SIZE 30 mm, 20 mm
 GAP 2 mm, 0 mm
 DIRECTION 1
 CLS
-BARCODE 20,20,"@BarcodeType",50,1,0,2,2,"@Barcode"
-TEXT 20,45,"2",0,1,1,"@Price"
+BARCODE 6,10,"@BarcodeType",80,1,0,2,2,"@Barcode"
+TEXT 6,95,"2",0,1,1,"Rs @Price"
 PRINT 1,1

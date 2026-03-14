@@ -60,8 +60,8 @@ function buildTspl(widthMm: number, heightMm: number, gapMm: number, elements: L
       const rot = el.rotation ?? 0;
       const wDots = el.width ?? (el.xMul ?? 1) * TEXT_DEFAULT_WIDTH;
       const hDots = el.height ?? (el.yMul ?? 1) * TEXT_DEFAULT_HEIGHT;
-      const xMul = wDots / TEXT_DEFAULT_WIDTH;
-      const yMul = hDots / TEXT_DEFAULT_HEIGHT;
+      const xMul = Math.max(1, Math.round(wDots / TEXT_DEFAULT_WIDTH));
+      const yMul = Math.max(1, Math.round(hDots / TEXT_DEFAULT_HEIGHT));
       lines.push(`TEXT ${el.x},${el.y},"${font}",${rot},${xMul},${yMul},"${content}"`);
     } else if (el.type === 'barcode') {
       const h = el.height ?? BARCODE_DEFAULT_HEIGHT;
