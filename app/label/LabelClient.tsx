@@ -199,8 +199,18 @@ export default function LabelClient() {
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(s => {
       setShopName(s.shop_name || '');
-      const url = (s.xprinter_service_url || '').trim() || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_XPRINTER_SERVICE_URL) || DEFAULT_XPRINTER_BASE_URL;
-      setXprinterBaseUrl(url.replace(/\/$/, ''));
+      let url = (s.xprinter_service_url || '').trim() || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_XPRINTER_SERVICE_URL) || DEFAULT_XPRINTER_BASE_URL;
+      // Never use the app's own origin for Xprinter (e.g. vercel.app) — it must call the PC with the printer
+      if (typeof window !== 'undefined' && url) {
+        try {
+          const u = new URL(url);
+          const appOrigin = window.location.origin;
+          if (u.origin === appOrigin || u.hostname.endsWith('.vercel.app') || u.hostname === 'vercel.app') {
+            url = DEFAULT_XPRINTER_BASE_URL;
+          }
+        } catch (_) {}
+      }
+      setXprinterBaseUrl((url || DEFAULT_XPRINTER_BASE_URL).replace(/\/$/, ''));
     });
   }, []);
 
