@@ -192,6 +192,8 @@ export default function LabelClient() {
   const [showKioskHelp, setShowKioskHelp] = useState(false);
   const [printViaServiceStatus, setPrintViaServiceStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle');
   const [printViaXprinterStatus, setPrintViaXprinterStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle');
+  const [previewStatus, setPreviewStatus] = useState<'idle' | 'sending' | 'ok' | 'error'>('idle');
+  const [previewSavedPath, setPreviewSavedPath] = useState<string | null>(null);
   const [xprinterBaseUrl, setXprinterBaseUrl] = useState(DEFAULT_XPRINTER_BASE_URL);
   const [downloadingPng, setDownloadingPng] = useState(false);
   const previewContainerRef = useRef<HTMLDivElement>(null);
@@ -455,6 +457,44 @@ export default function LabelClient() {
     }
   }
 
+  async function doPreviewRequest() {
+    if (selectedProducts.length === 0) return;
+    setPreviewStatus('sending');
+    setPreviewSavedPath(null);
+    try {
+      const base = xprinterBaseUrl.replace(/\/$/, '');
+      const url = `${base}/Values/PreviewRequest`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildBarcodeTemplates()),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        let msg = res.statusText;
+        try {
+          const j = JSON.parse(text);
+          if (typeof j === 'object' && j !== null && 'message' in j) msg = (j as { message?: string }).message ?? text;
+          else if (typeof text === 'string' && text.length < 200) msg = text;
+        } catch {
+          if (text.length < 200) msg = text;
+        }
+        throw new Error(msg);
+      }
+      const data = (await res.json()) as { savedPath?: string };
+      const path = data?.savedPath ?? '';
+      setPreviewSavedPath(path);
+      setPreviewStatus('ok');
+      setTimeout(() => setPreviewStatus('idle'), 8000);
+      setTimeout(() => setPreviewSavedPath(null), 10000);
+    } catch (e) {
+      setPreviewStatus('error');
+      setTimeout(() => setPreviewStatus('idle'), 4000);
+      const message = e instanceof Error ? e.message : 'Request failed';
+      alert('Preview failed: ' + message + ' Ensure the Xprinter service is running and template files exist.');
+    }
+  }
+
   // Portal: render whenever we have selected products so it's in DOM before print.
   // Hide off-screen on screen (not display:none so print dialog can show it).
   const printRootId = 'label-print-root';
@@ -700,6 +740,18 @@ export default function LabelClient() {
                     {printViaXprinterStatus === 'error' && <i className="bi bi-exclamation-triangle me-1" />}
                     Print via Xprinter
                   </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={doPreviewRequest}
+                    disabled={previewStatus === 'sending' || selectedProducts.length === 0}
+                    title="Build TSPL and save to file on the PC where Xprinter runs (no print). Open the file with Notepad or other software."
+                  >
+                    {previewStatus === 'sending' && <span className="spinner-border spinner-border-sm me-1" role="status" />}
+                    {previewStatus === 'ok' && <i className="bi bi-check me-1" />}
+                    {previewStatus === 'error' && <i className="bi bi-exclamation-triangle me-1" />}
+                    Save preview (no print)
+                  </button>
                   <Link href="/label/template-designer" className="btn btn-outline-secondary btn-sm">
                     <i className="bi bi-palette me-1" /> Template designer
                   </Link>
@@ -707,6 +759,10 @@ export default function LabelClient() {
                   {printViaServiceStatus === 'error' && <span className="small text-danger">Send failed</span>}
                   {printViaXprinterStatus === 'ok' && <span className="small text-success">Sent to Xprinter</span>}
                   {printViaXprinterStatus === 'error' && <span className="small text-danger">Xprinter failed</span>}
+                  {previewStatus === 'ok' && previewSavedPath && (
+                    <span className="small text-success ms-1">Saved: {previewSavedPath}</span>
+                  )}
+                  {previewStatus === 'error' && <span className="small text-danger ms-1">Preview failed</span>}
                 </div>
                 <div className="small text-muted">
                   <strong>Print via Xprinter</strong> calls the Xprinter service on the PC where the printer is connected — set <strong>Settings → Xprinter service URL</strong> to <code>http://localhost:8083/Xprinter</code> (or that PC&apos;s IP). Do not use the app&apos;s own URL (e.g. vercel.app). Sends template ID <strong>{size === 'xsmall' ? '20' : '1'}</strong> (30×20 → 30mm20mm.txt, other sizes → 50mm25mm.txt). Save templates from the designer into the Xprinter template folder.{' '}

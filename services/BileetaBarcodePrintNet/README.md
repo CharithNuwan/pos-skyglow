@@ -13,6 +13,7 @@ HTTP API service (exposed as **Xprinter**) that sends barcode label data to a lo
 | GET | `/Xprinter/Values/CheckPrinter` | Runs a test feed and checks for errors; returns `{ ok, message }`. |
 | GET | `/Xprinter/Values/LineFeed` | Sends an empty line to the printer (paper/label feed). Returns `"OK"` on success. |
 | POST | `/Xprinter/Values/PrintRequest` | Send barcodes to printer. Body: JSON array of `BarcodeTemplate`. Returns `true` on success. |
+| POST | `/Xprinter/Values/PreviewRequest` | Same body as PrintRequest. Builds TSPL and saves to a file (no printer). Returns `{ savedPath }`. Use when printer is off to verify the file with other software. |
 
 ## Configuration
 
@@ -35,6 +36,9 @@ Edit `appsettings.json` (or use environment variables):
 - Set **PrinterName** or the contents of **Printer.txt** to your printer’s share name (e.g. `XP-T202UA`). The service sends output to `\\localhost\<PrinterName>`.
 - **PrinterComPort** (optional): COM port for direct status query (e.g. `COM3`). Use this for TSPL/ZPL-compatible printers (e.g. TTP-244 Pro) connected via **RS-232** or a virtual COM port so the app can detect paper out/error via the ZPL `~HS` command. If the printer is connected only via USB, it may not appear as a COM port in Windows—use RS-232 or check if your model has a USB virtual COM driver. Leave empty to use Windows printer status only.
 - **TemplateBasePath**: folder containing template files (e.g. `50mm25mm.txt`, `50mmx25mm.lbl`). The service also looks in the **parent** of this folder (e.g. `C:\BileetaBarcode\BarcodeTemplate` if TemplateBasePath is `...\BarcodeTemplate\Source`).
+- **PrintRequestInitialDelayMs** (optional, default 6000): Milliseconds to wait at the start of each PrintRequest before writing to the printer share. If the printer sometimes prints the *previous* label instead of the new one, increase this (e.g. 8000–10000) so the printer has time to clear its buffer.
+- **PrintRequestDelayAfterCopyMs** (optional, default 2500): Milliseconds to wait after each file copy to the printer before the next copy or response. Increase if multiple labels in one request get mixed up.
+- **PreviewOutputPath** (optional, default `C:\BileetaBarcode\Preview`): Folder where PreviewRequest saves the built TSPL file. Create this folder if it does not exist. Open the saved `.txt` file with Notepad or other software to verify without printing.
 
 **You must define print templates for PrintRequest to work:**
 

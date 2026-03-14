@@ -249,9 +249,23 @@ public class ValuesController : ControllerBase
             string basePath = _config["BarcodePrint:TemplateBasePath"] ?? "C:\\BileetaBarcode\\BarcodeTemplate\\Source";
             int printedCount = 0;
 
-            // Wait so printer finishes previous job before we overwrite the shared file (stops duplicate "previous label" on second print)
-            Thread.Sleep(2500);
+            _logger.LogInformation("PrintRequest: received {Count} item(s). First item BarcodeNo={BarcodeNo}, ProductDesc={Desc}, SellingPrice={Price}",
+                barcods.Count,
+                barcods[0].BarcodeNo ?? "(null)",
+                barcods[0].ProductDesc ?? "(null)",
+                barcods[0].SellingPrice ?? "(null)");
 
+            // Clear any pending jobs in the Windows print queue so the printer does not output the previous label
+            PrinterStatusHelper.PurgePrintQueue(printer);
+            _logger.LogInformation("PrintRequest: purged printer queue for {Printer}.", printer);
+
+            int initialDelayMs = 4000;
+            if (_config["BarcodePrint:PrintRequestInitialDelayMs"] != null && int.TryParse(_config["BarcodePrint:PrintRequestInitialDelayMs"], out int cfgInitial))
+                initialDelayMs = Math.Max(500, Math.Min(60000, cfgInitial));
+            _logger.LogInformation("PrintRequest: waiting {Ms}ms for printer to clear before writing.", initialDelayMs);
+            Thread.Sleep(initialDelayMs);
+
+            int itemIndex = 0;
             foreach (var item in barcods)
             {
                 string? templateId = item.BarcodeTemplateId ?? "1";
@@ -327,15 +341,26 @@ public class ValuesController : ControllerBase
                 str = str.Replace("@BatchNo", item.BatchNo ?? "");
                 str = str.Replace("@S", string.IsNullOrEmpty(item.BarcodeType) ? item.BarcodeType ?? "" : "");
 
+                bool strContainsBarcode = str.Contains(item.BarcodeNo ?? "");
+                bool strContainsPrice = str.Contains(price);
+                _logger.LogInformation("PrintRequest: item[{Index}] BarcodeNo={BarcodeNo}, Price={Price}. After replace: template contains BarcodeNo={HasBarcode}, contains Price={HasPrice}. TempFile={TempFile}",
+                    itemIndex, item.BarcodeNo ?? "(null)", price, strContainsBarcode, strContainsPrice, tempFile);
+
                 for (int i = 0; i < noOfBarcode; i++)
                 {
                     System.IO.File.WriteAllText(tempFile, str, Encoding.Default);
+                    // Let the file flush to disk before copy so printer does not read partial/stale data
+                    Thread.Sleep(300);
                     string destinationFile = destinationPrefix + printer;
+                    _logger.LogInformation("PrintRequest: copy {CopyNum} -> writing to {Dest} (BarcodeNo={BarcodeNo}, Price={Price})", printedCount + 1, destinationFile, item.BarcodeNo ?? "(null)", price);
                     System.IO.File.Copy(tempFile, destinationFile, true);
                     printedCount++;
-                    // Give printer time to process this job before next copy (same batch or next request)
-                    Thread.Sleep(1500);
+                    int afterCopyMs = 2000;
+                    if (_config["BarcodePrint:PrintRequestDelayAfterCopyMs"] != null && int.TryParse(_config["BarcodePrint:PrintRequestDelayAfterCopyMs"], out int cfgAfter))
+                        afterCopyMs = Math.Max(500, Math.Min(30000, cfgAfter));
+                    Thread.Sleep(afterCopyMs);
                 }
+                itemIndex++;
             }
 
             if (printedCount == 0)
@@ -358,6 +383,132 @@ public class ValuesController : ControllerBase
             string msg = ex.Message.Contains("paper", StringComparison.OrdinalIgnoreCase) ? "Paper out" : "Print failed: " + ex.Message;
             LastPrintErrorStore.Set(msg);
             return StatusCode(500, "Printer not respond...! " + ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Builds the same TSPL as PrintRequest but saves to a file instead of sending to the printer.
+    /// Use when printer is off to verify the file with other software (e.g. Notepad) without wasting labels.
+    /// </summary>
+    [HttpPost("PreviewRequest")]
+    public IActionResult PreviewRequest([FromBody] List<BarcodeTemplate>? barcods)
+    {
+        try
+        {
+            if (barcods == null || barcods.Count == 0)
+                return BadRequest("No barcode data provided.");
+
+            string basePath = _config["BarcodePrint:TemplateBasePath"] ?? "C:\\BileetaBarcode\\BarcodeTemplate\\Source";
+            string previewDir = _config["BarcodePrint:PreviewOutputPath"] ?? "C:\\BileetaBarcode\\Preview";
+
+            try
+            {
+                Directory.CreateDirectory(previewDir);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not create preview directory: {Dir}", previewDir);
+            }
+
+            var fullTspl = new StringBuilder();
+            int labelIndex = 0;
+
+            foreach (var item in barcods)
+            {
+                string? templateId = item.BarcodeTemplateId ?? "1";
+                string decs1 = "";
+                string decs2 = "";
+                string? productDesc = item.ProductDesc ?? "";
+                int length = productDesc.Length;
+                if (length <= 35)
+                    decs1 = productDesc;
+                else
+                {
+                    decs1 = productDesc[..35];
+                    decs2 = length > 36 ? productDesc[35..] : "";
+                }
+
+                int noOfBarcode = int.TryParse(item.NoOfBarcode, out int n) ? n : 1;
+                string price = "0.00";
+                if (!string.IsNullOrWhiteSpace(item.SellingPrice) && decimal.TryParse(item.SellingPrice, out decimal p))
+                    price = p.ToString("0.00");
+
+                string? templateFile;
+                string baseName;
+                string baseNameWithX;
+                if (templateId == "1" || templateId == "18")
+                {
+                    baseName = "50mm25mm";
+                    baseNameWithX = "50mmx25mm";
+                    templateFile = ResolveTemplateFile(basePath, baseName, baseNameWithX);
+                }
+                else if (templateId == "6")
+                {
+                    baseName = "50mm25mmWoExp";
+                    baseNameWithX = "50mmx25mmWoExp";
+                    templateFile = ResolveTemplateFile(basePath, baseName, baseNameWithX);
+                }
+                else if (templateId == "20")
+                {
+                    baseName = "30mm20mm";
+                    baseNameWithX = "30mmx20mm";
+                    templateFile = ResolveTemplateFile(basePath, baseName, baseNameWithX);
+                }
+                else
+                {
+                    baseName = "50mm25mm";
+                    baseNameWithX = "50mmx25mm";
+                    templateFile = ResolveTemplateFile(basePath, baseName, baseNameWithX);
+                }
+
+                if (string.IsNullOrEmpty(templateFile) || !System.IO.File.Exists(templateFile))
+                {
+                    _logger.LogWarning("PreviewRequest: template not found for templateId={Id}, BarcodeNo={BarcodeNo}", templateId, item.BarcodeNo);
+                    fullTspl.AppendLine("; Template not found for BarcodeNo=" + (item.BarcodeNo ?? "(null)"));
+                    continue;
+                }
+
+                string str = System.IO.File.ReadAllText(templateFile, Encoding.Default);
+                str = str.Replace("@BarcodeType", !string.IsNullOrWhiteSpace(item.BarcodeType) ? item.BarcodeType.Trim() : "128");
+                str = str.Replace("@CompanyName", item.CompanyName ?? "");
+                str = str.Replace("@Barcode", item.BarcodeNo ?? "");
+                str = str.Replace("@ItemCode", item.ProductCode ?? "");
+                str = str.Replace("@Des1", decs1);
+                str = str.Replace("@Des2", decs2);
+                str = str.Replace("@Price", price);
+                str = str.Replace("@Qty", item.Quantity ?? "1");
+                str = str.Replace("@Count", item.NoOfBarcode ?? "1");
+                str = str.Replace("@Mdf", item.ManufactureDate ?? "");
+                str = str.Replace("@Exp", item.ExpiryDate ?? "");
+                str = str.Replace("@bt", item.BarcodeType ?? "");
+                str = str.Replace("@BatchNo", item.BatchNo ?? "");
+                str = str.Replace("@S", string.IsNullOrEmpty(item.BarcodeType) ? item.BarcodeType ?? "" : "");
+
+                for (int i = 0; i < noOfBarcode; i++)
+                {
+                    labelIndex++;
+                    fullTspl.Append("\r\n; --- Label ").Append(labelIndex).Append(" ---\r\n");
+                    fullTspl.Append(str);
+                }
+            }
+
+            if (fullTspl.Length == 0)
+            {
+                _logger.LogWarning("PreviewRequest: no template content generated. Check template files in {BasePath}", basePath);
+                return StatusCode(500, "No template found. Ensure template files exist in " + basePath + " (see README).");
+            }
+
+            string fileName = "barcode-preview-" + DateTime.Now.ToString("yyyy-MM-dd-HHmmss") + ".txt";
+            string savedPath = Path.Combine(previewDir, fileName);
+            System.IO.File.WriteAllText(savedPath, fullTspl.ToString(), Encoding.Default);
+            _logger.LogInformation("PreviewRequest: saved to {Path}", savedPath);
+
+            return Ok(new { savedPath });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "PreviewRequest failed");
+            return StatusCode(500, "Preview failed: " + ex.Message);
         }
     }
 }
