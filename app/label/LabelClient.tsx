@@ -699,7 +699,7 @@ export default function LabelClient() {
                   {printViaXprinterStatus === 'error' && <span className="small text-danger">Xprinter failed</span>}
                 </div>
                 <div className="small text-muted">
-                  <strong>Print via Xprinter</strong> sends template ID <strong>{size === 'xsmall' ? '20' : '1'}</strong> (30×20 → 30mm20mm.txt, other sizes → 50mm25mm.txt). Save templates from the designer into the Xprinter template folder.{' '}
+                  <strong>Print via Xprinter</strong> calls the Xprinter service on the PC where the printer is connected — set <strong>Settings → Xprinter service URL</strong> to <code>http://localhost:8083/Xprinter</code> (or that PC&apos;s IP). Do not use the app&apos;s own URL (e.g. vercel.app). Sends template ID <strong>{size === 'xsmall' ? '20' : '1'}</strong> (30×20 → 30mm20mm.txt, other sizes → 50mm25mm.txt). Save templates from the designer into the Xprinter template folder.{' '}
                   One-click (no dialog): Use Chrome with kiosk-printing and set the Xprinter as default, or use <strong>Print via service</strong> with the Windows label print service running on this PC.{' '}
                   <button type="button" className="btn btn-link btn-sm p-0 align-baseline" onClick={() => setShowKioskHelp(s => !s)}>
                     {showKioskHelp ? 'Hide' : 'How to enable'}

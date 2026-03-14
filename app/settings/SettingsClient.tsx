@@ -330,7 +330,7 @@ export default function SettingsClient() {
                 <i className="bi bi-upc-scan me-1"/>Xprinter service URL (barcode labels)
               </label>
               <p className="text-muted small mb-2">
-                Base URL for the Xprinter .NET service. Used by &quot;Print via Xprinter&quot; on Print Labels. Default: <code>http://localhost:8083/Xprinter</code>
+                Base URL for the Xprinter .NET service (runs on the PC with the printer). Use <code>http://localhost:8083/Xprinter</code> when the browser is on that same PC. Do not use the app&apos;s own URL (e.g. vercel.app). Default: <code>http://localhost:8083/Xprinter</code>
               </p>
               <input
                 type="url"
