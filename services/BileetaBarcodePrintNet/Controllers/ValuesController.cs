@@ -249,6 +249,9 @@ public class ValuesController : ControllerBase
             string basePath = _config["BarcodePrint:TemplateBasePath"] ?? "C:\\BileetaBarcode\\BarcodeTemplate\\Source";
             int printedCount = 0;
 
+            // Wait so printer finishes previous job before we overwrite the shared file (stops duplicate "previous label" on second print)
+            Thread.Sleep(2500);
+
             foreach (var item in barcods)
             {
                 string? templateId = item.BarcodeTemplateId ?? "1";
@@ -309,6 +312,7 @@ public class ValuesController : ControllerBase
                 }
 
                 string str = System.IO.File.ReadAllText(templateFile, Encoding.Default);
+                str = str.Replace("@BarcodeType", !string.IsNullOrWhiteSpace(item.BarcodeType) ? item.BarcodeType.Trim() : "128");
                 str = str.Replace("@CompanyName", item.CompanyName ?? "");
                 str = str.Replace("@Barcode", item.BarcodeNo ?? "");
                 str = str.Replace("@ItemCode", item.ProductCode ?? "");
@@ -329,8 +333,8 @@ public class ValuesController : ControllerBase
                     string destinationFile = destinationPrefix + printer;
                     System.IO.File.Copy(tempFile, destinationFile, true);
                     printedCount++;
-                    // Give printer time to process this job before sending the next; otherwise only the last label may print
-                    Thread.Sleep(1200);
+                    // Give printer time to process this job before next copy (same batch or next request)
+                    Thread.Sleep(1500);
                 }
             }
 

@@ -65,7 +65,7 @@ function buildTspl(widthMm: number, heightMm: number, gapMm: number, elements: L
       lines.push(`TEXT ${el.x},${el.y},"${font}",${rot},${xMul},${yMul},"${content}"`);
     } else if (el.type === 'barcode') {
       const h = el.height ?? BARCODE_DEFAULT_HEIGHT;
-      lines.push(`BARCODE ${el.x},${el.y},"128",${h},1,0,2,2,"@Barcode"`);
+      lines.push(`BARCODE ${el.x},${el.y},"@BarcodeType",${h},1,0,2,2,"@Barcode"`);
     }
   }
   lines.push('PRINT 1,1');

@@ -5,6 +5,6 @@ CLS
 TEXT 20,20,"2",0,1,1,"@ItemCode"
 TEXT 20,45,"2",0,1,1,"@Des1"
 TEXT 20,70,"2",0,1,1,"@Des2"
-BARCODE 20,95,"128",50,1,0,2,2,"@Barcode"
+BARCODE 20,95,"@BarcodeType",50,1,0,2,2,"@Barcode"
 TEXT 20,160,"2",0,1,1,"Qty: @Qty"
 PRINT 1,1

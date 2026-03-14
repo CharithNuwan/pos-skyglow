@@ -21,7 +21,7 @@ import JsBarcode from 'jsbarcode';
 import QRCode from 'qrcode';
 import html2canvas from 'html2canvas';
 
-export type BarcodeType = '1d' | 'ean8' | '2d';
+export type BarcodeType = '1d' | 'ean8' | 'ean13' | '2d';
 
 export type LabelBlockId = 'shop' | 'name' | 'barcode' | 'price';
 const DEFAULT_LABEL_ORDER: LabelBlockId[] = ['shop', 'name', 'barcode', 'price'];
@@ -36,7 +36,7 @@ interface Product {
   category_name: string;
 }
 
-// 1D: CODE128. EAN-8: 8-digit 1D. 2D: QR code.
+// 1D: CODE128. EAN-8 / EAN-13: 1D. 2D: QR code.
 function BarcodeDisplay({ value, width = 160, height = 50, barcodeType = '1d' }: { value: string; width?: number; height?: number; barcodeType?: BarcodeType }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -48,9 +48,8 @@ function BarcodeDisplay({ value, width = 160, height = 50, barcodeType = '1d' }:
       });
     } else {
       try {
-        const format = barcodeType === 'ean8' ? 'EAN8' : 'CODE128';
-        // EAN-8 needs 7 or 8 digits; use first 8 digits if longer
-        const val = format === 'EAN8' && value.length > 8 ? value.slice(0, 8) : value;
+        const format = barcodeType === 'ean8' ? 'EAN8' : barcodeType === 'ean13' ? 'EAN13' : 'CODE128';
+        const val = format === 'EAN8' && value.length > 8 ? value.slice(0, 8) : format === 'EAN13' && value.length > 13 ? value.slice(0, 13) : value;
         JsBarcode(canvasRef.current, val, {
           format,
           width: 1.5,
@@ -86,8 +85,8 @@ function getBarcodeDataUrl(barcode: string, height: number = 40, barcodeType: Ba
   if (barcodeType === '2d') return ''; // 2D uses getBarcodeDataUrlAsync
   try {
     const canvas = document.createElement('canvas');
-    const format = barcodeType === 'ean8' ? 'EAN8' : 'CODE128';
-    const val = format === 'EAN8' && barcode.length > 8 ? barcode.slice(0, 8) : barcode;
+    const format = barcodeType === 'ean8' ? 'EAN8' : barcodeType === 'ean13' ? 'EAN13' : 'CODE128';
+    const val = format === 'EAN8' && barcode.length > 8 ? barcode.slice(0, 8) : format === 'EAN13' && barcode.length > 13 ? barcode.slice(0, 13) : barcode;
     JsBarcode(canvas, val, { format, width: 1.5, height, displayValue: false, margin: 0 });
     return canvas.toDataURL('image/png');
   } catch (_) {
@@ -102,7 +101,7 @@ async function getBarcodeDataUrlAsync(barcode: string, height: number, barcodeTy
       const size = Math.min(120, height * 2);
       return await QRCode.toDataURL(barcode, { width: size, margin: 1 });
     }
-    return getBarcodeDataUrl(barcode, height, barcodeType === 'ean8' ? 'ean8' : '1d');
+    return getBarcodeDataUrl(barcode, height, barcodeType === 'ean8' ? 'ean8' : barcodeType === 'ean13' ? 'ean13' : '1d');
   } catch (_) {
     return '';
   }
@@ -384,8 +383,16 @@ export default function LabelClient() {
     }
   }
 
+  /** Map UI barcode type to Xprinter TSPL type (128=CODE128, 12=EAN-13, EAN8). */
+  function xprinterBarcodeType(bt: BarcodeType): string {
+    if (bt === 'ean8') return 'EAN8';
+    if (bt === 'ean13') return '12';
+    return '128'; // 1d, 2d
+  }
+
   function buildBarcodeTemplates(): BarcodeTemplateItem[] {
     const items: BarcodeTemplateItem[] = [];
+    const barcodeTypeStr = xprinterBarcodeType(barcodeType);
     for (const p of selectedProducts) {
       const copies = selected[p.product_id] || 1;
       for (let i = 0; i < copies; i++) {
@@ -398,6 +405,7 @@ export default function LabelClient() {
           NoOfBarcode: '1',
           BarcodeTemplateId: size === 'xsmall' ? '20' : '1',
           CompanyName: shopName || undefined,
+          BarcodeType: barcodeTypeStr,
         });
       }
     }
@@ -557,9 +565,10 @@ export default function LabelClient() {
                   <div className="d-flex flex-wrap gap-1">
                     <button type="button" className={`btn btn-sm ${barcodeType === '1d' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setBarcodeType('1d')}>1D (CODE128)</button>
                     <button type="button" className={`btn btn-sm ${barcodeType === 'ean8' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setBarcodeType('ean8')}>EAN-8</button>
+                    <button type="button" className={`btn btn-sm ${barcodeType === 'ean13' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setBarcodeType('ean13')}>EAN-13 (type 12)</button>
                     <button type="button" className={`btn btn-sm ${barcodeType === '2d' ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => setBarcodeType('2d')}>2D (QR)</button>
                   </div>
-                  <div className="form-text">Scanner supports 1D and 2D</div>
+                  <div className="form-text">Xprinter: use EAN-13 (type 12) if 128 not read reliably</div>
                 </div>
                 <div className="col-md-4">
                   <label className="form-label small fw-bold">Optional Info</label>
