@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
     if (scope === 'all') {
       // Delete in correct order to respect foreign keys
       await execute(`DELETE FROM stock_logs`);
+      await execute(`DELETE FROM warehouse_stock`);
       await execute(`DELETE FROM sale_items`);
       await execute(`DELETE FROM payments`);
       await execute(`DELETE FROM sales`);
@@ -30,6 +31,7 @@ export async function POST(req: NextRequest) {
 
     if (scope === 'products_only') {
       await execute(`DELETE FROM stock_logs`);
+      await execute(`DELETE FROM warehouse_stock`);
       await execute(`DELETE FROM sale_items`);
       await execute(`DELETE FROM sales`);
       await execute(`DELETE FROM products`);

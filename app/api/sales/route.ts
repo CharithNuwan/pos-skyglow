@@ -90,10 +90,14 @@ export async function POST(req: NextRequest) {
           [item.product_id, session.user_id, batch?.quantity ?? 0, -item.quantity, Math.max(0, (batch?.quantity ?? 0) - item.quantity), saleId, `Sale - ${invoiceNumber}`]
         );
       } else {
-        const product = await queryOne<{ quantity: number; cost_price: number }>(`SELECT quantity, cost_price FROM products WHERE product_id = ?`, [item.product_id]);
+        const product = await queryOne<{ quantity: number; cost_price: number; company_id: number }>(`SELECT quantity, cost_price, company_id FROM products WHERE product_id = ?`, [item.product_id]);
         const qBefore = product?.quantity ?? 0;
         const qAfter = qBefore - item.quantity;
         await execute(`UPDATE products SET quantity = quantity - ?, updated_at = datetime('now') WHERE product_id = ?`, [item.quantity, item.product_id]);
+        const defaultWh = await queryOne<{ warehouse_id: number }>(`SELECT warehouse_id FROM warehouses WHERE company_id = ? AND is_default = 1 LIMIT 1`, [product?.company_id ?? company_id]);
+        if (defaultWh) {
+          await execute(`UPDATE warehouse_stock SET quantity = quantity - ?, updated_at = datetime('now') WHERE product_id = ? AND warehouse_id = ?`, [item.quantity, item.product_id, defaultWh.warehouse_id]);
+        }
         await execute(
           `INSERT INTO stock_logs (product_id, user_id, movement_type, quantity_before, quantity_change, quantity_after, reference_id, reference_type, notes, created_at) VALUES (?, ?, 'sale', ?, ?, ?, ?, 'sale', ?, datetime('now'))`,
           [item.product_id, session.user_id, qBefore, -item.quantity, qAfter, saleId, `Sale - ${invoiceNumber}`]

@@ -17,10 +17,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const items = await query<{ product_id: number; quantity: number }>(`SELECT product_id, quantity FROM sale_items WHERE sale_id = ?`, [saleId]);
 
+    const company_id = session.company_id ?? 1;
+    const defaultWh = await queryOne<{ warehouse_id: number }>(`SELECT warehouse_id FROM warehouses WHERE company_id = ? AND is_default = 1 LIMIT 1`, [company_id]);
     for (const item of items) {
-      const product = await queryOne<{ quantity: number }>(`SELECT quantity FROM products WHERE product_id = ?`, [item.product_id]);
+      const product = await queryOne<{ quantity: number; company_id: number }>(`SELECT quantity, company_id FROM products WHERE product_id = ?`, [item.product_id]);
       const qBefore = product?.quantity ?? 0;
       await execute(`UPDATE products SET quantity = quantity + ?, updated_at = datetime('now') WHERE product_id = ?`, [item.quantity, item.product_id]);
+      if (defaultWh) {
+        await execute(
+          `INSERT INTO warehouse_stock (product_id, warehouse_id, quantity, updated_at) VALUES (?, ?, ?, datetime('now'))
+           ON CONFLICT(product_id, warehouse_id) DO UPDATE SET quantity = quantity + ?, updated_at = datetime('now')`,
+          [item.product_id, defaultWh.warehouse_id, item.quantity, item.quantity]
+        );
+      }
       await execute(
         `INSERT INTO stock_logs (product_id, user_id, movement_type, quantity_before, quantity_change, quantity_after, reference_id, reference_type, notes, created_at) VALUES (?, ?, 'return', ?, ?, ?, ?, 'refund', ?, datetime('now'))`,
         [item.product_id, session.user_id, qBefore, item.quantity, qBefore + item.quantity, saleId, `Refund - ${sale.invoice_number}`]

@@ -10,11 +10,27 @@ export async function POST(req: NextRequest) {
     const { product_id, new_quantity, reason } = await req.json();
     if (!product_id || new_quantity === undefined || new_quantity < 0) return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
 
-    const product = await queryOne<any>(`SELECT product_id, quantity, product_name FROM products WHERE product_id = ?`, [product_id]);
+    const company_id = session.company_id ?? 1;
+    const product = await queryOne<any>(`SELECT product_id, quantity, product_name, company_id FROM products WHERE product_id = ?`, [product_id]);
     if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
 
     const diff = new_quantity - product.quantity;
     await execute(`UPDATE products SET quantity = ?, updated_at = datetime('now') WHERE product_id = ?`, [new_quantity, product_id]);
+    const defaultWh = await queryOne<{ warehouse_id: number }>(`SELECT warehouse_id FROM warehouses WHERE company_id = ? AND is_default = 1 LIMIT 1`, [product.company_id ?? company_id]);
+    if (defaultWh && diff !== 0) {
+      if (diff > 0) {
+        await execute(
+          `INSERT INTO warehouse_stock (product_id, warehouse_id, quantity, updated_at) VALUES (?, ?, ?, datetime('now'))
+           ON CONFLICT(product_id, warehouse_id) DO UPDATE SET quantity = quantity + ?, updated_at = datetime('now')`,
+          [product_id, defaultWh.warehouse_id, diff, diff]
+        );
+      } else {
+        await execute(
+          `UPDATE warehouse_stock SET quantity = quantity + ?, updated_at = datetime('now') WHERE product_id = ? AND warehouse_id = ?`,
+          [diff, product_id, defaultWh.warehouse_id]
+        );
+      }
+    }
     await execute(
       `INSERT INTO stock_logs (product_id, user_id, movement_type, quantity_before, quantity_change, quantity_after, notes, created_at) VALUES (?, ?, 'adjustment', ?, ?, ?, ?, datetime('now'))`,
       [product_id, session.user_id, product.quantity, diff, new_quantity, reason || 'Manual adjustment']

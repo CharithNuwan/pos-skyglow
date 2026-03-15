@@ -389,30 +389,47 @@ const migrations = [
   `INSERT OR IGNORE INTO users (username, email, password_hash, full_name, phone, role, is_active) VALUES
     ('admin', 'admin@pos.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', '+1 234 567 8900', 'admin', 1)`,
 
-  // Sample categories
-  `INSERT OR IGNORE INTO categories (category_name, description) VALUES ('Electronics', 'Electronic devices and accessories')`,
-  `INSERT OR IGNORE INTO categories (category_name, description) VALUES ('Clothing', 'Apparel and fashion items')`,
-  `INSERT OR IGNORE INTO categories (category_name, description) VALUES ('Food & Beverages', 'Edible items and drinks')`,
-  `INSERT OR IGNORE INTO categories (category_name, description) VALUES ('Home & Garden', 'Home improvement and garden supplies')`,
+  // No default categories or sample products — add your own via the app.
 
   // Add short_name column if not exists (safe to run multiple times via try/catch in migrate fn)
   `ALTER TABLE products ADD COLUMN short_name TEXT`,
   `ALTER TABLE products ADD COLUMN pack_size INTEGER DEFAULT 1`,
 
-  // Sample products
-  `INSERT OR IGNORE INTO products (barcode, product_name, category_id, cost_price, selling_price, quantity, minimum_stock, description) VALUES
-    ('1234567890123', 'Wireless Mouse', 1, 15.00, 29.99, 50, 10, 'Ergonomic wireless mouse with USB receiver')`,
-  `INSERT OR IGNORE INTO products (barcode, product_name, category_id, cost_price, selling_price, quantity, minimum_stock, description) VALUES
-    ('1234567890124', 'USB-C Cable', 1, 5.00, 12.99, 100, 20, 'Fast charging USB-C cable')`,
-  `INSERT OR IGNORE INTO products (barcode, product_name, category_id, cost_price, selling_price, quantity, minimum_stock, description) VALUES
-    ('1234567890125', 'T-Shirt Cotton', 2, 8.00, 19.99, 75, 15, '100% cotton comfortable t-shirt')`,
-  `INSERT OR IGNORE INTO products (barcode, product_name, category_id, cost_price, selling_price, quantity, minimum_stock, description) VALUES
-    ('1234567890126', 'Coffee Beans 500g', 3, 8.50, 16.99, 40, 10, 'Premium arabica coffee beans')`,
-  `INSERT OR IGNORE INTO products (barcode, product_name, category_id, cost_price, selling_price, quantity, minimum_stock, description) VALUES
-    ('1234567890127', 'LED Desk Lamp', 4, 20.00, 45.99, 30, 8, 'Adjustable LED desk lamp with dimmer')`,
-
   // ─── Expenses: capital vs recurring ─────────────────────────────────────
   `ALTER TABLE expenses ADD COLUMN expense_type TEXT DEFAULT 'recurring'`,
+
+  // ─── Warehouses & warehouse_stock ───────────────────────────────────────
+  `CREATE TABLE IF NOT EXISTS warehouses (
+    warehouse_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    code TEXT,
+    is_default INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(company_id, name),
+    FOREIGN KEY (company_id) REFERENCES companies(company_id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_warehouses_company ON warehouses(company_id)`,
+  `CREATE TABLE IF NOT EXISTS warehouse_stock (
+    product_id INTEGER NOT NULL,
+    warehouse_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT DEFAULT (datetime('now')),
+    PRIMARY KEY (product_id, warehouse_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    FOREIGN KEY (warehouse_id) REFERENCES warehouses(warehouse_id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_warehouse_stock_warehouse ON warehouse_stock(warehouse_id)`,
+  // Default warehouse per company (idempotent)
+  `INSERT OR IGNORE INTO warehouses (company_id, name, code, is_default)
+   SELECT company_id, 'Main', 'MAIN', 1 FROM companies
+   WHERE NOT EXISTS (SELECT 1 FROM warehouses w WHERE w.company_id = companies.company_id AND w.name = 'Main')`,
+  // Backfill warehouse_stock from products.quantity only when no row exists
+  `INSERT OR IGNORE INTO warehouse_stock (product_id, warehouse_id, quantity)
+   SELECT p.product_id, w.warehouse_id, p.quantity
+   FROM products p
+   JOIN warehouses w ON w.company_id = p.company_id AND w.is_default = 1
+   WHERE NOT EXISTS (SELECT 1 FROM warehouse_stock ws WHERE ws.product_id = p.product_id AND ws.warehouse_id = w.warehouse_id)`,
 ];
 
 async function migrate() {

@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid product or quantity' }, { status: 400 });
     }
 
-    // Get current stock
-    const product = await queryOne<{ product_id: number; quantity: number; product_name: string }>(
-      `SELECT product_id, quantity, product_name FROM products WHERE product_id = ?`, [product_id]
+    const company_id = session.company_id ?? 1;
+    const product = await queryOne<{ product_id: number; quantity: number; product_name: string; company_id: number }>(
+      `SELECT product_id, quantity, product_name, company_id FROM products WHERE product_id = ?`, [product_id]
     );
     if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
 
@@ -27,6 +27,14 @@ export async function POST(req: NextRequest) {
       `UPDATE products SET quantity = ?, updated_at = datetime('now') WHERE product_id = ?`,
       [newQuantity, product_id]
     );
+    const defaultWh = await queryOne<{ warehouse_id: number }>(`SELECT warehouse_id FROM warehouses WHERE company_id = ? AND is_default = 1 LIMIT 1`, [product.company_id ?? company_id]);
+    if (defaultWh) {
+      await execute(
+        `INSERT INTO warehouse_stock (product_id, warehouse_id, quantity, updated_at) VALUES (?, ?, ?, datetime('now'))
+         ON CONFLICT(product_id, warehouse_id) DO UPDATE SET quantity = quantity + ?, updated_at = datetime('now')`,
+        [product_id, defaultWh.warehouse_id, quantity, quantity]
+      );
+    }
 
     // Log the stock movement
     await execute(

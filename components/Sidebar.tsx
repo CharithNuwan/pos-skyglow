@@ -116,6 +116,12 @@ export default function Sidebar({ user }: SidebarProps) {
             <Link href="/stock-adjust" className={`sidebar-link ${isActive('/stock-adjust') ? 'active' : ''}`} onClick={closeSidebar}>
               <i className="bi bi-sliders" /> Stock Adjustment
             </Link>
+            <Link href="/warehouses" className={`sidebar-link ${isActive('/warehouses') && !pathname.startsWith('/warehouses/transfer') ? 'active' : ''}`} onClick={closeSidebar}>
+              <i className="bi bi-building" /> Warehouses
+            </Link>
+            <Link href="/warehouses/transfer" className={`sidebar-link ${isActive('/warehouses/transfer') ? 'active' : ''}`} onClick={closeSidebar}>
+              <i className="bi bi-arrow-left-right" /> Transfer
+            </Link>
           </>}
         </>}
 

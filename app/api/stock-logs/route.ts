@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const logs = await query(
       `SELECT sl.*, p.product_name, u.full_name FROM stock_logs sl
        JOIN products p ON sl.product_id = p.product_id
-       JOIN users u ON sl.user_id = u.user_id
+       LEFT JOIN users u ON sl.user_id = u.user_id
        WHERE sl.movement_type = ? AND (p.company_id = ? OR p.company_id IS NULL)
        ORDER BY sl.created_at DESC LIMIT 50`,
       [type, company_id]
