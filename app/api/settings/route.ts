@@ -36,10 +36,22 @@ export async function POST(req: NextRequest) {
           [String(value), company_id, key]
         );
       } else {
-        await execute(
-          `INSERT INTO settings (company_id, setting_key, setting_value, updated_at) VALUES (?, ?, ?, datetime('now'))`,
-          [company_id, key, String(value)]
-        );
+        try {
+          await execute(
+            `INSERT INTO settings (company_id, setting_key, setting_value, updated_at) VALUES (?, ?, ?, datetime('now'))`,
+            [company_id, key, String(value)]
+          );
+        } catch (insertErr: unknown) {
+          const msg = String((insertErr as Error).message || '').toLowerCase();
+          if (msg.includes('unique') && msg.includes('setting')) {
+            await execute(
+              `UPDATE settings SET setting_value = ?, company_id = ? WHERE setting_key = ?`,
+              [String(value), company_id, key]
+            );
+          } else {
+            throw insertErr;
+          }
+        }
       }
     }
     return NextResponse.json({ success: true });
