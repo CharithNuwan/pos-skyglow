@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ReceiptLayout from '@/components/ReceiptLayout';
 
 export default function SettingsClient() {
@@ -9,10 +9,15 @@ export default function SettingsClient() {
   const [testPrintMsg, setTestPrintMsg] = useState('');
   const [fontCheckMsg, setFontCheckMsg] = useState('');
   const [companyId, setCompanyId] = useState<number | null>(null);
+  const initDoneRef = useRef(false);
 
   useEffect(() => {
-    fetch('/api/settings').then(r => r.json()).then(setSettings);
-    fetch('/api/me').then(r => r.json()).then((d: { company_id?: number }) => setCompanyId(d.company_id ?? 1));
+    if (initDoneRef.current) return;
+    initDoneRef.current = true;
+    Promise.all([
+      fetch('/api/settings').then(r => r.json()).then(setSettings),
+      fetch('/api/me').then(r => r.json()).then((d: { company_id?: number }) => setCompanyId(d.company_id ?? 1)),
+    ]).catch(() => { initDoneRef.current = false; });
   }, []);
 
   async function save() {
