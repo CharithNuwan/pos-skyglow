@@ -44,10 +44,13 @@ export async function POST(req: NextRequest) {
         } catch (insertErr: unknown) {
           const msg = String((insertErr as Error).message || '').toLowerCase();
           if (msg.includes('unique') && msg.includes('setting')) {
-            await execute(
-              `UPDATE settings SET setting_value = ?, company_id = ? WHERE setting_key = ?`,
-              [String(value), company_id, key]
+            const result = await execute(
+              `UPDATE settings SET setting_value = ?, company_id = ? WHERE setting_key = ? AND (company_id = ? OR company_id IS NULL)`,
+              [String(value), company_id, key, company_id]
             );
+            if (result.rowsAffected === 0) {
+              throw new Error(`Setting "${key}" is owned by another company. Use a different key or contact support.`);
+            }
           } else {
             throw insertErr;
           }

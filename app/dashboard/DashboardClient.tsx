@@ -5,6 +5,11 @@ import Link from 'next/link';
 export default function DashboardClient() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [curr, setCurr] = useState('$');
+
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then(s => setCurr(s.currency_symbol || '$')).catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch('/api/dashboard')
@@ -44,7 +49,7 @@ export default function DashboardClient() {
             <div className="d-flex justify-content-between align-items-start">
               <div>
                 <div className="stat-label">Today's Revenue</div>
-                <div className="stat-value">${Number(todaySales.total_revenue ?? 0).toFixed(2)}</div>
+                <div className="stat-value">{curr}{Number(todaySales.total_revenue ?? 0).toFixed(2)}</div>
               </div>
               <div className="rounded-3 p-2" style={{ background: '#e8f4fd', color: '#0d6efd' }}>
                 <i className="bi bi-currency-dollar fs-4" />
@@ -115,7 +120,7 @@ export default function DashboardClient() {
                         <td className="fw-500">{sale.invoice_number}</td>
                         <td>{sale.cashier_name}</td>
                         <td className="text-capitalize">{sale.payment_method}</td>
-                        <td className="fw-600">${Number(sale.total_amount).toFixed(2)}</td>
+                        <td className="fw-600">{curr}{Number(sale.total_amount).toFixed(2)}</td>
                         <td><span className={`badge status-${sale.payment_status}`}>{sale.payment_status}</span></td>
                         <td className="text-muted small">{new Date(sale.sale_date).toLocaleDateString()}</td>
                       </tr>
@@ -212,7 +217,7 @@ export default function DashboardClient() {
                     <tr key={p.product_name}>
                       <td className="fw-500">{p.product_name}</td>
                       <td>{p.total_sold}</td>
-                      <td>${Number(p.total_revenue).toFixed(2)}</td>
+                      <td>{curr}{Number(p.total_revenue).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>

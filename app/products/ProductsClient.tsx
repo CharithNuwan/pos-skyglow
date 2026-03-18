@@ -29,6 +29,11 @@ export default function ProductsClient() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [msgType, setMsgType] = useState<'success'|'danger'>('success');
+  const [curr, setCurr] = useState('$');
+
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then(s => setCurr(s.currency_symbol || '$')).catch(() => {});
+  }, []);
 
   // Restock state
   const [showRestock, setShowRestock] = useState(false);
@@ -184,6 +189,22 @@ export default function ProductsClient() {
     URL.revokeObjectURL(url);
   }
 
+  function generateTenDigitBarcode() {
+    const ts = Date.now().toString().slice(-6);
+    const rand = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    return ts + rand;
+  }
+
+  /** Batch barcode: first 4 from product (barcode or id), last 6 unique. */
+  function generateBatchBarcode(product: { barcode?: string; product_id: number }) {
+    const prefix = (product.barcode && product.barcode.length >= 4)
+      ? product.barcode.slice(0, 4)
+      : String(product.product_id).padStart(4, '0').slice(-4);
+    const ts = Date.now().toString().slice(-5);
+    const rand = Math.floor(Math.random() * 10).toString();
+    return prefix + ts + rand;
+  }
+
   async function openBatches(p: any) {
     setBatchProduct(p);
     setBatchMsg('');
@@ -193,7 +214,7 @@ export default function ProductsClient() {
     setEditBatch({
       product_id: p.product_id,
       batch_number: `BATCH-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-001`,
-      barcode: `${p.barcode || p.product_id}-B${String(Date.now()).slice(-4)}`,
+      barcode: generateBatchBarcode(p),
       cost_price: p.cost_price || 0,
       selling_price: p.selling_price || 0,
       quantity: 0,
@@ -219,7 +240,7 @@ export default function ProductsClient() {
       setEditBatch({
         product_id: batchProduct!.product_id,
         batch_number: `BATCH-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String((d2.batches?.length||0)+1).padStart(3,'0')}`,
-        barcode: `${batchProduct!.barcode || batchProduct!.product_id}-B${String(Date.now()).slice(-4)}`,
+        barcode: generateBatchBarcode(batchProduct!),
         cost_price: batchProduct!.cost_price || 0,
         selling_price: batchProduct!.selling_price || 0,
         quantity: 0, received_date: new Date().toISOString().slice(0,10), expiry_date: '', notes: '',
@@ -397,8 +418,8 @@ export default function ProductsClient() {
                     </td>
                     <td className="text-muted small">{p.barcode || '-'}</td>
                     <td>{p.category_name || '-'}</td>
-                    <td>${Number(p.cost_price).toFixed(2)}</td>
-                    <td className="fw-600">${Number(p.selling_price).toFixed(2)}</td>
+                    <td>{curr}{Number(p.cost_price).toFixed(2)}</td>
+                    <td className="fw-600">{curr}{Number(p.selling_price).toFixed(2)}</td>
                     <td>
                       <span className={p.quantity <= p.minimum_stock ? 'text-danger fw-600' : ''}>
                         {p.quantity}
@@ -479,9 +500,9 @@ export default function ProductsClient() {
                       <button
                         type="button"
                         className="btn btn-outline-secondary"
-                        title="Generate random barcode"
+                        title="Generate random 10-digit barcode"
                         onClick={() => {
-                          const ts = Date.now().toString().slice(-8);
+                          const ts = Date.now().toString().slice(-6);
                           const rand = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
                           setEditProduct(p => ({ ...p!, barcode: ts + rand }));
                         }}
@@ -666,7 +687,7 @@ export default function ProductsClient() {
                   <h5 className="modal-title text-white fw-bold mb-0">
                     <i className="bi bi-layers me-2"/>Batch Management — {batchProduct.product_name}
                   </h5>
-                  <div className="text-white-50 small">Default price: Rs {batchProduct.selling_price} · Total stock: {batchProduct.quantity}</div>
+                  <div className="text-white-50 small">Default price: {curr}{batchProduct.selling_price} · Total stock: {batchProduct.quantity}</div>
                 </div>
                 <button className="btn-close btn-close-white" onClick={()=>setShowBatchModal(false)}/>
               </div>
@@ -706,8 +727,8 @@ export default function ProductsClient() {
                               <tr key={b.batch_id} style={{background: isExpired?'#fff5f5': expiringSoon?'#fffbeb':''}}>
                                 <td className="fw-600">{b.batch_number}</td>
                                 <td><code style={{fontSize:'0.7rem'}}>{b.barcode}</code></td>
-                                <td>Rs {Number(b.cost_price).toFixed(2)}</td>
-                                <td className="fw-600 text-success">Rs {Number(b.selling_price).toFixed(2)}</td>
+                                <td>{curr}{Number(b.cost_price).toFixed(2)}</td>
+                                <td className="fw-600 text-success">{curr}{Number(b.selling_price).toFixed(2)}</td>
                                 <td>
                                   <span className={`badge ${b.quantity===0?'bg-secondary':b.quantity<=5?'bg-warning text-dark':'bg-success'}`}>
                                     {b.quantity}
@@ -762,7 +783,7 @@ export default function ProductsClient() {
                           <label className="form-label small fw-600">Batch Barcode * <span className="text-muted fw-normal">(printed on labels)</span></label>
                           <div className="input-group input-group-sm">
                             <input className="form-control" value={editBatch.barcode||''} onChange={e=>setEditBatch((b:any)=>({...b,barcode:e.target.value}))}/>
-                            <button className="btn btn-outline-secondary" onClick={()=>setEditBatch((b:any)=>({...b,barcode:`${batchProduct.barcode||batchProduct.product_id}-B${String(Date.now()).slice(-4)}`}))}>
+                            <button className="btn btn-outline-secondary" onClick={()=>setEditBatch((b:any)=>({...b,barcode:generateBatchBarcode(batchProduct)}))} title="Generate new 10-digit barcode">
                               <i className="bi bi-arrow-clockwise"/>
                             </button>
                           </div>
@@ -823,7 +844,7 @@ export default function ProductsClient() {
                             <button className="btn btn-outline-secondary" onClick={()=>setEditBatch({
                               product_id: batchProduct.product_id,
                               batch_number:`BATCH-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-NEW`,
-                              barcode:`${batchProduct.barcode||batchProduct.product_id}-B${String(Date.now()).slice(-4)}`,
+                              barcode: generateBatchBarcode(batchProduct),
                               cost_price:batchProduct.cost_price||0, selling_price:batchProduct.selling_price||0,
                               quantity:0, received_date:new Date().toISOString().slice(0,10), expiry_date:'', notes:'',
                             })}>New</button>

@@ -17,7 +17,11 @@ export default function SalesClient() {
   const [lookupSale, setLookupSale] = useState<Sale | null>(null);
   const [lookupError, setLookupError] = useState('');
   const [lookupLoading, setLookupLoading] = useState(false);
+  const [curr, setCurr] = useState('$');
 
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then(s => setCurr(s.currency_symbol || '$')).catch(() => {});
+  }, []);
   useEffect(() => { load(); }, [page, dateFrom, dateTo, status, search]);
 
   async function load() {
@@ -95,7 +99,7 @@ export default function SalesClient() {
                 {' · '}
                 {lookupSale.customer_name || <span className="text-muted">Walk-in</span>}
                 {' · '}
-                <span className="fw-700">${Number(lookupSale.total_amount).toFixed(2)}</span>
+                <span className="fw-700">{curr}{Number(lookupSale.total_amount).toFixed(2)}</span>
                 {' · '}
                 <span className={`badge status-${lookupSale.payment_status}`}>{lookupSale.payment_status}</span>
                 {' · '}
@@ -143,7 +147,7 @@ export default function SalesClient() {
                     <td>{s.customer_name || <span className="text-muted">Walk-in</span>}</td>
                     <td>{s.cashier_name}</td>
                     <td><span className="badge bg-light text-dark text-capitalize">{s.payment_method}</span></td>
-                    <td className="fw-700">${Number(s.total_amount).toFixed(2)}</td>
+                    <td className="fw-700">{curr}{Number(s.total_amount).toFixed(2)}</td>
                     <td><span className={`badge status-${s.payment_status}`}>{s.payment_status}</span></td>
                     <td className="text-muted small">{new Date(s.sale_date).toLocaleString()}</td>
                     <td>

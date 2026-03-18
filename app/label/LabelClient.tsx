@@ -177,6 +177,7 @@ export default function LabelClient() {
   const [selectedBatches, setSelectedBatches] = useState<Record<number,number>>({});
   const [batchSearch, setBatchSearch] = useState('');
   const [batchProduct, setBatchProduct] = useState<Product|null>(null);
+  const [batchLoading, setBatchLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Record<number, number>>({});
   const [shopName, setShopName] = useState('');
@@ -201,6 +202,7 @@ export default function LabelClient() {
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(s => {
       setShopName(s.shop_name || '');
+      setCurrencySymbol(s.currency_symbol || 'Rs');
       let url = (s.xprinter_service_url || '').trim() || (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_XPRINTER_SERVICE_URL) || DEFAULT_XPRINTER_BASE_URL;
       // Never use the app's own origin for Xprinter (e.g. vercel.app) — it must call the PC with the printer
       if (typeof window !== 'undefined' && url) {
@@ -244,9 +246,28 @@ export default function LabelClient() {
 
   async function loadBatches(productId: number, product: Product) {
     setBatchProduct(product);
-    const res = await fetch(`/api/batches?product_id=${productId}`);
-    const d = await res.json();
-    setBatches(d.batches || []);
+    setBatchLoading(true);
+    setSelectedBatches({});
+    try {
+      const res = await fetch(`/api/batches?product_id=${productId}`);
+      const d = await res.json();
+      setBatches(d.batches || []);
+    } finally {
+      setBatchLoading(false);
+    }
+  }
+
+  function toggleBatch(batchId: number) {
+    setSelectedBatches(s => {
+      const copy = { ...s };
+      if (copy[batchId]) delete copy[batchId];
+      else copy[batchId] = 1;
+      return copy;
+    });
+  }
+
+  function setBatchCopies(batchId: number, copies: number) {
+    setSelectedBatches(s => ({ ...s, [batchId]: Math.max(1, copies) }));
   }
 
   // Build label items: products OR batches
@@ -262,10 +283,13 @@ export default function LabelClient() {
       expiry_date: b.expiry_date,
       qty: selectedBatches[parseInt(bid)] || 1,
     };
-  }).filter(Boolean);
-  const totalLabels = Object.values(selected).reduce((a, b) => a + b, 0);
+  }).filter(Boolean) as { product_name: string; short_name: string; barcode: string; selling_price: number; qty: number }[];
+  const totalLabelsBatch = Object.values(selectedBatches).reduce((a, b) => a + b, 0);
+  const totalLabels = batchMode && Object.keys(selectedBatches).length > 0 ? totalLabelsBatch : Object.values(selected).reduce((a, b) => a + b, 0);
 
   async function doPrint() {
+    const useBatch = batchMode && batchLabelItems.length > 0;
+    if (!useBatch && selectedProducts.length === 0) return;
     setShowPreview(true);
     const printWindow = window.open('', '_blank', 'noopener,noreferrer');
     if (!printWindow) {
@@ -275,9 +299,14 @@ export default function LabelClient() {
     }
     const dims = getLabelDims(size);
     const barcodeH = size === 'xsmall' ? 28 : size === 'small' ? 35 : size === 'medium' ? 45 : 55;
-    const labelItems = selectedProducts.flatMap(p =>
-      Array.from({ length: selected[p.product_id] }, () => ({ p, name: (p.short_name || p.product_name).slice(0, size === 'xsmall' ? 18 : 28) }))
-    );
+    const labelItems = useBatch
+      ? batchLabelItems.flatMap(item => Array.from({ length: item.qty }, () => ({
+          p: { product_id: 0, product_name: item.product_name, short_name: item.short_name, barcode: item.barcode, selling_price: item.selling_price, pack_size: 1, category_name: '' } as Product,
+          name: (item.short_name || item.product_name).slice(0, size === 'xsmall' ? 18 : 28),
+        })))
+      : selectedProducts.flatMap(p =>
+          Array.from({ length: selected[p.product_id] }, () => ({ p, name: (p.short_name || p.product_name).slice(0, size === 'xsmall' ? 18 : 28) }))
+        );
     const barcodeUrls = await Promise.all(
       labelItems.map(({ p }) => (p.barcode ? getBarcodeDataUrlAsync(p.barcode, barcodeH, barcodeType) : Promise.resolve('')))
     );
@@ -363,18 +392,27 @@ export default function LabelClient() {
       barcodeType,
       labelBlockOrder,
       currencySymbol,
-      labels: selectedProducts.map(p => ({
-        product_name: p.product_name,
-        short_name: p.short_name || p.product_name,
-        barcode: p.barcode || '',
-        selling_price: p.selling_price,
-        copies: selected[p.product_id] || 1,
-      })),
+      labels: batchMode && batchLabelItems.length > 0
+        ? batchLabelItems.map(item => ({
+            product_name: item.product_name,
+            short_name: item.short_name || item.product_name,
+            barcode: item.barcode || '',
+            selling_price: item.selling_price,
+            copies: item.qty,
+          }))
+        : selectedProducts.map(p => ({
+            product_name: p.product_name,
+            short_name: p.short_name || p.product_name,
+            barcode: p.barcode || '',
+            selling_price: p.selling_price,
+            copies: selected[p.product_id] || 1,
+          })),
     };
   }
 
   async function doPrintViaService() {
-    if (selectedProducts.length === 0) return;
+    const hasLabels = batchMode ? batchLabelItems.length > 0 : selectedProducts.length > 0;
+    if (!hasLabels) return;
     setPrintViaServiceStatus('sending');
     try {
       const res = await fetch('/api/print-jobs', {
@@ -405,27 +443,46 @@ export default function LabelClient() {
   function buildBarcodeTemplates(): BarcodeTemplateItem[] {
     const items: BarcodeTemplateItem[] = [];
     const barcodeTypeStr = xprinterBarcodeType(barcodeType);
-    for (const p of selectedProducts) {
-      const copies = selected[p.product_id] || 1;
-      for (let i = 0; i < copies; i++) {
-        items.push({
-          ProductCode: String(p.product_id),
-          ProductDesc: p.short_name || p.product_name || '',
-          BarcodeNo: p.barcode || '',
-          SellingPrice: Number(p.selling_price).toFixed(2),
-          Quantity: '1',
-          NoOfBarcode: '1',
-          BarcodeTemplateId: size === 'xsmall' ? '20' : '1',
-          CompanyName: shopName || undefined,
-          BarcodeType: barcodeTypeStr,
-        });
+    if (batchMode && batchLabelItems.length > 0) {
+      for (const item of batchLabelItems) {
+        for (let i = 0; i < item.qty; i++) {
+          items.push({
+            ProductCode: item.short_name || item.product_name || '',
+            ProductDesc: item.short_name || item.product_name || '',
+            BarcodeNo: item.barcode || '',
+            SellingPrice: Number(item.selling_price).toFixed(2),
+            Quantity: '1',
+            NoOfBarcode: '1',
+            BarcodeTemplateId: size === 'xsmall' ? '20' : '1',
+            CompanyName: shopName || undefined,
+            BarcodeType: barcodeTypeStr,
+          });
+        }
+      }
+    } else {
+      for (const p of selectedProducts) {
+        const copies = selected[p.product_id] || 1;
+        for (let i = 0; i < copies; i++) {
+          items.push({
+            ProductCode: String(p.product_id),
+            ProductDesc: p.short_name || p.product_name || '',
+            BarcodeNo: p.barcode || '',
+            SellingPrice: Number(p.selling_price).toFixed(2),
+            Quantity: '1',
+            NoOfBarcode: '1',
+            BarcodeTemplateId: size === 'xsmall' ? '20' : '1',
+            CompanyName: shopName || undefined,
+            BarcodeType: barcodeTypeStr,
+          });
+        }
       }
     }
     return items;
   }
 
   async function doPrintViaXprinter() {
-    if (selectedProducts.length === 0) return;
+    const hasLabels = batchMode ? batchLabelItems.length > 0 : selectedProducts.length > 0;
+    if (!hasLabels) return;
     setPrintViaXprinterStatus('sending');
     try {
       const base = xprinterBaseUrl.replace(/\/$/, '');
@@ -458,7 +515,8 @@ export default function LabelClient() {
   }
 
   async function doPreviewRequest() {
-    if (selectedProducts.length === 0) return;
+    const hasLabels = batchMode ? batchLabelItems.length > 0 : selectedProducts.length > 0;
+    if (!hasLabels) return;
     setPreviewStatus('sending');
     setPreviewSavedPath(null);
     try {
@@ -495,10 +553,11 @@ export default function LabelClient() {
     }
   }
 
-  // Portal: render whenever we have selected products so it's in DOM before print.
+  // Portal: render whenever we have selected products or batch labels so it's in DOM before print.
   // Hide off-screen on screen (not display:none so print dialog can show it).
   const printRootId = 'label-print-root';
-  const printContent = selectedProducts.length > 0 && typeof document !== 'undefined' ? createPortal(
+  const hasPrintContent = (batchMode ? batchLabelItems.length > 0 : selectedProducts.length > 0) && typeof document !== 'undefined';
+  const printContent = hasPrintContent ? createPortal(
     <div
       id={printRootId}
       className="label-print-root"
@@ -533,9 +592,14 @@ export default function LabelClient() {
           #${printRootId} .label-item { border: 1px solid #999 !important; page-break-inside: avoid !important; }
         }
       `}} />
-      {selectedProducts.map(p => (
-        <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} labelBlockOrder={labelBlockOrder} currencySymbol={currencySymbol} />
-      ))}
+      {batchMode && batchLabelItems.length > 0
+        ? batchLabelItems.map((item, idx) => {
+            const productLike: Product = { product_id: idx, product_name: item.product_name, short_name: item.short_name || item.product_name, barcode: item.barcode, selling_price: item.selling_price, pack_size: 1, category_name: '' };
+            return <Label key={idx} product={productLike} shopName={shopName} copies={item.qty} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} labelBlockOrder={labelBlockOrder} currencySymbol={currencySymbol} />;
+          })
+        : selectedProducts.map(p => (
+            <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} labelBlockOrder={labelBlockOrder} currencySymbol={currencySymbol} />
+          ))}
     </div>,
     document.body
   ) : null;
@@ -544,7 +608,7 @@ export default function LabelClient() {
     <div>
       {/* Batch mode toggle */}
       <div className="mb-3 d-flex gap-2 align-items-center">
-        <button className={`btn btn-sm ${!batchMode?'btn-primary':'btn-outline-secondary'}`} onClick={()=>{setBatchMode(false);setSelectedBatches({});}}>
+        <button className={`btn btn-sm ${!batchMode?'btn-primary':'btn-outline-secondary'}`} onClick={()=>{setBatchMode(false);setSelectedBatches({});setBatchProduct(null);setBatches([]);}}>
           <i className="bi bi-tag me-1"/>Product Labels
         </button>
         <button className={`btn btn-sm ${batchMode?'btn-success':'btn-outline-secondary'}`} onClick={()=>{setBatchMode(true);setSelected({});}}>
@@ -571,16 +635,20 @@ export default function LabelClient() {
                   {products.map(p => (
                     <div
                       key={p.product_id}
-                      className={`d-flex align-items-center gap-2 p-2 rounded mb-1 cursor-pointer ${selected[p.product_id] ? 'bg-primary bg-opacity-10 border border-primary' : 'border'}`}
+                      className={`d-flex align-items-center gap-2 p-2 rounded mb-1 cursor-pointer ${batchMode ? (batchProduct?.product_id === p.product_id ? 'bg-success bg-opacity-10 border border-success' : 'border') : (selected[p.product_id] ? 'bg-primary bg-opacity-10 border border-primary' : 'border')}`}
                       style={{ cursor: 'pointer' }}
-                      onClick={() => toggleProduct(p)}
+                      onClick={() => batchMode ? loadBatches(p.product_id, p) : toggleProduct(p)}
                     >
-                      <input type="checkbox" className="form-check-input mt-0" checked={!!selected[p.product_id]} readOnly />
+                      {batchMode ? (
+                        <span className="text-muted small">{batchProduct?.product_id === p.product_id ? '✓ ' : ''}</span>
+                      ) : (
+                        <input type="checkbox" className="form-check-input mt-0" checked={!!selected[p.product_id]} readOnly />
+                      )}
                       <div className="flex-grow-1">
                         <div className="fw-500 small">{p.short_name || p.product_name}</div>
                         <div className="text-muted" style={{ fontSize: '0.72rem' }}>
                           {p.barcode && <span className="me-2">📦 {p.barcode}</span>}
-                          <span className="fw-600 text-dark">Rs {Number(p.selling_price).toFixed(2)}</span>
+                          <span className="fw-600 text-dark">{currencySymbol} {Number(p.selling_price).toFixed(2)}</span>
                           {p.pack_size > 1 && <span className="ms-2 badge bg-warning text-dark">Pack of {p.pack_size}</span>}
                         </div>
                       </div>
@@ -671,7 +739,141 @@ export default function LabelClient() {
             </div>
           </div>
 
-          {/* Selected products with copy count */}
+          {/* Batch mode: Batches for product OR empty state. Product mode: Selected products */}
+          {batchMode ? (
+            <>
+              {!batchProduct ? (
+                <div className="card">
+                  <div className="card-body text-center text-muted py-5">
+                    <i className="bi bi-search fs-1 d-block mb-2" />
+                    Search and select a product to load its batches
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="card mb-3">
+                    <div className="card-header d-flex justify-content-between align-items-center">
+                      <span className="fw-bold">Batches for {batchProduct.product_name}</span>
+                      <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => { setBatchProduct(null); setBatches([]); setSelectedBatches({}); }}>
+                        Change product
+                      </button>
+                    </div>
+                    <div className="card-body p-0">
+                      {batchLoading ? (
+                        <div className="text-center py-4"><span className="spinner-border spinner-border-sm" /> Loading batches...</div>
+                      ) : batches.length === 0 ? (
+                        <div className="text-center text-muted py-4">
+                          No batches for this product.
+                          <div className="mt-2"><Link href="/products" className="btn btn-sm btn-outline-primary">Add batches in Products</Link></div>
+                        </div>
+                      ) : (
+                        <table className="table mb-0">
+                          <thead><tr><th></th><th>Batch</th><th>Barcode</th><th>Price</th><th>Expiry</th><th>Qty</th><th style={{width:130}}>Copies</th></tr></thead>
+                          <tbody>
+                            {batches.map((b: any) => (
+                              <tr key={b.batch_id} className={selectedBatches[b.batch_id] ? 'table-active' : ''}>
+                                <td>
+                                  <input type="checkbox" className="form-check-input mt-0" checked={!!selectedBatches[b.batch_id]} readOnly onClick={() => toggleBatch(b.batch_id)} />
+                                </td>
+                                <td className="fw-500 small">{b.batch_number}</td>
+                                <td className="small text-muted">{b.barcode}</td>
+                                <td className="fw-600 small">{currencySymbol} {Number(b.selling_price).toFixed(2)}</td>
+                                <td className="small text-muted">{b.expiry_date || '—'}</td>
+                                <td>{b.quantity}</td>
+                                <td>
+                                  {selectedBatches[b.batch_id] ? (
+                                    <div className="d-flex align-items-center gap-1">
+                                      <button className="btn btn-sm btn-outline-secondary px-2" onClick={() => setBatchCopies(b.batch_id, (selectedBatches[b.batch_id] || 1) - 1)}>−</button>
+                                      <input type="number" className="form-control form-control-sm text-center" style={{width:55}} min={1} value={selectedBatches[b.batch_id]} onChange={e => setBatchCopies(b.batch_id, parseInt(e.target.value) || 1)} />
+                                      <button className="btn btn-sm btn-outline-secondary px-2" onClick={() => setBatchCopies(b.batch_id, (selectedBatches[b.batch_id] || 1) + 1)}>+</button>
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted small">—</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </div>
+                  <div className="card">
+                    <div className="card-header d-flex justify-content-between align-items-center">
+                      <span className="fw-bold">Selected Batches ({Object.keys(selectedBatches).length})</span>
+                      {Object.keys(selectedBatches).length > 0 && <span className="badge bg-primary">{totalLabels} labels total</span>}
+                    </div>
+                    <div className="card-body p-0">
+                      {Object.keys(selectedBatches).length === 0 ? (
+                        <div className="text-center text-muted py-4 small">Select batches above and set copies</div>
+                      ) : (
+                        <ul className="list-group list-group-flush">
+                          {batchLabelItems.map((item, idx) => (
+                            <li key={idx} className="list-group-item d-flex justify-content-between align-items-center">
+                              <span className="small">{item.product_name} · {item.barcode} · {currencySymbol}{Number(item.selling_price).toFixed(2)}</span>
+                              <span className="badge bg-secondary">{item.qty} labels</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    {Object.keys(selectedBatches).length > 0 && (
+                      <div className="card-footer">
+                        <div className="d-flex gap-2 mb-2 flex-wrap align-items-center">
+                          <button className="btn btn-outline-secondary btn-sm" onClick={() => setShowPreview(s => !s)}>
+                            <i className="bi bi-eye me-1" />{showPreview ? 'Hide' : 'Preview'}
+                          </button>
+                          <button className="btn btn-primary" onClick={doPrint}>
+                            <i className="bi bi-printer me-2" />Print {totalLabels} Labels
+                          </button>
+                          <button type="button" className="btn btn-outline-primary" onClick={doPrintViaService} disabled={printViaServiceStatus === 'sending'}>
+                            {printViaServiceStatus === 'sending' && <span className="spinner-border spinner-border-sm me-1" role="status" />}
+                            {printViaServiceStatus === 'ok' && <i className="bi bi-check me-1" />}
+                            {printViaServiceStatus === 'error' && <i className="bi bi-exclamation-triangle me-1" />}
+                            Print via service
+                          </button>
+                          <button type="button" className="btn btn-outline-success" onClick={doPrintViaXprinter} disabled={printViaXprinterStatus === 'sending'} title={`Send to Xprinter at ${xprinterBaseUrl}`}>
+                            {printViaXprinterStatus === 'sending' && <span className="spinner-border spinner-border-sm me-1" role="status" />}
+                            {printViaXprinterStatus === 'ok' && <i className="bi bi-check me-1" />}
+                            {printViaXprinterStatus === 'error' && <i className="bi bi-exclamation-triangle me-1" />}
+                            Print via Xprinter
+                          </button>
+                          <button type="button" className="btn btn-outline-secondary" onClick={doPreviewRequest} disabled={previewStatus === 'sending'} title="Build TSPL and save to file on the PC where Xprinter runs (no print).">
+                            {previewStatus === 'sending' && <span className="spinner-border spinner-border-sm me-1" role="status" />}
+                            {previewStatus === 'ok' && <i className="bi bi-check me-1" />}
+                            {previewStatus === 'error' && <i className="bi bi-exclamation-triangle me-1" />}
+                            Save preview (no print)
+                          </button>
+                          <Link href="/label/template-designer" className="btn btn-outline-secondary btn-sm"><i className="bi bi-palette me-1" /> Template designer</Link>
+                          {printViaServiceStatus === 'ok' && <span className="small text-success">Sent to label printer</span>}
+                          {printViaServiceStatus === 'error' && <span className="small text-danger">Send failed</span>}
+                          {printViaXprinterStatus === 'ok' && <span className="small text-success">Sent to Xprinter</span>}
+                          {printViaXprinterStatus === 'error' && <span className="small text-danger">Xprinter failed</span>}
+                          {previewStatus === 'ok' && previewSavedPath && <span className="small text-success ms-1">Saved: {previewSavedPath}</span>}
+                          {previewStatus === 'error' && <span className="small text-danger ms-1">Preview failed</span>}
+                        </div>
+                        <div className="small text-muted">
+                          <strong>Print via Xprinter</strong> calls the Xprinter service on the PC where the printer is connected. Set <strong>Settings → Xprinter service URL</strong> if needed.{' '}
+                          <button type="button" className="btn btn-link btn-sm p-0 align-baseline" onClick={() => setShowKioskHelp(s => !s)}>{showKioskHelp ? 'Hide' : 'How to enable'}</button>
+                        </div>
+                        {showKioskHelp && (
+                          <div className="small mt-2 p-2 bg-light rounded">
+                            <div className="fw-600 mb-1">Print without the dialog:</div>
+                            <ol className="mb-0 ps-3">
+                              <li>Set <strong>Xprinter XP-T202UA</strong> as the default printer in Windows (Settings → Printers).</li>
+                              <li>Run Chrome with <code>--kiosk-printing</code>: create a shortcut with Target <code>&quot;C:\...\chrome.exe&quot; --kiosk-printing</code>.</li>
+                              <li>Open the POS in that Chrome window; the same Print button will send labels straight to the printer.</li>
+                            </ol>
+                            <Link href="/docs/label-printing" className="d-block mt-2">Full guide</Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
           <div className="card">
             <div className="card-header d-flex justify-content-between align-items-center">
               <span className="fw-bold">Selected Products ({selectedProducts.length})</span>
@@ -693,7 +895,7 @@ export default function LabelClient() {
                           <div className="fw-500 small">{p.short_name || p.product_name}</div>
                           {p.pack_size > 1 && <div style={{fontSize:'0.7rem'}} className="text-warning">Pack of {p.pack_size}</div>}
                         </td>
-                        <td className="fw-600 small">Rs {Number(p.selling_price).toFixed(2)}</td>
+                        <td className="fw-600 small">{currencySymbol} {Number(p.selling_price).toFixed(2)}</td>
                         <td>
                           <div className="d-flex align-items-center gap-1">
                             <button className="btn btn-sm btn-outline-secondary px-2" onClick={() => setCopies(p.product_id, selected[p.product_id] - 1)}>−</button>
@@ -785,11 +987,12 @@ export default function LabelClient() {
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
 
       {/* On-screen preview (print uses portal to body so dialog shows labels) */}
-      {showPreview && selectedProducts.length > 0 && (() => {
+      {showPreview && (batchMode ? batchLabelItems.length > 0 : selectedProducts.length > 0) && (() => {
         const dims = getLabelDims(size);
         const previewW = totalLabels * (dims.w + 6);
         const previewH = dims.h + 6;
@@ -798,9 +1001,14 @@ export default function LabelClient() {
           <div className="card-header fw-bold">Preview</div>
           <div className="card-body">
             <div ref={previewContainerRef} style={{ width: previewW, minHeight: previewH, overflow: 'visible', display: 'inline-block' }}>
-              {selectedProducts.map(p => (
-                <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} labelBlockOrder={labelBlockOrder} currencySymbol={currencySymbol} />
-              ))}
+              {batchMode && batchLabelItems.length > 0
+                ? batchLabelItems.map((item, idx) => {
+                    const productLike: Product = { product_id: idx, product_name: item.product_name, short_name: item.short_name || item.product_name, barcode: item.barcode, selling_price: item.selling_price, pack_size: 1, category_name: '' };
+                    return <Label key={idx} product={productLike} shopName={shopName} copies={item.qty} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} labelBlockOrder={labelBlockOrder} currencySymbol={currencySymbol} />;
+                  })
+                : selectedProducts.map(p => (
+                    <Label key={p.product_id} product={p} shopName={shopName} copies={selected[p.product_id]} size={size} showName={showName} showShop={showShop} barcodeType={barcodeType} labelBlockOrder={labelBlockOrder} currencySymbol={currencySymbol} />
+                  ))}
             </div>
             <div className="mt-2">
               <button

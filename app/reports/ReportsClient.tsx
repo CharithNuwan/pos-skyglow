@@ -6,7 +6,11 @@ export default function ReportsClient() {
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState(() => new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().slice(0, 10));
+  const [curr, setCurr] = useState('$');
 
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then(s => setCurr(s.currency_symbol || '$')).catch(() => {});
+  }, []);
   useEffect(() => { load(); }, [dateFrom, dateTo]);
   async function load() {
     setLoading(true);
@@ -15,7 +19,6 @@ export default function ReportsClient() {
   }
 
   const s = data?.summary || {};
-  const curr = '$';
   return (
     <div>
       <div className="card mb-3"><div className="card-body py-2"><div className="d-flex gap-3 align-items-end flex-wrap">
